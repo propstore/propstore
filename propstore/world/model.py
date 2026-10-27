@@ -33,7 +33,7 @@ What does NOT live here:
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Generator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -513,7 +513,7 @@ class WorldQuery(WorldStore):
         self._session_cm.__exit__(None, None, None)
 
     @contextmanager
-    def historical_query(self, commit_sha: str) -> Iterator[WorldQuery]:
+    def historical_query(self, commit_sha: str) -> Generator[WorldQuery]:
         """Open a temporary reader rebuilt from ``commit_sha``.
 
         The live worktree is not touched: the sidecar for ``commit_sha`` is

@@ -10,7 +10,7 @@ recognise. Opening is kept separate from viewing so the builders stay pure
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
@@ -32,7 +32,7 @@ class WorldSidecarMissingError(WorldAppError):
 
 
 @contextmanager
-def open_app_world_model(repo: Repository) -> Iterator[WorldQuery]:
+def open_app_world_model(repo: Repository) -> Generator[WorldQuery]:
     """Open a :class:`WorldQuery` over ``repo`` for the lifetime of the context.
 
     A not-yet-built sidecar surfaces as :class:`WorldSidecarMissingError` (its
