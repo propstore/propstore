@@ -4,7 +4,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-inventory_path = Path("C:/Users/Q/code/propstore/scripts/concept_inventory.json")
+inventory_path = Path(__file__).resolve().parent / "concept_inventory.json"
 inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
 
 concepts = sorted(inventory.keys())

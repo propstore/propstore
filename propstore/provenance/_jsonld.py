@@ -1,9 +1,8 @@
 """Single home for the provenance JSON-LD constants.
 
-The named-graph carrier (:mod:`propstore.provenance`), the PROV-O export
-(:mod:`propstore.provenance.prov_o`), and the typed records
-(:mod:`propstore.provenance.records`) all share one JSON-LD ``@context`` and one
-set of accepted URI scheme prefixes. They live here so there is exactly one
+The named-graph carrier (:mod:`propstore.provenance`) uses the JSON-LD
+``@context`` and shares the accepted URI scheme prefixes with the typed records
+(:mod:`propstore.provenance.records`). They live here so there is exactly one
 spelling of each (PLAN §12.6: no duplicated ``_CONTEXT`` / ``_URI_PREFIXES``).
 This module imports nothing from the package, so importing it never cycles.
 """

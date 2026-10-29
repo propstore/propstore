@@ -1,19 +1,16 @@
 """The canonical compilation context (PLAN-mandated coverage).
 
 CompilationContext bundles the symbol tables the semantic passes resolve
-against. These tests pin checked-concept consumption, repository loading, and
+against. These tests pin checked-concept consumption, explicit empty inputs, and
 the claim index.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from condition_ir import KindType
 
 from propstore.compiler.context import (
     build_compilation_context,
-    build_compilation_context_from_repo,
     build_compiler_claim_index,
 )
 from propstore.core.lemon import (
@@ -36,7 +33,6 @@ from propstore.families.forms_passes import (
     LoadedForm,
     run_form_pipeline,
 )
-from propstore.repository import Repository
 
 
 def test_claim_index_keyed_by_claim_id() -> None:
@@ -93,40 +89,12 @@ def test_context_from_checked_concepts_populates_tables() -> None:
     assert context.form_registry is form_result.output
 
 
-def test_context_from_repo_reads_concepts_and_forms(tmp_path: Path) -> None:
-    repo = Repository.init(tmp_path)
-    repo.families.form.save(
-        "mass",
-        FormDefinition(name="mass", kind=KindType.QUANTITY, dimensions={"mass": 1}),
-        message="m",
-    )
-    repo.families.concept.save(
-        "ps:concept:frequency",
-        Concept(
-            concept_id="ps:concept:frequency",
-            canonical_name="frequency",
-            lexical_entry=LexicalEntry(
-                identifier="entry:frequency",
-                canonical_form=LexicalForm(
-                    written_rep="Fundamental frequency", language="en"
-                ),
-                senses=(
-                    LexicalSense(
-                        reference=OntologyReference(uri="ps:concept:frequency")
-                    ),
-                ),
-                physical_dimension_form="mass",
-            ),
-        ),
-        message="m",
-    )
-    context = build_compilation_context_from_repo(repo)
-    assert "ps:concept:frequency" in context.concepts_by_id
-    assert "mass" in context.form_registry.registry
-    assert context.condition_registry["frequency"].id == "ps:concept:frequency"
-
-
-def test_context_from_repo_none_is_empty() -> None:
-    context = build_compilation_context_from_repo(None)
+def test_context_from_empty_checked_inputs_is_empty() -> None:
+    result = run_concept_pipeline([])
+    assert isinstance(result.output, ConceptCheckedRegistry)
+    context = build_compilation_context(result.output)
     assert context.concepts_by_id == {}
     assert context.claim_index == {}
+    assert context.condition_registry == {}
+    assert context.context_ids == frozenset()
+    assert context.form_registry.registry == {}

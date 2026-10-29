@@ -156,7 +156,7 @@ ast-equiv consume-pin). `adjudicate` workflow: never existed; not a feature.
   datalog_grounding.grounding_inspection_to_aspic → GroundedDatalogTheory all resolve.
   - **6a keystone:** core/{reasoning,results,labels}.py prereqs (canonical enums/value types; Phase 7
     world.types re-exports reasoning) + the `conflict_detector/` package + condition_classifier — Z3
-    disjointness via condition-ir ConditionSolver, equation conflict via eq-equiv (propstore.claim_equations),
+    disjointness via condition-ir ConditionSolver, equation conflict via eq-equiv (propstore.conflict_detector),
     AST via ast-equiv compare, value/param via value_comparison+dimensions, context φ-node via context_lifting.
   - **6b moved-assembly:** the Phase-6 portion of core/analyzers.py (AF/BAF/PrAF math RE-PARAMETERIZED over
     plain (claims_by_id, stance_rows, conflict_rows, active_ids); SharedAnalyzerInput WITHOUT active_graph),

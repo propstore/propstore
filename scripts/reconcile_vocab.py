@@ -12,8 +12,8 @@ from pathlib import Path
 
 import yaml
 
-papers_dir = Path("C:/Users/Q/code/propstore/papers")
-inventory_path = Path("C:/Users/Q/code/propstore/scripts/concept_inventory.json")
+papers_dir = Path(__file__).resolve().parent.parent / "papers"
+inventory_path = Path(__file__).resolve().parent / "concept_inventory.json"
 inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
 
 # ============================================================
@@ -429,6 +429,6 @@ results = {
     "kept_distinct": [{"a": a, "b": b, "reason": r} for a, b, r in KEPT_DISTINCT],
     "modified_files": modified_files,
 }
-results_path = Path("C:/Users/Q/code/propstore/scripts/reconciliation_results.json")
+results_path = Path(__file__).resolve().parent / "reconciliation_results.json"
 results_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
 print(f"\nResults written to {results_path}")

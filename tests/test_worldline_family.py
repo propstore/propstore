@@ -148,6 +148,6 @@ def test_worldline_is_mutable_on_the_current_branch(tmp_path: Path) -> None:
 
 def test_worldline_rejects_removed_created_field() -> None:
     codec = WorldlineDefinition.__charter__.document_codec()
-    payload = b'name: wl\nid: wl\ntargets: [Speed]\ncreated: arbitrary\n'
+    payload = b"name: wl\nid: wl\ntargets: [Speed]\ncreated: arbitrary\n"
     with pytest.raises(DocumentSchemaError, match="created"):
         codec.decode(payload, WorldlineDefinition, source="worldlines/wl.yaml")

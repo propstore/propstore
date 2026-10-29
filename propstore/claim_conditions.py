@@ -13,8 +13,7 @@ What propstore contributes (CLAUDE.md substrate boundary, generic-package rule):
   conditions into condition-ir's ``CheckedConditionSet`` (with non-committal
   diagnostics for invalid conditions — never an abort or a drop), serializing
   that set with the package's json codec into the claim's ``conditions_ir``, and
-  asking the package solver claim-level questions (satisfiability, disjointness,
-  including the TIMEPOINT temporal path).
+  reconstructing the stored checked set without reparsing authored CEL.
 """
 
 from __future__ import annotations
@@ -28,8 +27,6 @@ from condition_ir import (
     CheckedCondition,
     CheckedConditionSet,
     ConceptInfo,
-    ConditionSolver,
-    SolverResult,
     check_cel_expression,
     check_condition_ir,
     checked_condition_set,
@@ -120,42 +117,3 @@ def check_claim(claim: Claim, registry: Mapping[str, ConceptInfo]) -> Claim:
     return msgspec.structs.replace(
         claim, conditions_ir=serialize_checked_conditions(report.checked)
     )
-
-
-def claim_condition_satisfiability(
-    claim: Claim,
-    registry: Mapping[str, ConceptInfo],
-    bindings: Mapping[str, object] = {},
-) -> tuple[tuple[str, SolverResult], ...]:
-    """Per-condition satisfiability/definedness of a claim's checked conditions.
-
-    Pairs each checked condition's CEL source with condition-ir's ``SolverResult``
-    (Z3). Returning the package result keeps a ``SolverUnknown`` explicit (honest
-    ignorance) rather than collapsing it to a boolean. ``bindings`` exercises the
-    definedness/evaluation path.
-    """
-
-    report = check_claim_conditions(claim, registry)
-    solver = ConditionSolver(registry)
-    return tuple(
-        (condition.source, solver.is_condition_satisfied_result(condition, bindings))
-        for condition in report.checked.conditions
-    )
-
-
-def claim_conditions_disjoint(
-    claim_a: Claim,
-    claim_b: Claim,
-    registry: Mapping[str, ConceptInfo],
-) -> SolverResult:
-    """Whether two claims' checked conditions are disjoint (Z3, incl. TIMEPOINT).
-
-    A ``SolverUnsat`` means the conjunction is unsatisfiable, i.e. the conditions
-    ARE disjoint; ``SolverSat`` means they overlap; ``SolverUnknown`` stays
-    explicit. The TIMEPOINT temporal-ordering path is condition-ir's.
-    """
-
-    checked_a = check_claim_conditions(claim_a, registry).checked
-    checked_b = check_claim_conditions(claim_b, registry).checked
-    solver = ConditionSolver(registry)
-    return solver.are_disjoint_result(checked_a, checked_b)

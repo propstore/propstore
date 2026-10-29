@@ -28,7 +28,7 @@ import pytest
 import yaml
 from condition_ir import KindType
 
-from propstore.compiler.context import build_compilation_context_from_repo
+from propstore.compiler.workflows import compile_repository_checked_bundle
 from propstore.core.scalars import ScalarValue
 from propstore.core.source_types import SourceKind, SourceOriginType
 from propstore.families.claims import Claim, ClaimStatus, ClaimType
@@ -298,9 +298,11 @@ def test_promoted_concepts_preserve_form_and_category_semantics(tmp_path: Path) 
     assert reloaded_score.category_values == ()
     assert reloaded_score.category_extensible is True
 
-    compiler_info = build_compilation_context_from_repo(repo).condition_registry[
-        "severity"
-    ]
+    checked = compile_repository_checked_bundle(
+        repo, commit=str(repo.require_git().head_sha())
+    )
+    assert checked is not None
+    compiler_info = checked.compilation_context.condition_registry["severity"]
     with WorldQuery(repo) as world:
         world_info = world.condition_solver().registry["severity"]
     assert compiler_info == world_info

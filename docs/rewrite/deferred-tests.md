@@ -556,7 +556,8 @@ records + `ExternalStatementAttitude`, the single `ProjectionFrameProvenanceReco
 spelling — the duplicate msgspec one was deleted), `provenance/prov_o.py` (PROV-O
 JSON-LD export), `provenance/trusty.py` (ni-URI re-export). `propstore/uri.py`
 gained the RFC 6920 ni-URI byte primitives (`compute_ni_uri` / `verify_ni_uri` /
-`ni_uri_for_bytes` / `ni_uri_for_file`) + `source_tag_uri` / `claim_tag_uri`.
+`ni_uri_for_bytes` / `ni_uri_for_file`) + `source_tag_uri`. Canonical claim
+identity belongs to `propstore.families.identity.claims`, not the tag-URI helpers.
 Tests ported (now green): `test_compose_provenance_causal_order` (the PLAN-level
 7a-causal deferral — closed), `test_provenance` (stamp), `test_provenance_records`,
 `test_prov_o_export`, `test_trusty_uri_verification`, `test_uri`,
@@ -1157,12 +1158,11 @@ charters → `WorldQuery`):
 - `app/rendering.py` — `AppRenderPolicyRequest` / `build_render_policy` /
   `summarize_render_policy` / `RenderPolicyValidationError`
   (`tests/test_app_rendering.py`).
-- `app/view_state.py` — the view tier's single `ViewState` vocabulary with a
-  distinct `UNKNOWN` (PLAN.md §12.4) and the honest-ignorance routing
-  (`lifting_view_state` / `applicability_view_state` / `solver_view_state`):
-  context-lifting `LIFTED`, defeasible `EXCEPTED`, and a `condition_ir` solver
-  `UNKNOWN` all route to `ViewState.UNKNOWN`, which is provably `≠ BLOCKED`
-  (policy-hidden) and `≠ MISSING` (no data) — `tests/test_view_state_unknown.py`.
+- `app/view_state.py` — the view tier's shared `ViewState` vocabulary with a
+  distinct `UNKNOWN` (PLAN.md §12.4), separate from `BLOCKED` (policy-hidden)
+  and `MISSING` (no data) — `tests/test_view_state_unknown.py`. Claim, concept,
+  and neighborhood builders assign states directly from their report fields;
+  `tests/test_render_contracts.py` covers their JSON rendering.
 - `app/claim_views.py` + `app/claims.py` — `build_claim_view` per-field state
   machine + NL sentences, and the claim list/search summary rows
   (`tests/test_claim_views.py`).
