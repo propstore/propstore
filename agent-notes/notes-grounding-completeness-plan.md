@@ -95,7 +95,7 @@
 - `RenderPolicy` is not the budget owner: it varies per render after the sidecar
   is selected, so placing the grounding build limit there could make the stored
   grounded rows and runtime bundle describe different computations.
-- Production `load_grounding_repo()` currently creates each `ConceptRelations`
+- Production `load_grounded_bundle_from_sidecar()` creates each `ConceptRelations`
   with no relationships. Consequently an authored
   `derived_from="concept.relation:..."` predicate cannot mine repository facts,
   even though direct `GroundingRepo` tests can supply them. This is an adjacent
