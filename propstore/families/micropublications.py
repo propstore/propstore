@@ -40,10 +40,6 @@ def validate_principal_claim(
 ) -> None:
     """Enforce Clark's principal claim ``c`` over a bundle's claim set.
 
-    The single canonical rule, shared by the charter and by the runtime view
-    (:class:`~propstore.core.micropublications.ActiveMicropublication`) — the
-    two must never disagree about which claim a bundle is *about*.
-
     A one-claim bundle's principal is that claim. A multi-claim bundle has no
     distinguished greatest element unless one is authored, and guessing would
     fabricate the bundle's point, so it must be explicit. An authored principal

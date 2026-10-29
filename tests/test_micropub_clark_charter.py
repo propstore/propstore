@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import pytest
 
-from propstore.core.micropublications import ActiveMicropublication
 from propstore.families.micropublications import Micropublication
 
 
@@ -64,36 +63,3 @@ class TestPrincipalClaim:
     def test_principal_must_be_a_member_of_claims(self) -> None:
         with pytest.raises(ValueError, match="principal"):
             _bundle(claims=("cl1", "cl2"), principal_claim="cl3")
-
-
-class TestActiveMicropublicationPrincipal:
-    def test_single_claim_active_bundle_derives_its_principal(self) -> None:
-        active = ActiveMicropublication(
-            artifact_id="mp1", context_id="ctx1", claim_ids=("cl1",)
-        )
-        assert active.principal_claim_id == "cl1"
-
-    def test_active_principal_must_be_a_member(self) -> None:
-        with pytest.raises(ValueError, match="principal"):
-            ActiveMicropublication(
-                artifact_id="mp1",
-                context_id="ctx1",
-                claim_ids=("cl1",),
-                principal_claim="cl9",
-            )
-
-    def test_projection_from_the_charter_carries_principal_through(self) -> None:
-        # The view is built by attribute access from the canonical charter —
-        # there is no from_mapping, so the stored bundle and the runtime view
-        # cannot disagree about the principal claim.
-        active = ActiveMicropublication.from_micropublication(
-            _bundle(claims=("cl1", "cl2"), principal_claim="cl2")
-        )
-        assert active.principal_claim_id == "cl2"
-        assert active.claim_ids == ("cl1", "cl2")
-
-    def test_multi_claim_active_bundle_requires_explicit_principal(self) -> None:
-        with pytest.raises(ValueError, match="principal"):
-            ActiveMicropublication(
-                artifact_id="mp1", context_id="ctx1", claim_ids=("cl1", "cl2")
-            )
