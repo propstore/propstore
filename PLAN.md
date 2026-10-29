@@ -286,8 +286,8 @@ These directives SUPERSEDE any conflicting phase text above. Sourced from report
   unit-convert helper" means ONLY the Pint code bridgman lacks (normalize_to_si/from_si, UnitConversion, affine/log/delta).
 - DELETE `argumentation.py` (2-line marker; anchor the import-linter on `core/analyzers`, the REAL Dung-AF/PrAF assembly).
 - DELETE `merge/description_kinds.py` (re-export; coreference lives only in `core/lemon`, Phase 2).
-- `ConflictClaim`/`MergeClaim` are field-subset VIEWS over the one `Claim` charter — NO independent storage, NO
-  coerce/`to_payload`/`from_payload` roundtrip.
+- Conflict detectors consume canonical checked `Claim` objects with separate admission and provenance inputs (#209).
+  `MergeClaim` references that canonical document and its compiler/provenance owners; no field-subset claim mirror remains.
 - condition-ir OWNS its registry-input type (the `ConceptInfo` role); propstore lowers `ConceptRecord` → it ONCE at the
   call site; no propstore `ConceptInfo` mirror. Verify `core/assertions.ConditionRef` is not a second spelling.
 - eq-equiv is parameterized by PRIMITIVES (equation text + symbol bindings); the conflict detector passes `Claim` fields
