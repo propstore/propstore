@@ -277,8 +277,8 @@ def test_full_equation_must_match_the_concept_it_computes(tmp_path: Path) -> Non
     ]
 
 
-def test_context_repository_loader_rejects_invalid_forms(tmp_path: Path) -> None:
-    from propstore.compiler.context import build_compilation_context_from_repo
+def test_repository_compiler_rejects_invalid_forms(tmp_path: Path) -> None:
+    from propstore.compiler.errors import CompilerWorkflowError
 
     repo = _physics_repo(tmp_path)
     repo.families.form.save(
@@ -291,8 +291,8 @@ def test_context_repository_loader_rejects_invalid_forms(tmp_path: Path) -> None
         ),
         message="Retain invalid form",
     )
-    with pytest.raises(ValueError, match="form validation failed"):
-        build_compilation_context_from_repo(repo)
+    with pytest.raises(CompilerWorkflowError, match="form validation failed"):
+        validate_repository(repo)
 
 
 def test_validate_build_preserve_rival_claims_and_provenance(tmp_path: Path) -> None:
