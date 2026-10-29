@@ -29,7 +29,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 
 import msgspec
-from ast_equiv import AlgorithmParseError, ComparisonResult
+from ast_equiv import AlgorithmParseError
 from ast_equiv import compare as ast_compare
 
 from propstore.core.active_claims import ActiveClaim

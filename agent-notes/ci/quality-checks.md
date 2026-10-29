@@ -220,3 +220,10 @@ deleted definitions and use PR CI to verify all callers; no replacement shim.
 Ast-equiv PR #6 passed package typing, 249 tests and distribution build, then
 merged normally with two parents. Pin its merged revision and let Propstore's
 full hosted checks validate the direct imports and all integration callers.
+
+Run 40815097880 passed tests, formatting, contracts and workflow checks. Its
+only remaining typing/lint finding was the unused ComparisonResult import left
+after deleting the local Protocol; that import is now removed. Await the final
+hosted run, then normal-merge PR #353 and integrate Propstore master. The upstream
+temporary worktree/branch is removed; its pre-existing divergent local master
+was preserved after fast-forward was refused.
