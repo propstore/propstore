@@ -19,6 +19,7 @@ render-time view over the claim charters rather than a duplicated projection.
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, TypeGuard
 
@@ -34,6 +35,7 @@ from propstore.core.graph_types import ParameterizationEdge
 from propstore.core.id_types import to_claim_id, to_concept_id, to_concept_ids
 from propstore.core.store_results import ConceptSearchHit
 from propstore.families.claims import Claim, ClaimType
+from propstore.families.claim_admission import ClaimAdmission, ClaimAdmissionState
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context, LiftingRule
 from propstore.families.coreference import CoreferenceMergeArgumentDoc
@@ -70,6 +72,21 @@ class UnknownClaimError(WorldQueryError):
     def __init__(self, target: str) -> None:
         super().__init__(f"Unknown claim: {target}")
         self.target = target
+
+
+@dataclass(frozen=True)
+class QuarantinedClaim:
+    claim: Claim
+    admission: ClaimAdmission
+    diagnostics: tuple[BuildDiagnostic, ...]
+
+
+class QuarantinedClaimError(WorldQueryError):
+    """An existing claim has no permission to supply semantic evidence."""
+
+    def __init__(self, artifact: QuarantinedClaim) -> None:
+        super().__init__(f"Quarantined claim: {artifact.claim.claim_id}")
+        self.artifact = artifact
 
 
 def _is_str_mapping(value: object) -> TypeGuard[Mapping[str, Any]]:
@@ -160,6 +177,31 @@ def select_claim(session: DerivedSession, claim_id: str) -> Claim | None:
     model = session.schema.model("claim")
     row = session.scalars(select(model).where(model.claim_id == claim_id)).first()
     return None if row is None else Claim.__charter__.document_from_model(row, Claim)
+
+
+def select_claim_admissions(session: DerivedSession) -> dict[str, ClaimAdmission]:
+    """Read executable compiler decisions, never infer them from diagnostics."""
+
+    model = session.schema.model("claim_admission")
+    return {
+        row.claim_id: ClaimAdmission.__charter__.document_from_model(row, ClaimAdmission)
+        for row in session.scalars(select(model))
+    }
+
+
+def select_admitted_claims(session: DerivedSession) -> list[Claim]:
+    """Only content-matching admitted claims may supply semantic input."""
+
+    admissions = select_claim_admissions(session)
+    admitted: list[Claim] = []
+    for claim in select_claims(session):
+        admission = admissions.get(claim.claim_id)
+        if admission is None:
+            raise ValueError(f"missing checked admission for claim {claim.claim_id!r}")
+        admission.verify(claim)
+        if admission.state is ClaimAdmissionState.ADMITTED:
+            admitted.append(claim)
+    return admitted
 
 
 def resolve_claim_id(session: DerivedSession, name: str) -> str | None:

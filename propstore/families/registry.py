@@ -28,6 +28,7 @@ from quire.references import ForeignKeySpec
 from propstore.families.alignment import ConceptAlignmentArtifact
 from propstore.families.calibration import CalibrationCount
 from propstore.families.claims import Claim
+from propstore.families.claim_admission import ClaimAdmission
 from propstore.families.concepts import Concept
 from propstore.families.conflicts import ConflictProjection
 from propstore.families.contexts import Context, LiftingMaterialization, LiftingRule
@@ -132,6 +133,7 @@ _CHARTER_MODELS = (
     SourceFinalizeReportDocument,
     # Derived-only projection families (never authored; populated by the build).
     ConflictProjection,
+    ClaimAdmission,
     BuildDiagnostic,
     CalibrationCount,
     GroundingBuildConfiguration,
@@ -194,6 +196,7 @@ class PropstoreFamily(StrEnum):
     SOURCE_MICROPUBS = "source_micropubs"
     SOURCE_FINALIZE_REPORTS = "source_finalize_reports"
     CONFLICT = "conflict"
+    CLAIM_ADMISSION = "claim_admission"
     BUILD_DIAGNOSTIC = "build_diagnostic"
     CALIBRATION_COUNTS = "calibration_counts"
     GROUNDING_BUILD_CONFIGURATION = "grounding_build_configuration"

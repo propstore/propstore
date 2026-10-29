@@ -82,10 +82,12 @@ class RepositoryCheckedBundle:
     messages: tuple[PassDiagnostic, ...]
 
     @property
-    def claims(self) -> tuple[Claim, ...]:
-        """Every checked claim's normalised document (blocked claims included)."""
+    def admitted_claims(self) -> tuple[Claim, ...]:
+        return tuple(checked.claim for checked in self.claim_bundle.checked_claims)
 
-        return tuple(checked.claim for checked in self.claim_bundle.claims)
+    @property
+    def quarantined_claims(self) -> tuple[Claim, ...]:
+        return tuple(checked.claim for checked in self.claim_bundle.blocked_claims)
 
 
 @dataclass(frozen=True)
@@ -179,7 +181,7 @@ def _compile_conflicts(
     checked: RepositoryCheckedBundle,
     micropubs: tuple[Micropublication, ...],
 ) -> tuple[ConflictProjection, ...]:
-    admitted = tuple(entry.claim for entry in checked.claim_bundle.checked_claims)
+    admitted = checked.admitted_claims
     conflict_claims = _conflict_claims(admitted, _claim_sources(micropubs))
     if not conflict_claims:
         return ()
@@ -319,12 +321,13 @@ def compile_sidecar_build_plan(
         if isinstance(document, Micropublication)
     )
     conflicts = _compile_conflicts(checked, micropubs)
-    valid_claims = frozenset(claim.claim_id for claim in checked.claims)
+    valid_claims = frozenset(claim.claim_id for claim in checked.admitted_claims)
     quarantine = _quarantine_dangling_references(
         repo, commit=commit, valid_claims=valid_claims
     )
     authoring_lints = collect_authoring_lints(
-        claims=checked.claims, stances=_stances(repo, commit)
+        claims=tuple(entry.claim for entry in checked.claim_bundle.claims),
+        stances=_stances(repo, commit)
     )
 
     diagnostics: list[BuildDiagnostic] = []

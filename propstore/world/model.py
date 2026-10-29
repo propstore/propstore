@@ -74,6 +74,7 @@ from propstore.derived_schema import (
     build_world_sidecar_schema,
 )
 from propstore.families.claims import Claim, ClaimStatus
+from propstore.families.claim_admission import ClaimAdmissionState
 from propstore.families.concepts import Concept
 from propstore.families.diagnostics import BuildDiagnostic
 from propstore.families.forms import FormDefinition
@@ -85,6 +86,8 @@ from propstore.grounding.loading import load_grounded_bundle_from_sidecar
 from propstore.world.bound import BoundWorld
 from propstore.world.causal import from_compiled_graph
 from propstore.world.queries import (
+    QuarantinedClaim,
+    QuarantinedClaimError,
     count_claims,
     count_concepts,
     count_conflicts,
@@ -94,6 +97,8 @@ from propstore.world.queries import (
     search_concepts,
     select_build_diagnostics,
     select_claim,
+    select_admitted_claims,
+    select_claim_admissions,
     select_claims,
     select_concept,
     select_concepts,
@@ -104,7 +109,6 @@ from propstore.world.queries import (
     select_justifications,
     select_lifting_rules,
     select_micropublications,
-    select_stances,
     select_stances_between,
 )
 from propstore.world.types import (
@@ -582,17 +586,52 @@ class WorldQuery(WorldStore):
     def get_claim(self, claim_id: str) -> Claim | None:
         claim = select_claim(self._session, claim_id)
         if claim is not None:
+            self._require_admitted(claim)
             return claim
         resolved = self.resolve_claim(claim_id)
         if resolved is None or resolved == claim_id:
             return None
-        return select_claim(self._session, resolved)
+        claim = select_claim(self._session, resolved)
+        if claim is not None:
+            self._require_admitted(claim)
+        return claim
+
+    def _require_admitted(self, claim: Claim) -> None:
+        admission = select_claim_admissions(self._session).get(claim.claim_id)
+        if admission is None:
+            raise ValueError(f"missing checked admission for claim {claim.claim_id!r}")
+        admission.verify(claim)
+        if admission.state is ClaimAdmissionState.QUARANTINED:
+            raise QuarantinedClaimError(
+                QuarantinedClaim(
+                    claim=claim,
+                    admission=admission,
+                    diagnostics=tuple(
+                        diagnostic
+                        for diagnostic in select_build_diagnostics(self._session)
+                        if diagnostic.claim_id == claim.claim_id
+                    ),
+                )
+            )
+
+    def quarantined_claims(self, policy: RenderPolicy) -> tuple[QuarantinedClaim, ...]:
+        """Inspect retained raw documents only under explicit diagnostic policy."""
+
+        if not policy.show_quarantined:
+            return ()
+        artifacts: list[QuarantinedClaim] = []
+        for claim in select_claims(self._session):
+            try:
+                self._require_admitted(claim)
+            except QuarantinedClaimError as error:
+                artifacts.append(error.artifact)
+        return tuple(artifacts)
 
     def resolve_claim(self, name: str) -> str | None:
         return resolve_claim_id(self._session, name)
 
     def claims_for(self, concept_id: str | None) -> Sequence[Claim]:
-        claims = select_claims(self._session)
+        claims = select_admitted_claims(self._session)
         if concept_id is None:
             return claims
         resolved = self.resolve_concept(concept_id) or concept_id
@@ -608,7 +647,7 @@ class WorldQuery(WorldStore):
         resolved = {self.resolve_claim(claim_id) or claim_id for claim_id in claim_ids}
         return {
             str(claim.claim_id): claim
-            for claim in select_claims(self._session)
+            for claim in select_admitted_claims(self._session)
             if claim.claim_id in resolved
         }
 
@@ -661,10 +700,16 @@ class WorldQuery(WorldStore):
         return select_stances_between(self._session, resolved)
 
     def all_claim_stances(self) -> Sequence[Stance]:
-        return select_stances(self._session)
+        admitted = {claim.claim_id for claim in self.claims_for(None)}
+        return select_stances_between(self._session, admitted)
 
     def all_justifications(self) -> Sequence[Justification]:
-        return select_justifications(self._session)
+        admitted = {claim.claim_id for claim in self.claims_for(None)}
+        return [
+            justification for justification in select_justifications(self._session)
+            if (justification.conclusion is None or justification.conclusion in admitted)
+            and all(premise in admitted for premise in justification.premises)
+        ]
 
     def explain(self, claim_id: str) -> Sequence[Stance]:
         resolved = self.resolve_claim(claim_id) or claim_id
@@ -688,7 +733,7 @@ class WorldQuery(WorldStore):
     def _all_parameterizations(self) -> tuple[ParameterizationEdge, ...]:
         if self._parameterizations is None:
             self._parameterizations = tuple(
-                derive_parameterizations(select_claims(self._session))
+                derive_parameterizations(select_admitted_claims(self._session))
             )
         return self._parameterizations
 
