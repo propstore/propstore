@@ -40,17 +40,26 @@ from propstore.core.results import ExtensionResult
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.relations import Stance
 from propstore.stances import StanceType
+from tests.canonical_claim_fixtures import concept_with_form
+from tests.checked_claim_helpers import check_claims
 
 
 def _claim(claim_id: str, value: float) -> Claim:
-    return Claim(
-        claim_id=claim_id,
-        output_concept="concept1",
-        claim_type=ClaimType.PARAMETER,
-        value=value,
-        sample_size=30,
-        confidence=1.0,
+    bundle, _ = check_claims(
+        (
+            Claim(
+                claim_id=claim_id,
+                output_concept="concept1",
+                claim_type=ClaimType.PARAMETER,
+                value=value,
+                sample_size=30,
+                confidence=1.0,
+            ),
+        ),
+        (concept_with_form("concept1", "concept1", "quantity"),),
     )
+    assert not bundle.blocked_claims, bundle.diagnostics
+    return bundle.claims[0].claim
 
 
 def _conflict(kind: ConflictClass) -> ConflictRecord:

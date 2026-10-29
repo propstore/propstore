@@ -37,6 +37,7 @@ from propstore.core.labels import (
     compile_environment_assumptions,
 )
 from propstore.core.scalars import ScalarValue
+from propstore.families.claim_admission import ClaimAdmission
 from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept
@@ -46,6 +47,8 @@ from propstore.families.micropublications import Micropublication
 from propstore.families.relations import Stance
 from propstore.world.bound import BoundWorld
 from propstore.world.types import ReasoningBackend, RenderPolicy
+from tests.canonical_claim_fixtures import concept_with_form
+from tests.checked_claim_helpers import check_claims
 
 _NAME_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\b\s*(?:==|!=|<=|>=|<|>|in\b)")
 
@@ -143,6 +146,7 @@ class InMemoryWorldStore:
     justifications: tuple[Justification, ...] = ()
     micropublications: tuple[Micropublication, ...] = ()
     forms: tuple[FormDefinition, ...] = ()
+    admissions: tuple[ClaimAdmission, ...] = ()
     solver: ConditionSolver = field(default_factory=lambda: ConditionSolver({}))
 
     def all_concepts(self) -> Sequence[Concept]:
@@ -242,6 +246,9 @@ class InMemoryWorldStore:
     def claim_provenance(self) -> ClaimProvenanceIndex:
         return ClaimProvenanceIndex.from_micropublications(self.micropublications)
 
+    def claim_admissions(self) -> dict[str, ClaimAdmission]:
+        return {admission.claim_id: admission for admission in self.admissions}
+
     def explain(self, claim_id: str) -> Sequence[Stance]:
         return [
             stance for stance in self.stances if str(stance.target_claim_id) == claim_id
@@ -276,7 +283,6 @@ def build_bound(
     for param in parameterizations:
         all_sources.extend(param.conditions)
     registry = registry_for_sources(all_sources)
-    solver = ConditionSolver(registry)
 
     concept_ids: set[str] = set()
     for claim in claims:
@@ -285,7 +291,7 @@ def build_bound(
         concept_ids.add(param.output)
         concept_ids.update(param.inputs)
     concept_objs = tuple(
-        Concept(concept_id=concept_id, canonical_name=concept_id)
+        concept_with_form(concept_id, concept_id, "quantity")
         for concept_id in sorted(concept_ids)
     )
 
@@ -299,10 +305,20 @@ def build_bound(
             sample_size=spec.sample_size,
             context_id=spec.context_id,
             conditions=tuple(spec.conditions),
-            conditions_ir=_conditions_ir(spec.conditions, registry),
         )
         for spec in claims
     )
+    bundle, compilation_context = check_claims(
+        claim_objs,
+        concept_objs,
+        condition_registry=registry,
+        context_ids=tuple(
+            sorted({spec.context_id for spec in claims if spec.context_id is not None})
+        ),
+    )
+    assert not bundle.blocked_claims, bundle.diagnostics
+    claim_objs = tuple(entry.claim for entry in bundle.claims)
+    solver = ConditionSolver(compilation_context.condition_registry)
 
     param_objs = tuple(
         ParameterizationEdge(
@@ -351,6 +367,8 @@ def build_bound(
         parameterizations=param_objs,
         conflict_records=conflict_objs,
         micropublications=micropub_objs,
+        forms=tuple(compilation_context.form_registry.registry.values()),
+        admissions=tuple(entry.admission for entry in bundle.claims),
         solver=solver,
     )
     environment = Environment(
