@@ -6,8 +6,7 @@ for the argumentation projection boundary
 holds it as a frozen-dataclass field. It validates its URI invariants on
 construction (Carroll et al. 2005 names a provenance graph; the identifiers it
 names must be real URIs) and exposes a deterministic ``identity_payload`` so
-equal records compare equal. :mod:`propstore.provenance.prov_o` projects it to
-PROV-O at export time by attribute access — there is no ``to_payload`` dict hop.
+equal records compare equal.
 
 It is the *only* record here. The import-side records (source version, license,
 import run, external statement, external inference) were deleted on 2026-07-14:
