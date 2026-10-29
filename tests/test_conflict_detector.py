@@ -182,6 +182,42 @@ def test_equation_detector_reports_undecidable_domain_sensitive_pair() -> None:
     assert records[0].warning_class == ConflictClass.UNKNOWN
 
 
+def test_equation_detector_uses_each_claim_symbol_bindings() -> None:
+    renamed = ConflictClaim(
+        claim_id="renamed",
+        claim_type=ClaimType.EQUATION,
+        expression="result = first + second",
+        variables=(
+            ClaimVariable(concept="output", symbol="result", role="dependent"),
+            ClaimVariable(concept="factor_a", symbol="first", role="independent"),
+            ClaimVariable(concept="factor_b", symbol="second", role="independent"),
+        ),
+    )
+    assert detect_equation_conflicts(
+        [_equation_claim("original", "y = x + z"), renamed], {}
+    ) == []
+    records = detect_equation_conflicts(
+        [_equation_claim("scaled", "y = 2*x + z"), renamed], {}
+    )
+    assert len(records) == 1
+    assert records[0].warning_class == ConflictClass.CONFLICT
+
+
+@pytest.mark.parametrize("invalid_first", [True, False])
+def test_equation_detector_skips_package_failure(
+    invalid_first: bool, caplog: pytest.LogCaptureFixture
+) -> None:
+    claims = [
+        _equation_claim("invalid", "y = ("),
+        _equation_claim("valid", "y = x + z"),
+    ]
+    if not invalid_first:
+        claims.reverse()
+    assert detect_equation_conflicts(claims, {}) == []
+    assert "Skipping equation comparison for claim invalid" in caplog.text
+    assert "parse_error" in caplog.text
+
+
 # ── algorithm detector (ast-equiv) ───────────────────────────────────
 
 
