@@ -259,3 +259,13 @@ def test_overlay_replacement_gets_fresh_checked_owner_and_admission(tmp_path: Pa
     assert changed.claim.quantitative.point == 2
     with pytest.raises(ValueError, match="stale"):
         first.admission.verify(changed.claim)
+
+
+def test_interval_only_claim_view_does_not_report_absence() -> None:
+    from propstore.app.claim_views import _claim_value
+    from propstore.app.view_state import ViewState
+    claim = Claim(claim_id="interval", claim_type=ClaimType.MODEL,
+        quantitative_ir=QuantitativeEvidence(IntervalValue(1, 3), None, None))
+    value = _claim_value(claim)
+    assert value.state is ViewState.KNOWN
+    assert "[1, 3]" in value.sentence
