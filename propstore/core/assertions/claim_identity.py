@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+
 import msgspec
 
 from propstore.core.id_types import ContextId, to_context_id
@@ -39,7 +40,10 @@ def _semantic_fields(claim: Claim) -> dict[str, object]:
 
 def semantic_content(claim: Claim) -> dict[str, object]:
     """Runtime identity consumes the same checked value as semantic reasoning."""
-    return {**_semantic_fields(claim), "quantitative": msgspec.to_builtins(claim.quantitative)}
+    return {
+        **_semantic_fields(claim),
+        "quantitative": msgspec.to_builtins(claim.quantitative),
+    }
 
 
 def claim_assertion_id(

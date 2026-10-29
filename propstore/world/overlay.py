@@ -21,7 +21,6 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 import msgspec
-
 from condition_ir import ConditionSolver
 
 from propstore.compiler.context import CompilationContext
@@ -34,9 +33,9 @@ from propstore.core.graph_build import build_compiled_world_graph
 from propstore.core.graph_types import CompiledWorldGraph
 from propstore.core.id_types import ConceptId, to_concept_id
 from propstore.core.scalars import ScalarValue
+from propstore.families.claim_admission import ClaimAdmission
 from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType
-from propstore.families.claim_admission import ClaimAdmission
 from propstore.families.claims_passes import ClaimFiles, LoadedClaim, run_claim_pipeline
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
@@ -280,7 +279,9 @@ class OverlayWorld(BeliefSpace):
             if claim_id in self._removed_ids and replacement is None:
                 continue
             if replacement is not None:
-                checked = _synthetic_claim(replacement, existing=claim, solver=solver, store=base_store)
+                checked = _synthetic_claim(
+                    replacement, existing=claim, solver=solver, store=base_store
+                )
                 overlay_claims.append(checked.claim)
                 admissions[checked.claim.claim_id] = checked.admission
             else:
@@ -290,7 +291,9 @@ class OverlayWorld(BeliefSpace):
         for synthetic in self._synthetics:
             if synthetic.id in existing_ids:
                 continue
-            checked = _synthetic_claim(synthetic, existing=None, solver=solver, store=base_store)
+            checked = _synthetic_claim(
+                synthetic, existing=None, solver=solver, store=base_store
+            )
             overlay_claims.append(checked.claim)
             admissions[checked.claim.claim_id] = checked.admission
 
@@ -454,22 +457,36 @@ def _synthetic_claim(
             else (existing.quantitative.sample_size if existing is not None else None)
         ),
         confidence=synthetic.confidence,
-        unit=synthetic.unit if synthetic.unit is not None else None if existing is None else existing.quantitative.unit,
+        unit=synthetic.unit
+        if synthetic.unit is not None
+        else None
+        if existing is None
+        else existing.quantitative.unit,
     )
     forms = tuple(store.all_forms())
     context = CompilationContext(
-        form_registry=FormCheckedRegistry(tuple(LoadedForm(form) for form in forms), {form.name:form for form in forms}),
-        context_ids=frozenset(() if authored.context_id is None else (authored.context_id,)),
-        concepts_by_id={concept.concept_id:concept for concept in store.all_concepts()},
-        claim_index={authored.claim_id:authored},
+        form_registry=FormCheckedRegistry(
+            tuple(LoadedForm(form) for form in forms),
+            {form.name: form for form in forms},
+        ),
+        context_ids=frozenset(
+            () if authored.context_id is None else (authored.context_id,)
+        ),
+        concepts_by_id={
+            concept.concept_id: concept for concept in store.all_concepts()
+        },
+        claim_index={authored.claim_id: authored},
         condition_registry=solver.registry,
     )
     result = run_claim_pipeline(ClaimFiles((LoadedClaim(authored),), context))
     if not isinstance(result.output, ClaimCheckedBundle):
         raise TypeError("synthetic claim pipeline returned no checked bundle")
-    checked, = result.output.claims
+    (checked,) = result.output.claims
     if checked.blocked:
-        raise ValueError("invalid synthetic claim: " + "; ".join(problem.message for problem in checked.diagnostics))
+        raise ValueError(
+            "invalid synthetic claim: "
+            + "; ".join(problem.message for problem in checked.diagnostics)
+        )
     return checked
 
 

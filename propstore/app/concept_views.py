@@ -20,11 +20,11 @@ from dataclasses import dataclass
 from propstore.app.claim_views import claim_display_id, claim_type_text
 from propstore.app.rendering import RenderPolicySummary, summarize_render_policy
 from propstore.app.view_state import ViewState
-from propstore.families.claims import Claim
 from propstore.families.claim_quantitative import AbsentValue, IntervalValue
-from propstore.value_comparison import value_str
+from propstore.families.claims import Claim
 from propstore.families.concepts import Concept
 from propstore.reporting import JsonReportMixin
+from propstore.value_comparison import value_str
 from propstore.world import RenderPolicy, WorldQuery
 
 
@@ -158,7 +158,9 @@ def build_concept_view(
 
 
 def _single_unit(claims: Sequence[Claim]) -> str | None:
-    units = sorted({claim.quantitative.unit for claim in claims if claim.quantitative.unit})
+    units = sorted(
+        {claim.quantitative.unit for claim in claims if claim.quantitative.unit}
+    )
     return units[0] if len(units) == 1 else None
 
 
@@ -277,7 +279,11 @@ def _concept_claim_entry(claim: Claim) -> ConceptClaimEntry:
 
 
 def _value_summary(visible_claims: Sequence[Claim]) -> ConceptValueSummary:
-    value_claims = [claim for claim in visible_claims if not isinstance(claim.quantitative.value, AbsentValue)]
+    value_claims = [
+        claim
+        for claim in visible_claims
+        if not isinstance(claim.quantitative.value, AbsentValue)
+    ]
     if not value_claims:
         return ConceptValueSummary(
             state=ViewState.MISSING,

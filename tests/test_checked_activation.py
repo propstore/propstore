@@ -11,8 +11,12 @@ from propstore.families.claims import Claim, ClaimType
 
 def test_activation_preserves_checked_registry_mismatch() -> None:
     registry = {"x": ConceptInfo(id="x", canonical_name="x", kind=KindType.QUANTITY)}
-    claim = check_claim(Claim(claim_id="conditional", claim_type=ClaimType.MODEL,
-        conditions=("x > 0",)), registry)
+    claim = check_claim(
+        Claim(
+            claim_id="conditional", claim_type=ClaimType.MODEL, conditions=("x > 0",)
+        ),
+        registry,
+    )
     solver = ConditionSolver(registry)
     environment = Environment(bindings={"x": 2, "environment_only": True})
 

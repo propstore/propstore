@@ -24,12 +24,12 @@ from dataclasses import dataclass
 from propstore.app.rendering import RenderPolicySummary, summarize_render_policy
 from propstore.app.view_state import ViewState
 from propstore.core.scalars import ScalarValue
-from propstore.families.claims import Claim, ClaimType
 from propstore.families.claim_quantitative import AbsoluteUncertainty, IntervalValue
+from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept
 from propstore.reporting import JsonReportMixin
-from propstore.world import RenderPolicy, WorldQuery
 from propstore.value_comparison import value_str
+from propstore.world import RenderPolicy, WorldQuery
 
 # Claim types whose assertion is not a single scalar value: an absent ``value``
 # on one of these is expected (``NOT_APPLICABLE``), not a hole (``MISSING``).
@@ -295,7 +295,11 @@ def _claim_uncertainty(claim: Claim) -> ClaimViewUncertainty:
     return ClaimViewUncertainty(
         state=ViewState.KNOWN,
         uncertainty=None if uncertainty is None else uncertainty.magnitude,
-        uncertainty_type=None if uncertainty is None else "absolute" if isinstance(uncertainty, AbsoluteUncertainty) else "relative",
+        uncertainty_type=None
+        if uncertainty is None
+        else "absolute"
+        if isinstance(uncertainty, AbsoluteUncertainty)
+        else "relative",
         lower_bound=None if interval is None else interval.lower,
         upper_bound=None if interval is None else interval.upper,
         sample_size=evidence.sample_size,

@@ -1917,9 +1917,7 @@ class ATMSEngine:
 
         claim = _node_claim(node)
         if claim is not None:
-            _label, quality = self._runtime.claim_support(
-                ActiveClaim.from_claim(claim)
-            )
+            _label, quality = self._runtime.claim_support(ActiveClaim.from_claim(claim))
             return quality
         return SupportQuality.SEMANTIC_COMPATIBLE
 

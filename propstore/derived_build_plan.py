@@ -153,7 +153,9 @@ def _compile_conflicts(
         admitted,
         {str(concept.concept_id): concept for concept in checked.concepts},
         checked.compilation_context.condition_registry,
-        admissions=tuple(entry.admission for entry in checked.claim_bundle.checked_claims),
+        admissions=tuple(
+            entry.admission for entry in checked.claim_bundle.checked_claims
+        ),
         lifting_system=lifting_system,
         provenance=ClaimProvenanceIndex.from_micropublications(micropubs),
         forms=dict(checked.form_registry),

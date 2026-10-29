@@ -129,7 +129,9 @@ def _check_one(
         )
 
     normalized = check_claim(claim, context.condition_registry)
-    normalized = msgspec.structs.replace(normalized, quantitative_ir=contract_report.quantitative)
+    normalized = msgspec.structs.replace(
+        normalized, quantitative_ir=contract_report.quantitative
+    )
     return CheckedClaim(
         claim=normalized,
         blocked=bool(diagnostics),

@@ -168,7 +168,9 @@ def _classify_pair(left_claim: MergeClaim, right_claim: MergeClaim) -> _DiffKind
 
     try:
         records = detect_conflicts(
-            [left_claim.claim, right_claim.claim], {}, registry,
+            [left_claim.claim, right_claim.claim],
+            {},
+            registry,
             admissions=(left_claim.admission, right_claim.admission),
             provenance=provenance,
         )

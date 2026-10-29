@@ -16,8 +16,8 @@ import msgspec
 from doxa import Opinion
 
 from propstore.core.scalars import ScalarValue
-from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.claim_quantitative import AbsentValue, QuantitativeEvidence
+from propstore.families.claims import Claim, ClaimType, ClaimVariable
 
 _DOGMATIC_TOL = 1e-12
 

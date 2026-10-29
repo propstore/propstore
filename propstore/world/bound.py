@@ -52,8 +52,8 @@ from propstore.core.labels import (
     merge_labels,
 )
 from propstore.core.scalars import ScalarValue
-from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claim_admission import ClaimAdmission
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
@@ -168,7 +168,9 @@ def recomputed_conflicts(
         claims,
         inputs.concepts,
         inputs.cel_registry,
-        admissions=tuple((store.claim_admissions() if admissions is None else admissions).values()),
+        admissions=tuple(
+            (store.claim_admissions() if admissions is None else admissions).values()
+        ),
         lifting_system=lifting_system,
         provenance=inputs.provenance,
         forms=inputs.forms,

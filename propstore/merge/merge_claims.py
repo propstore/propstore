@@ -17,15 +17,15 @@ branch they were annotated with — get distinct assertion ids and stay rival.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Mapping
+from dataclasses import dataclass
 
 from condition_ir import ConceptInfo
 
 from propstore.core.assertions import content_digest, semantic_content
+from propstore.families.claim_admission import ClaimAdmission
 from propstore.families.claim_provenance import BundledClaim, UnbundledClaim
 from propstore.families.claims import Claim
-from propstore.families.claim_admission import ClaimAdmission
 
 
 @dataclass(frozen=True)

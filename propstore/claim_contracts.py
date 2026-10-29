@@ -33,12 +33,16 @@ from human_to_sympy import generate_sympy_rhs_with_error, parse_symbolic
 
 from propstore.core.scalars import ScalarValue
 from propstore.dimensions import normalize_to_si, unit_compatible_with_form
+from propstore.families.claim_quantitative import (
+    AbsentValue,
+    AbsoluteUncertainty,
+    IntervalValue,
+    PointValue,
+    QuantitativeEvidence,
+    RelativeUncertainty,
+)
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.forms import FormDefinition
-from propstore.families.claim_quantitative import (
-    AbsentValue, AbsoluteUncertainty, IntervalValue, PointValue,
-    QuantitativeEvidence, RelativeUncertainty,
-)
 
 if TYPE_CHECKING:
     from propstore.compiler.context import CompilationContext
@@ -521,89 +525,223 @@ def _check_quantitative(
     def problem(field: str, code: str, message: str) -> None:
         problems.append(ClaimValidationDiagnostic(field, message, code))
 
-    numeric_point = claim.value if isinstance(claim.value, int | float) and not isinstance(claim.value, bool) else None
+    numeric_point = (
+        claim.value
+        if isinstance(claim.value, int | float) and not isinstance(claim.value, bool)
+        else None
+    )
     numeric = numeric_point is not None
-    for field, value in (("value", claim.value), ("lower_bound", claim.lower_bound),
-                         ("upper_bound", claim.upper_bound)):
+    for field, value in (
+        ("value", claim.value),
+        ("lower_bound", claim.lower_bound),
+        ("upper_bound", claim.upper_bound),
+    ):
         if isinstance(value, float) and not isfinite(value):
             problem(field, "claim.quantitative.finite", f"{field} must be finite")
     lower, upper = claim.lower_bound, claim.upper_bound
     for field, bound in (("lower_bound", lower), ("upper_bound", upper)):
         if isinstance(bound, bool):
-            problem(field, "claim.quantitative.bound.numeric", f"{field} must be numeric, excluding boolean")
+            problem(
+                field,
+                "claim.quantitative.bound.numeric",
+                f"{field} must be numeric, excluding boolean",
+            )
     has_interval = lower is not None or upper is not None
     if lower is not None and upper is not None and lower > upper:
-        problem("lower_bound", "claim.quantitative.interval.order", "lower_bound must not exceed upper_bound")
+        problem(
+            "lower_bound",
+            "claim.quantitative.interval.order",
+            "lower_bound must not exceed upper_bound",
+        )
     if has_interval and claim.value is not None and not numeric:
-        problem("value", "claim.quantitative.interval.numeric", "an interval requires a numeric point when value is present")
+        problem(
+            "value",
+            "claim.quantitative.interval.numeric",
+            "an interval requires a numeric point when value is present",
+        )
     if numeric_point is not None:
         if lower is not None and numeric_point < lower:
-            problem("value", "claim.quantitative.point.lower", "value must be at least lower_bound")
+            problem(
+                "value",
+                "claim.quantitative.point.lower",
+                "value must be at least lower_bound",
+            )
         if upper is not None and numeric_point > upper:
-            problem("value", "claim.quantitative.point.upper", "value must be at most upper_bound")
+            problem(
+                "value",
+                "claim.quantitative.point.upper",
+                "value must be at most upper_bound",
+            )
     if claim.sample_size is not None and (
-        isinstance(claim.sample_size, bool) or not isinstance(claim.sample_size, int)
-        or claim.sample_size <= 0
+        type(claim.sample_size) is not int or claim.sample_size <= 0
     ):
-        problem("sample_size", "claim.quantitative.sample_size", "sample_size must be a positive integer, excluding boolean")
+        problem(
+            "sample_size",
+            "claim.quantitative.sample_size",
+            "sample_size must be a positive integer, excluding boolean",
+        )
     if claim.confidence is not None and (
-        isinstance(claim.confidence, bool) or not isfinite(claim.confidence)
+        isinstance(claim.confidence, bool)
+        or not isfinite(claim.confidence)
         or not 0 <= claim.confidence <= 1
     ):
-        problem("confidence", "claim.quantitative.confidence", "confidence must be finite and in [0, 1]")
+        problem(
+            "confidence",
+            "claim.quantitative.confidence",
+            "confidence must be finite and in [0, 1]",
+        )
     if claim.uncertainty_type not in (None, "absolute", "relative"):
-        problem("uncertainty_type", "claim.quantitative.uncertainty.type", "uncertainty_type must be absolute or relative")
+        problem(
+            "uncertainty_type",
+            "claim.quantitative.uncertainty.type",
+            "uncertainty_type must be absolute or relative",
+        )
     if (claim.uncertainty is None) != (claim.uncertainty_type is None):
-        problem("uncertainty", "claim.quantitative.uncertainty.pair", "uncertainty and uncertainty_type must be supplied together")
+        problem(
+            "uncertainty",
+            "claim.quantitative.uncertainty.pair",
+            "uncertainty and uncertainty_type must be supplied together",
+        )
     if claim.uncertainty is not None and (
-        isinstance(claim.uncertainty, bool) or not isfinite(claim.uncertainty)
+        isinstance(claim.uncertainty, bool)
+        or not isfinite(claim.uncertainty)
         or claim.uncertainty < 0
     ):
-        problem("uncertainty", "claim.quantitative.uncertainty.domain", "uncertainty must be finite and nonnegative")
+        problem(
+            "uncertainty",
+            "claim.quantitative.uncertainty.domain",
+            "uncertainty must be finite and nonnegative",
+        )
     if claim.uncertainty is not None and not numeric and not has_interval:
-        problem("uncertainty", "claim.quantitative.uncertainty.numeric", "measurement uncertainty requires a numeric point or interval")
+        problem(
+            "uncertainty",
+            "claim.quantitative.uncertainty.numeric",
+            "measurement uncertainty requires a numeric point or interval",
+        )
 
     unit = claim.unit
     contract = claim_type_contract_for(claim.claim_type)
     policy = None if contract is None else contract.unit_policy
-    requires_form = (policy is not None and policy.required) or unit is not None or claim.uncertainty_type == "absolute"
+    requires_form = (
+        (policy is not None and policy.required)
+        or unit is not None
+        or claim.uncertainty_type == "absolute"
+    )
     concept_id = claim.output_concept or claim.target_concept
-    if context is not None and concept_id is not None and (requires_form or claim.value is not None or has_interval):
-        concept = context.concepts_by_id.get(concept_id)
+    form_name = None if form is None else form.name
+    resolution_failed = False
+    if policy is not None and context is None:
+        problem(
+            "unit",
+            "claim.unit.context.missing",
+            "unit evidence unavailable: no checked compilation context",
+        )
+        form = None
+        resolution_failed = True
+    if context is not None and (
+        requires_form or claim.value is not None or has_interval
+    ):
+        concept = context.concepts_by_id.get(concept_id or "")
         if concept is None:
             if requires_form:
-                problem("unit", "claim.unit.concept.missing", f"unit evidence unavailable: concept {concept_id!r} is missing")
+                problem(
+                    "unit",
+                    "claim.unit.concept.missing",
+                    f"unit evidence unavailable: concept {concept_id!r} is missing",
+                )
+                resolution_failed = True
+            form = None
         else:
             entry = concept.lexical_entry
             form_name = None if entry is None else entry.physical_dimension_form
             form = context.form_registry.registry.get(form_name or "")
             concept_info = context.condition_registry.get(concept.canonical_name)
-    if requires_form and form is None:
+    evidence = f"concept {concept_id!r}, form {form_name!r}"
+    if requires_form and form is None and not resolution_failed:
         if context is None:
-            problem("unit", "claim.unit.context.missing", "unit evidence unavailable: no checked compilation context or supplied form")
+            problem(
+                "unit",
+                "claim.unit.context.missing",
+                "unit evidence unavailable: no checked compilation context or supplied form",
+            )
         else:
-            problem("unit", "claim.unit.form.missing", f"unit evidence unavailable: concept {concept_id!r} has no resolved form")
+            problem(
+                "unit",
+                "claim.unit.form.missing",
+                f"unit evidence unavailable: {evidence} is missing",
+            )
     if form is not None:
-        problems.extend(validate_claim_value_fields(value=claim.value, lower_bound=lower,
-            upper_bound=upper, form=form, concept_info=concept_info))
+        problems.extend(
+            validate_claim_value_fields(
+                value=claim.value,
+                lower_bound=lower,
+                upper_bound=upper,
+                form=form,
+                concept_info=concept_info,
+            )
+        )
         if form.kind is KindType.QUANTITY:
             if unit is None and form.is_dimensionless and policy is not None:
                 unit = policy.dimensionless_default_unit
             if not unit and policy is not None and policy.required:
-                problem("unit", "claim.unit.required", f"unit is required for form {form.name!r}")
+                problem(
+                    "unit",
+                    "claim.unit.required",
+                    f"unit {claim.unit!r} is required for {evidence}",
+                )
             elif unit is not None:
-                try:
-                    if not unit_compatible_with_form(unit, form):
-                        problem("unit", "claim.unit.incompatible", f"unit {unit!r} is not compatible with form {form.name!r}")
-                    for field, value in (("value", claim.value), ("lower_bound", lower), ("upper_bound", upper)):
-                        if isinstance(value, int | float) and not isinstance(value, bool) and not isfinite(normalize_to_si(float(value), unit, form)):
-                            problem(field, "claim.unit.conversion.invalid", f"unit conversion for {field} returned a non-finite value")
-                except (ArithmeticError, ValueError) as exc:
-                    problem("unit", "claim.unit.conversion.invalid", f"unit conversion unavailable for form {form.name!r}: {exc}")
-        elif unit is not None:
-            problem("unit", "claim.unit.not_applicable", f"form {form.name!r} does not accept a quantity unit")
+                if not form.unit_symbol and not form.is_dimensionless:
+                    problem(
+                        "unit",
+                        "claim.unit.form.unit.missing",
+                        f"unit evidence unavailable: {evidence} has no canonical unit for authored unit {claim.unit!r}",
+                    )
+                else:
+                    try:
+                        compatible = unit_compatible_with_form(unit, form)
+                    except ValueError as exc:
+                        problem(
+                            "unit",
+                            "claim.unit.form.invalid",
+                            f"unit evidence unavailable: {evidence}: {exc}",
+                        )
+                    else:
+                        if not compatible:
+                            problem(
+                                "unit",
+                                "claim.unit.incompatible",
+                                f"unit {claim.unit!r} is not compatible with {evidence}, canonical unit {form.unit_symbol!r}, dimensions {form.dimensions!r}",
+                            )
+                        else:
+                            for field, value in (
+                                ("value", claim.value),
+                                ("lower_bound", lower),
+                                ("upper_bound", upper),
+                            ):
+                                if isinstance(value, int | float) and not isinstance(
+                                    value, bool
+                                ):
+                                    try:
+                                        converted = normalize_to_si(
+                                            float(value), unit, form
+                                        )
+                                        if not isfinite(converted):
+                                            raise ValueError(
+                                                "conversion returned a non-finite value"
+                                            )
+                                    except (ArithmeticError, ValueError) as exc:
+                                        problem(
+                                            "unit",
+                                            "claim.unit.conversion.invalid",
+                                            f"unit conversion unavailable: {evidence}, {field}={value!r}, unit {claim.unit!r}: {exc}",
+                                        )
+                                        break
     if claim.uncertainty_type == "absolute" and unit is None:
-        problem("uncertainty", "claim.quantitative.uncertainty.unit", "absolute uncertainty requires a resolved measurement unit")
+        problem(
+            "uncertainty",
+            "claim.quantitative.uncertainty.unit",
+            "absolute uncertainty requires a resolved measurement unit",
+        )
     if problems:
         return None, tuple(problems)
     checked_value: AbsentValue | PointValue | IntervalValue
@@ -620,7 +758,9 @@ def _check_quantitative(
             uncertainty = AbsoluteUncertainty(claim.uncertainty, unit)
         else:
             uncertainty = RelativeUncertainty(claim.uncertainty)
-    return QuantitativeEvidence(checked_value, form, unit, uncertainty, claim.confidence, claim.sample_size), ()
+    return QuantitativeEvidence(
+        checked_value, form, unit, uncertainty, claim.confidence, claim.sample_size
+    ), ()
 
 
 def validate_claim(
@@ -651,7 +791,9 @@ def validate_claim(
         )
 
     diagnostics: list[ClaimValidationDiagnostic] = []
-    quantitative, quantitative_diagnostics = _check_quantitative(claim, context, form, concept_info)
+    quantitative, quantitative_diagnostics = _check_quantitative(
+        claim, context, form, concept_info
+    )
     diagnostics.extend(quantitative_diagnostics)
     for name in contract.required_fields:
         if not _is_present(getattr(claim, name, None)):

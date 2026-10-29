@@ -14,8 +14,8 @@ import pytest
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.id_types import to_concept_id
 from propstore.core.scalars import ScalarValue
-from propstore.families.claims import ClaimType
 from propstore.families.claim_quantitative import PointValue, QuantitativeEvidence
+from propstore.families.claims import ClaimType
 from propstore.world.types import ValueResult, ValueStatus
 from propstore.world.value_resolver import ActiveClaimResolver, collect_known_values
 
@@ -33,7 +33,11 @@ def test_mixed_direct_and_multistatement_algorithm_uses_ast_equivalence():
     )
 
     active = [
-        ActiveClaim(claim_id="direct", claim_type=ClaimType.PARAMETER, quantitative=QuantitativeEvidence(PointValue(10.0), None, None)),
+        ActiveClaim(
+            claim_id="direct",
+            claim_type=ClaimType.PARAMETER,
+            quantitative=QuantitativeEvidence(PointValue(10.0), None, None),
+        ),
         ActiveClaim(
             claim_id="algo",
             claim_type=ClaimType.ALGORITHM,
@@ -58,8 +62,14 @@ def test_direct_consensus_accepts_exact_typed_scalar(value: ScalarValue) -> None
     )
     result = resolver.value_of_from_active(
         [
-            ActiveClaim(claim_id="a", quantitative=QuantitativeEvidence(PointValue(value), None, None)),
-            ActiveClaim(claim_id="b", quantitative=QuantitativeEvidence(PointValue(value), None, None)),
+            ActiveClaim(
+                claim_id="a",
+                quantitative=QuantitativeEvidence(PointValue(value), None, None),
+            ),
+            ActiveClaim(
+                claim_id="b",
+                quantitative=QuantitativeEvidence(PointValue(value), None, None),
+            ),
         ],
         "target",
     )
@@ -81,8 +91,14 @@ def test_direct_consensus_distinguishes_scalar_runtime_types(
     )
     result = resolver.value_of_from_active(
         [
-            ActiveClaim(claim_id="left", quantitative=QuantitativeEvidence(PointValue(left), None, None)),
-            ActiveClaim(claim_id="right", quantitative=QuantitativeEvidence(PointValue(right), None, None)),
+            ActiveClaim(
+                claim_id="left",
+                quantitative=QuantitativeEvidence(PointValue(left), None, None),
+            ),
+            ActiveClaim(
+                claim_id="right",
+                quantitative=QuantitativeEvidence(PointValue(right), None, None),
+            ),
         ],
         "target",
     )
@@ -97,7 +113,10 @@ def test_known_value_collection_accepts_only_numeric_claims(
     value: ScalarValue,
     expected: dict[object, float],
 ) -> None:
-    claim = ActiveClaim(claim_id="input-claim", quantitative=QuantitativeEvidence(PointValue(value), None, None))
+    claim = ActiveClaim(
+        claim_id="input-claim",
+        quantitative=QuantitativeEvidence(PointValue(value), None, None),
+    )
 
     def value_of(concept_id: object) -> ValueResult:
         return ValueResult(

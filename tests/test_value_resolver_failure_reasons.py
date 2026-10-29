@@ -21,7 +21,11 @@ from propstore.world.value_resolver import ActiveClaimResolver
 
 
 def _param(claim_id: str, value: float) -> ActiveClaim:
-    return ActiveClaim(claim_id=claim_id, claim_type=ClaimType.PARAMETER, quantitative=QuantitativeEvidence(PointValue(value), None, None))
+    return ActiveClaim(
+        claim_id=claim_id,
+        claim_type=ClaimType.PARAMETER,
+        quantitative=QuantitativeEvidence(PointValue(value), None, None),
+    )
 
 
 def _algo(claim_id: str, body: str) -> ActiveClaim:

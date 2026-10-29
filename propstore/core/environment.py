@@ -46,8 +46,8 @@ if TYPE_CHECKING:
         ConceptSimilarityHit,
         WorldStoreStats,
     )
-    from propstore.families.claim_provenance import ClaimProvenanceIndex
     from propstore.families.claim_admission import ClaimAdmission
+    from propstore.families.claim_provenance import ClaimProvenanceIndex
     from propstore.families.claims import Claim
     from propstore.families.concepts import Concept
     from propstore.families.forms import FormDefinition

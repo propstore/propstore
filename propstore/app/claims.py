@@ -259,6 +259,7 @@ def _value_display(claim: Claim) -> str:
 
 def _interval_display(claim: Claim) -> str | None:
     from propstore.families.claim_quantitative import IntervalValue
+
     value = claim.quantitative.value
     if not isinstance(value, IntervalValue):
         return None

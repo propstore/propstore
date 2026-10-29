@@ -58,3 +58,11 @@ Validation: focused authored quantitative and preference tests pass as recorded 
 ## Next step
 
 Commit the consumer slice for the #209 worker to integrate, then support combined CI repairs. Parent merges latest master/#144/#208 and resolves their shared merge-loader/manifest edits. No commit identifiers belong in this note.
+
+## PR #377 repair
+
+The initial unit consolidation recorded incompatibility but continued into conversion. Existing malformed-unit regressions exposed TokenError/AssertionError escaping from that conversion. Repaired the owner so incompatible units never convert, with the original authored unit/concept/form diagnostic context. Also restored the existing required checked-context evidence, missing canonical-unit and invalid canonical-form diagnostics, and nonquantity scalar-label behavior. The prior production checker and all parameter-unit contract tests determined these dispositions; no safeguards or assertions were relaxed. Quantitative tests now obtain declared parameter units from actual compiler contexts instead of accepting raw supplied forms.
+
+Applied hosted-CI import/formatter diagnostics using read-only Ruff diffs through apply_patch. Removed the unnecessary isinstance-int check using an exact type check that still rejects boolean/noninteger sample sizes. Detector files and root's other test repairs remain under their existing owners.
+
+Focused stable-source results: quantitative file 33 passed, `logs/test-runs/pytest-20261029-003828.log`; existing parameter-unit contract file 46 passed, `logs/test-runs/pytest-20261029-003920.log`. This includes checked-context/raw-form rejection, canonical-unit errors, malformed syntax, nonquantity labels, overflow, and decreasing affine interval behavior. Parent owns new hosted CI after publication.

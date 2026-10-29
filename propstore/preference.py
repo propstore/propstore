@@ -82,10 +82,7 @@ def metadata_strength_vector(claim: Claim | ActiveClaim) -> MetadataStrengthVect
     confidence_value = evidence.confidence
     uncertainty_value: float | None = None
 
-    if (
-        confidence_value is not None
-        and sample_size_value is not None
-    ):
+    if confidence_value is not None and sample_size_value is not None:
         opinion = Opinion.from_probability(
             confidence_value,
             sample_size_value,
@@ -99,7 +96,9 @@ def metadata_strength_vector(claim: Claim | ActiveClaim) -> MetadataStrengthVect
 
     dimensions = (
         math.log1p(sample_size_value) if sample_size_value is not None else 0.0,
-        1.0 / uncertainty_value if uncertainty_value is not None and uncertainty_value > 0 else 0.0,
+        1.0 / uncertainty_value
+        if uncertainty_value is not None and uncertainty_value > 0
+        else 0.0,
         confidence_value if confidence_value is not None else 0.0,
     )
     return MetadataStrengthVector(

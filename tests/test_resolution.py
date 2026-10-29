@@ -17,8 +17,12 @@ import pytest
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.results import AnalyzerResult, ClaimProjection, ExtensionResult
 from propstore.core.scalars import ScalarValue
+from propstore.families.claim_quantitative import (
+    AbsentValue,
+    PointValue,
+    QuantitativeEvidence,
+)
 from propstore.families.justifications import Justification
-from propstore.families.claim_quantitative import AbsentValue, PointValue, QuantitativeEvidence
 from propstore.grounding.bundle import (
     GroundedRulesBundle,
     GroundingStatus,
@@ -54,7 +58,12 @@ def _claim(
     return ActiveClaim(
         claim_id=claim_id,
         concept_id=concept_id,
-        quantitative=QuantitativeEvidence(AbsentValue() if value is None else PointValue(value), None, None, sample_size=sample_size),
+        quantitative=QuantitativeEvidence(
+            AbsentValue() if value is None else PointValue(value),
+            None,
+            None,
+            sample_size=sample_size,
+        ),
         branch=branch,
         date=date,
     )
