@@ -10,7 +10,11 @@ from propstore.families.claim_provenance import (
 )
 from propstore.families.claims import Claim
 from propstore.families.micropublications import Micropublication
-from propstore.families.sources import SourceClaimDocument, SourceClaimsDocument, SourceRef
+from propstore.families.sources import (
+    SourceClaimDocument,
+    SourceClaimsDocument,
+    SourceRef,
+)
 from propstore.provenance import Provenance, ProvenanceStatus
 from propstore.repository import Repository
 from propstore.source.common import init_source_branch, load_source_document
@@ -106,5 +110,7 @@ def test_missing_source_manifest_is_not_unknown_source(tmp_path: Path) -> None:
     repo = Repository.init(tmp_path)
     repo.require_git().create_branch("source/missing-manifest")
     index = SourceIndex.from_repository(repo)
-    assert isinstance(index.resolve(SourceRef("missing-manifest")), MissingSourceManifest)
+    assert isinstance(
+        index.resolve(SourceRef("missing-manifest")), MissingSourceManifest
+    )
     assert isinstance(index.resolve(SourceRef("unknown")), UnknownSource)
