@@ -45,6 +45,8 @@ Latest authored focused proof: `tests/test_claim_quantitative.py`, 31 passed, `l
 
 Follow-up slice: interval-only claim detail rendering now reports a known bounded value rather than missing scalar evidence. Its focused regression brings the authored quantitative file to 32 passing cases, `logs/test-runs/pytest-20261029-001039.log`.
 
+Precision follow-up: reproduced a canonical point at `2**53 + 3` below an interval starting at `float(2**53 + 4)`, both authored in kHz under the same Hz form. Unnecessary unit conversion and tolerance addition widened the point and incorrectly reported overlap. Same-form/same-unit intervals now compare directly, and finite overlap distances use exact Fraction subtraction. The authored focused case failed before repair (`pytest-20261029-001521.log`) and passed after (`pytest-20261029-001553.log`).
+
 Remaining forbidden raw readers in conflict_detector belong to the #209 worker and are not accepted as final state. The existing test constructors were migrated to typed quantitative input; full fixture/source compatibility remains for combined CI. The contract manifest and claim/source-claims versions were updated for the new projection/source confidence field.
 
 ## Draft PR description
