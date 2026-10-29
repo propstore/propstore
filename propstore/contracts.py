@@ -30,15 +30,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from quire.artifacts import ArtifactFamily
 from quire.contracts import ContractEntry, ContractManifest, contract_version
-from quire.references import ForeignKeySpec
 
 from propstore.claim_contracts import ClaimTypeContract, iter_claim_type_contracts
 from propstore.families.registry import (
     PROPSTORE_FAMILY_REGISTRY,
     PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION,
-    semantic_foreign_keys,
 )
 
 PROPSTORE_REGISTRY_CONTRACT_VERSION = PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION
@@ -62,31 +59,6 @@ CONTRACT_MANIFEST_PATH = (
     / "semantic-contracts.yaml"
 )
 """Where the checked-in manifest lives; the drift gate diffs against it."""
-
-
-def iter_artifact_families() -> tuple[ArtifactFamily[object, object, object], ...]:
-    """Every artifact family the registry assembled, sorted by name.
-
-    The bodies fold into the registry's charter-derived ``family`` entries; this
-    selector remains so the drift-coverage tests can assert every family carries
-    a contract version.
-    """
-
-    families = {
-        family.artifact_family.name: family.artifact_family
-        for family in PROPSTORE_FAMILY_REGISTRY.families
-    }
-    return tuple(family for _, family in sorted(families.items()))
-
-
-def iter_semantic_foreign_keys() -> tuple[ForeignKeySpec, ...]:
-    """Every charter-derived semantic foreign-key spec, sorted by spec name.
-
-    The bodies fold into each family's charter-derived ``family`` entry; this
-    selector remains for the drift-coverage tests.
-    """
-
-    return semantic_foreign_keys()
 
 
 def iter_semantic_pass_classes() -> tuple[type[Any], ...]:
