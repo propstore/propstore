@@ -1,24 +1,8 @@
-"""Ingest- and build-time CEL expression validation.
-
-A single reusable validator that rejects CEL expressions which fail the
-condition-ir type-checker (the most important case being a *structural* concept
-used inside a quantitative/temporal expression) before they can reach the
-sidecar, conflict detection, or Z3 translation. It composes condition-ir's own
-``check_cel_expression`` directly — there is no propstore CEL front-end.
-
-Two surfaces consume it: the source-authoring boundary (a later phase) and the
-compiler pre-build pass (:mod:`propstore.compiler.workflows`), which iterates a
-repository's claims and contexts and aborts the build early if any CEL
-expression references a structural concept. The validator raises
-:class:`CelIngestValidationError` (a ``ValueError`` subclass) whose message names
-the offending artifact, carrier field, and expression index — preserving the
-condition front-end error text inside a contextual envelope.
-"""
+"""CEL identifier walking for the compiler's structural-concept invariant."""
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from cel_parser.ast import (
@@ -33,75 +17,10 @@ from cel_parser.ast import (
     Select,
 )
 from cel_parser.parser import parse
-from condition_ir import KindType, check_cel_expression
+from condition_ir import KindType
 
 if TYPE_CHECKING:
     from condition_ir import ConceptInfo
-
-
-class CelIngestValidationError(ValueError):
-    """Raised when a CEL expression is invalid at ingest or pre-build time.
-
-    A ``ValueError`` subclass so existing ``except ValueError`` handlers surface
-    the error cleanly.
-    """
-
-
-@dataclass(frozen=True)
-class CelExpressionLocation:
-    """Identifies one CEL expression inside a larger artifact.
-
-    ``artifact_label`` is a human-readable string naming the owning artifact
-    (e.g. ``"claim 'c6'"``, ``"context 'ctx_popadad'"``). ``field`` names the
-    carrier (``"condition"``, ``"assumption"``). ``index`` is the zero-based
-    position within the carrier tuple (the rendered message adds 1 so it reads
-    naturally).
-    """
-
-    artifact_label: str
-    field: str
-    index: int
-
-    def render(self) -> str:
-        return f"{self.artifact_label}: {self.field}[{self.index}]"
-
-
-def validate_cel_expression(
-    expression: str,
-    registry: Mapping[str, "ConceptInfo"],
-    *,
-    location: CelExpressionLocation,
-) -> None:
-    """Type-check one CEL expression; raise ``CelIngestValidationError`` on failure.
-
-    Delegates to condition-ir's ``check_cel_expression`` and wraps any reported
-    errors with a message that includes ``location`` context. A structural
-    concept used in a typed expression is one specific failure the checker
-    reports; other CEL type errors surface identically.
-    """
-
-    errors = check_cel_expression(expression, registry)
-    if errors:
-        detail = "; ".join(str(error) for error in errors)
-        raise CelIngestValidationError(
-            f"{location.render()} = {expression!r}: {detail}"
-        )
-
-
-def validate_cel_expressions(
-    items: Iterable[tuple[str, CelExpressionLocation]],
-    registry: Mapping[str, "ConceptInfo"],
-) -> None:
-    """Validate ``(expression, location)`` pairs; raise on the first failure.
-
-    Deliberately fail-fast so an author sees one clear error at a time; the
-    caller invokes this before any write-side operation.
-    """
-
-    for expression, location in items:
-        if not expression:
-            continue
-        validate_cel_expression(expression, registry, location=location)
 
 
 def _collect_identifiers(node: Expr, names: set[str]) -> None:
@@ -179,62 +98,7 @@ def structural_concepts_in_expression(
     return tuple(structural)
 
 
-def iter_claim_condition_expressions(
-    claim_conditions: Sequence[str],
-    *,
-    artifact_label: str,
-) -> Iterable[tuple[str, CelExpressionLocation]]:
-    """Yield ``(expression, location)`` pairs for every claim condition."""
-
-    for index, expression in enumerate(claim_conditions):
-        yield (
-            expression,
-            CelExpressionLocation(
-                artifact_label=artifact_label, field="condition", index=index
-            ),
-        )
-
-
-def iter_context_assumption_expressions(
-    assumptions: Sequence[str],
-    *,
-    artifact_label: str,
-) -> Iterable[tuple[str, CelExpressionLocation]]:
-    """Yield ``(expression, location)`` pairs for every context assumption."""
-
-    for index, expression in enumerate(assumptions):
-        yield (
-            expression,
-            CelExpressionLocation(
-                artifact_label=artifact_label, field="assumption", index=index
-            ),
-        )
-
-
-def iter_lifting_rule_condition_expressions(
-    conditions: Sequence[str],
-    *,
-    artifact_label: str,
-) -> Iterable[tuple[str, CelExpressionLocation]]:
-    """Yield ``(expression, location)`` pairs for every lifting-rule condition."""
-
-    for index, expression in enumerate(conditions):
-        yield (
-            expression,
-            CelExpressionLocation(
-                artifact_label=artifact_label, field="condition", index=index
-            ),
-        )
-
-
 __all__ = [
-    "CelIngestValidationError",
-    "CelExpressionLocation",
-    "validate_cel_expression",
-    "validate_cel_expressions",
     "iter_cel_identifiers",
     "structural_concepts_in_expression",
-    "iter_claim_condition_expressions",
-    "iter_context_assumption_expressions",
-    "iter_lifting_rule_condition_expressions",
 ]
