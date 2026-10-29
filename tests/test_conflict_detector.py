@@ -28,7 +28,8 @@ from propstore.families.claim_admission import (
 from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.forms import FormDefinition
-from tests.checked_claim_helpers import check_claims, concept, frequency_form
+from tests.canonical_claim_fixtures import concept_with_form
+from tests.checked_claim_helpers import check_claims, frequency_form
 
 
 def test_coerce_conflict_class_round_trips_and_uppercases() -> None:
@@ -86,7 +87,10 @@ def _equation(claim_id: str, expression: str) -> Claim:
 def test_equation_comparison_uses_admitted_claims(left, right, expected) -> None:
     bundle, context = check_claims(
         (_equation("left", left), _equation("right", right)),
-        tuple(concept(name) for name in ("output", "factor_a", "factor_b")),
+        tuple(
+            concept_with_form(name, name, "quantity")
+            for name in ("output", "factor_a", "factor_b")
+        ),
     )
     assert not bundle.blocked_claims, bundle.diagnostics
     records = detect_equation_conflicts(
@@ -114,7 +118,10 @@ def test_equation_detector_uses_each_claim_symbol_bindings() -> None:
     )
     bundle, context = check_claims(
         (_equation("original", "y = x + z"), renamed),
-        tuple(concept(name) for name in ("output", "factor_a", "factor_b")),
+        tuple(
+            concept_with_form(name, name, "quantity")
+            for name in ("output", "factor_a", "factor_b")
+        ),
     )
     assert not bundle.blocked_claims, bundle.diagnostics
     assert (
@@ -137,7 +144,10 @@ def test_invalid_equation_is_rejected_by_canonical_admission(
         claims.reverse()
     bundle, context = check_claims(
         claims,
-        tuple(concept(name) for name in ("output", "factor_a", "factor_b")),
+        tuple(
+            concept_with_form(name, name, "quantity")
+            for name in ("output", "factor_a", "factor_b")
+        ),
     )
     assert [entry.claim.claim_id for entry in bundle.blocked_claims] == ["invalid"]
     with pytest.raises(ClaimAdmissionError) as caught:
@@ -172,7 +182,10 @@ def test_algorithm_comparison_uses_admitted_claims(
             _algorithm("a", f"def f(x):\n    return {left}\n"),
             _algorithm("b", f"def f(x):\n    return {right}\n"),
         ),
-        (concept("out"), concept("input")),
+        (
+            concept_with_form("out", "out", "quantity"),
+            concept_with_form("input", "input", "quantity"),
+        ),
     )
     assert not bundle.blocked_claims, bundle.diagnostics
     records = detect_algorithm_conflicts(
@@ -198,7 +211,10 @@ def test_algorithm_partial_eval_equivalence_suppresses_conflict(
             _algorithm("a", "def f(x):\n    return x\n"),
             _algorithm("b", "def f(x):\n    return x\n"),
         ),
-        (concept("out"), concept("input")),
+        (
+            concept_with_form("out", "out", "quantity"),
+            concept_with_form("input", "input", "quantity"),
+        ),
     )
     monkeypatch.setattr(algorithms, "ast_compare", lambda *args, **kwargs: Result())
     assert (
@@ -248,7 +264,7 @@ def test_measurement_comparison_uses_checked_conditions(
                 zip(populations, values, strict=True)
             )
         ),
-        (concept("out"),),
+        (concept_with_form("out", "out", "quantity"),),
         condition_registry=registry,
     )
     assert not bundle.blocked_claims, bundle.diagnostics
@@ -277,7 +293,7 @@ def test_solver_runtime_errors_preserve_cause_text(failure: str) -> None:
             )
             for index in range(3)
         ),
-        (concept("outcome"),),
+        (concept_with_form("outcome", "outcome", "quantity"),),
         condition_registry={
             "intention_to_treat": ConceptInfo(
                 "intention_to_treat",
@@ -335,7 +351,7 @@ def test_detect_conflicts_consumes_checked_quantitative_units(
                 unit=unit,
             ),
         ),
-        (concept("frequency", "frequency"),),
+        (concept_with_form("frequency", "frequency", "frequency"),),
         forms=(frequency_form(),),
     )
     assert not bundle.blocked_claims, bundle.diagnostics
@@ -366,7 +382,7 @@ def test_canonical_scalar_types_retain_disagreement(kind: KindType, values) -> N
             )
             for i, value in enumerate(values)
         ),
-        (concept("out", "scalar"),),
+        (concept_with_form("out", "out", "scalar"),),
         forms=(FormDefinition(name="scalar", kind=kind),),
         condition_registry={
             "out": ConceptInfo("out", "out", kind, category_extensible=True)
@@ -394,7 +410,7 @@ def test_missing_and_stale_admissions_are_typed_boundary_failures() -> None:
                 value=1.0,
             ),
         ),
-        (concept("out"),),
+        (concept_with_form("out", "out", "quantity"),),
     )
     assert not bundle.blocked_claims, bundle.diagnostics
     checked = bundle.claims[0]

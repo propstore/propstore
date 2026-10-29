@@ -21,7 +21,8 @@ from propstore.core.id_types import to_concept_id, to_concept_ids
 from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType, Exactness
 from propstore.families.contexts import Context
-from tests.checked_claim_helpers import check_claims, concept, frequency_form
+from tests.canonical_claim_fixtures import concept_with_form
+from tests.checked_claim_helpers import check_claims, frequency_form
 
 
 def _parameter(
@@ -67,7 +68,10 @@ def test_equality_parameterization_evaluates_without_warning() -> None:
             _parameter("claim_b", "concept2", 9.807, unit="1"),
             _parameter("claim_c", "concept3", 99.0, unit="1"),
         ),
-        tuple(concept(name) for name in ("concept1", "concept2", "concept3")),
+        tuple(
+            concept_with_form(name, name, "quantity")
+            for name in ("concept1", "concept2", "concept3")
+        ),
     )
     assert not bundle.blocked_claims, bundle.diagnostics
     with warnings.catch_warnings(record=True) as caught:
@@ -110,7 +114,10 @@ def test_single_hop_normalizes_units_and_renders_both_sides(
             _parameter("claim_khz", "freq_input", 0.5, unit="kHz"),
             _parameter("claim_out", "freq_output", value, unit=unit),
         ),
-        (concept("freq_input", "frequency"), concept("freq_output", "frequency")),
+        (
+            concept_with_form("freq_input", "freq_input", "frequency"),
+            concept_with_form("freq_output", "freq_output", "frequency"),
+        ),
         forms=(frequency_form(),),
     )
     assert not bundle.blocked_claims, bundle.diagnostics
@@ -161,7 +168,10 @@ def test_single_hop_conflict_carries_derived_conditions() -> None:
                 context_id="ctx_input",
             ),
         ),
-        (concept("concept_in", "frequency"), concept("concept_out", "frequency")),
+        (
+            concept_with_form("concept_in", "concept_in", "frequency"),
+            concept_with_form("concept_out", "concept_out", "frequency"),
+        ),
         forms=(frequency_form(),),
         condition_registry=registry,
         context_ids=("ctx_input",),
@@ -198,7 +208,10 @@ def test_single_hop_conflict_requires_lifted_contexts() -> None:
             _parameter("claim_in", "concept_in", 10.0, context_id="ctx_input"),
             _parameter("claim_out", "concept_out", 100.0, context_id="ctx_direct"),
         ),
-        (concept("concept_in", "frequency"), concept("concept_out", "frequency")),
+        (
+            concept_with_form("concept_in", "concept_in", "frequency"),
+            concept_with_form("concept_out", "concept_out", "frequency"),
+        ),
         forms=(frequency_form(),),
         context_ids=("ctx_input", "ctx_direct"),
     )
@@ -238,7 +251,7 @@ def test_transitive_propagation_normalizes_units() -> None:
             _parameter("claim_c", "concept_c", 300.0),
         ),
         tuple(
-            concept(name, "frequency")
+            concept_with_form(name, name, "frequency")
             for name in ("concept_a", "concept_b", "concept_c")
         ),
         forms=(frequency_form(),),
@@ -270,7 +283,7 @@ def test_transitive_conflict_detection_is_order_independent() -> None:
             _parameter("out_direct", "concept_out", 25.0),
         ),
         tuple(
-            concept(name, "frequency")
+            concept_with_form(name, name, "frequency")
             for name in ("concept_in", "concept_mid", "concept_out")
         ),
         forms=(frequency_form(),),
@@ -306,7 +319,9 @@ def test_runtime_error_from_sympy_parameterization_propagates() -> None:
             _parameter("claim_b", "b", 3.0, unit="1"),
             _parameter("claim_derived", "derived", 10.0, unit="1"),
         ),
-        tuple(concept(name) for name in ("a", "b", "derived")),
+        tuple(
+            concept_with_form(name, name, "quantity") for name in ("a", "b", "derived")
+        ),
     )
     assert not bundle.blocked_claims, bundle.diagnostics
     parse_cached.cache_clear()
