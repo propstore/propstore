@@ -165,9 +165,10 @@ def test_existing_literals_preserved_and_grounded_atoms_added() -> None:
 
     out = project_grounded_rules(bundle, literals).literals
 
-    assert out[
-        IstLiteralKey(to_context_id("context:alpha"), to_claim_id("claim-alpha"))
-    ] is seed_lit
+    situated_key = IstLiteralKey(
+        to_context_id("context:alpha"), to_claim_id("claim-alpha")
+    )
+    assert out[situated_key] is seed_lit
     assert claim_key("claim-alpha", context_id="context:other") not in out
     assert ground_key(GroundAtom("flies", ("tweety",)), False) in out
     assert ground_key(GroundAtom("bird", ("tweety",)), False) in out
