@@ -193,9 +193,12 @@ def test_equation_detector_uses_each_claim_symbol_bindings() -> None:
             ClaimVariable(concept="factor_b", symbol="second", role="independent"),
         ),
     )
-    assert detect_equation_conflicts(
-        [_equation_claim("original", "y = x + z"), renamed], {}
-    ) == []
+    assert (
+        detect_equation_conflicts(
+            [_equation_claim("original", "y = x + z"), renamed], {}
+        )
+        == []
+    )
     records = detect_equation_conflicts(
         [_equation_claim("scaled", "y = 2*x + z"), renamed], {}
     )
