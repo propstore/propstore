@@ -1,20 +1,14 @@
-"""Projection result models and lifting helpers for structured argumentation.
+"""Projection result models and extension semantics for structured argumentation.
 
 ASPIC+ construction lives in ``propstore.aspic_bridge`` (``csaf_to_projection``).
 This module owns the propstore-facing projection records and the extension
 semantics computed over a constructed :class:`StructuredProjection`. The Dung
 semantics themselves are the argumentation package's (CLAUDE.md substrate
 boundary): this module selects among them, it does not re-implement them.
-
-The store-reading helper that maps an active world graph to source-assertion ids
-(``claim_source_assertion_ids_from_active_graph`` in the pre-rewrite tree) is
-deferred to the world layer (Phase 7) because it needs ``ActiveWorldGraph``; it
-is intentionally absent here.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from argumentation.core.dung import (
@@ -32,7 +26,6 @@ from propstore.core.reasoning import (
     ReasoningBackend,
     validate_backend_semantics,
 )
-from propstore.core.results import AnalyzerResult
 from propstore.provenance import ProjectionFrameProvenanceRecord
 
 
@@ -62,38 +55,6 @@ class ProjectionAtom:
         )
 
 
-class ProjectionLiftError(ValueError):
-    """Raised when a backend result cannot lift to propstore assertion ids."""
-
-
-@dataclass(frozen=True)
-class LiftedProjectionResult:
-    argument_id: str
-    backend: str
-    situated_assertion_ids: tuple[str, ...]
-    provenance: ProjectionFrameProvenanceRecord
-
-
-@dataclass(frozen=True)
-class LiftedAnalyzerProjectionResult:
-    backend: str
-    semantics: str
-    target_assertion_ids: tuple[str, ...]
-    survivor_assertion_ids: tuple[str, ...]
-    witness_assertion_ids: tuple[str, ...]
-
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "target_assertion_ids", _sorted_unique(self.target_assertion_ids)
-        )
-        object.__setattr__(
-            self, "survivor_assertion_ids", _sorted_unique(self.survivor_assertion_ids)
-        )
-        object.__setattr__(
-            self, "witness_assertion_ids", _sorted_unique(self.witness_assertion_ids)
-        )
-
-
 @dataclass(frozen=True)
 class StructuredArgument:
     arg_id: str
@@ -109,73 +70,6 @@ class StructuredArgument:
     support_quality: SupportQuality
     justification_id: str
     dependency_claim_ids: tuple[str, ...]
-
-
-def lift_projected_argument(argument: StructuredArgument) -> LiftedProjectionResult:
-    projection = argument.projection
-    if projection.loss is not None:
-        raise ProjectionLiftError(f"{projection.loss.kind}: {projection.loss.reason}")
-    if projection.provenance is None or not projection.source_assertion_ids:
-        raise ProjectionLiftError(
-            "missing_source_assertion: projection result has no situated assertion ids"
-        )
-    return LiftedProjectionResult(
-        argument_id=argument.arg_id,
-        backend=projection.backend,
-        situated_assertion_ids=projection.source_assertion_ids,
-        provenance=projection.provenance,
-    )
-
-
-def lift_analyzer_result_projection(
-    result: AnalyzerResult,
-    claim_assertion_ids: Mapping[str, Sequence[str]],
-) -> LiftedAnalyzerProjectionResult:
-    if result.projection is None:
-        raise ProjectionLiftError(
-            "missing_projection: analyzer result has no claim projection to lift"
-        )
-    projection = result.projection
-    return LiftedAnalyzerProjectionResult(
-        backend=result.backend,
-        semantics=result.semantics,
-        target_assertion_ids=_assertion_ids_for_claims(
-            projection.target_claim_ids,
-            claim_assertion_ids,
-        ),
-        survivor_assertion_ids=_assertion_ids_for_claims(
-            projection.survivor_claim_ids,
-            claim_assertion_ids,
-        ),
-        witness_assertion_ids=_assertion_ids_for_claims(
-            projection.witness_claim_ids,
-            claim_assertion_ids,
-        ),
-    )
-
-
-def _sorted_unique(values: Sequence[str]) -> tuple[str, ...]:
-    return tuple(sorted(dict.fromkeys(str(value) for value in values)))
-
-
-def _assertion_ids_for_claims(
-    claim_ids: Sequence[str],
-    claim_assertion_ids: Mapping[str, Sequence[str]],
-) -> tuple[str, ...]:
-    assertion_ids: list[str] = []
-    missing: list[str] = []
-    for claim_id in claim_ids:
-        values = claim_assertion_ids.get(str(claim_id), ())
-        if not values:
-            missing.append(str(claim_id))
-            continue
-        assertion_ids.extend(str(value) for value in values)
-    if missing:
-        raise ProjectionLiftError(
-            "missing_source_assertion: analyzer projection has no situated "
-            f"assertion ids for claims {missing!r}"
-        )
-    return _sorted_unique(tuple(assertion_ids))
 
 
 @dataclass(frozen=True)
