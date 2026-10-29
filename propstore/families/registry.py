@@ -180,12 +180,6 @@ class PropstoreFamily(StrEnum):
     WORLDLINES = "worldlines"
 
 
-def registered_family_names() -> tuple[str, ...]:
-    """Every family name in the assembled registry, in declaration order."""
-
-    return tuple(charter.family.name for charter in _CHARTERS)
-
-
 def registered_charters() -> tuple[FamilyCharter, ...]:
     """Every charter the registry was assembled from, in declaration order."""
 
@@ -219,18 +213,6 @@ def semantic_charters() -> tuple[FamilyCharter, ...]:
     return tuple(charter for charter in _CHARTERS if _is_semantic(charter))
 
 
-def semantic_families() -> tuple[FamilyDefinition[object, object, object, object], ...]:
-    """The :class:`FamilyDefinition` of every semantic family."""
-
-    return tuple(charter.family for charter in semantic_charters())
-
-
-def semantic_family_names() -> tuple[str, ...]:
-    """The names of every semantic family."""
-
-    return tuple(charter.family.name for charter in semantic_charters())
-
-
 def semantic_foreign_keys() -> tuple[ForeignKeySpec, ...]:
     """Every foreign-key spec owned by a semantic family, sorted by spec name.
 
@@ -240,8 +222,8 @@ def semantic_foreign_keys() -> tuple[ForeignKeySpec, ...]:
 
     specs = [
         spec
-        for name in semantic_family_names()
-        for spec in PROPSTORE_FAMILY_REGISTRY.by_name(name).foreign_keys
+        for charter in semantic_charters()
+        for spec in PROPSTORE_FAMILY_REGISTRY.by_name(charter.family.name).foreign_keys
     ]
     return tuple(sorted(specs, key=lambda spec: spec.name))
 

@@ -33,7 +33,6 @@ from quire.artifacts import BranchPlacement, FixedFilePlacement
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.refs import single_field_ref_type
 
-from propstore.core.algorithm_stage import AlgorithmStage
 from propstore.core.scalars import ScalarValue, validate_scalar_value
 from propstore.core.source_types import SourceKind
 from propstore.families.claims import ClaimType, Exactness
@@ -272,7 +271,6 @@ class SourceClaimDocument(_Struct):
     notes: str | None = None
     parameters: tuple[ParameterBindingDocument, ...] = ()
     sample_size: int | None = None
-    stage: AlgorithmStage | None = None
     stances: tuple[ClaimStanceDocument, ...] = ()
     statement: str | None = None
     sympy: str | None = None

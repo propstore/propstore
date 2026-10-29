@@ -23,7 +23,6 @@ import propstore.families.registry as registry_module
 from propstore.families.registry import (
     PROPSTORE_FAMILY_REGISTRY,
     registered_charters,
-    semantic_families,
     semantic_foreign_keys,
     semantic_import_families,
     semantic_init_roots,
@@ -114,9 +113,7 @@ def test_semantic_import_order_places_targets_before_sources() -> None:
     order = [family.name for family in semantic_import_families()]
     position = {name: index for index, name in enumerate(order)}
     semantic_names = set(position)
-    for family in semantic_families():
-        if family.name not in position:
-            continue
+    for family in semantic_import_families():
         for spec in family.foreign_keys:
             if (
                 spec.target_family in semantic_names

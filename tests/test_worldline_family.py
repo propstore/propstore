@@ -17,7 +17,6 @@ from propstore.families.registry import (
     PROPSTORE_FAMILY_REGISTRY,
     PropstoreFamily,
     WorldlineRef,
-    registered_family_names,
 )
 from propstore.repository import Repository
 from propstore.world.types import Environment, RenderPolicy, ResolutionStrategy
@@ -49,7 +48,7 @@ def _definition(name: str) -> WorldlineDefinition:
 
 
 def test_worldline_family_is_registered() -> None:
-    assert "worldlines" in registered_family_names()
+    assert "worldlines" in PROPSTORE_FAMILY_REGISTRY.names()
     family = PROPSTORE_FAMILY_REGISTRY.by_name("worldlines")
     assert family.name == "worldlines"
 
@@ -58,7 +57,7 @@ def test_worldline_enum_matches_registry_names() -> None:
     # Mirrors the drift gate in tests/test_semantic_passes.py: adding a charter
     # without its enum member (or vice versa) must fail loudly.
     assert {member.value for member in PropstoreFamily} == set(
-        registered_family_names()
+        PROPSTORE_FAMILY_REGISTRY.names()
     )
     assert PropstoreFamily.WORLDLINES.value == "worldlines"
 

@@ -16,7 +16,7 @@ from quire.git_store import GitStore
 from quire.sqlalchemy_store import readonly_session
 from sqlalchemy import select
 
-from propstore.families.registry import registered_family_names
+from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY
 from propstore.families.temporal import (
     DescriptionTemporalAnchorDoc,
     HappensBeforeEdgeDoc,
@@ -28,7 +28,7 @@ from propstore.provenance import ProvenanceStatus
 
 
 def test_families_are_registered() -> None:
-    names = set(registered_family_names())
+    names = set(PROPSTORE_FAMILY_REGISTRY.names())
     assert {
         "temporal_frame",
         "description_temporal_anchor",

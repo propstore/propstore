@@ -20,19 +20,21 @@ from quire.contracts import ContractManifest, check_contract_manifest
 from propstore.contracts import (
     CONTRACT_MANIFEST_PATH,
     build_propstore_contract_manifest,
-    iter_artifact_families,
     iter_claim_type_contracts,
-    iter_semantic_foreign_keys,
     iter_semantic_pass_classes,
     iter_semantic_stage_contracts,
+)
+from propstore.families.registry import (
+    PROPSTORE_FAMILY_REGISTRY,
+    semantic_foreign_keys,
 )
 
 
 def test_every_artifact_family_has_contract_version() -> None:
     missing = [
-        family.name
-        for family in iter_artifact_families()
-        if family.contract_version is None
+        family.artifact_family.name
+        for family in PROPSTORE_FAMILY_REGISTRY.families
+        if family.artifact_family.contract_version is None
     ]
 
     assert missing == []
@@ -41,7 +43,7 @@ def test_every_artifact_family_has_contract_version() -> None:
 def test_every_semantic_foreign_key_has_contract_version() -> None:
     missing = [
         spec.name
-        for spec in iter_semantic_foreign_keys()
+        for spec in semantic_foreign_keys()
         if spec.contract_version is None
     ]
 
