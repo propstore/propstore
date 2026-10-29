@@ -39,7 +39,9 @@ class ClaimProvenanceIndex:
                 memberships.setdefault(claim_id, []).append(bundle)
         return cls(
             tuple(
-                BundledClaim(claim_id, tuple(sorted(bundles, key=lambda b: b.artifact_id)))
+                BundledClaim(
+                    claim_id, tuple(sorted(bundles, key=lambda b: b.artifact_id))
+                )
                 for claim_id, bundles in sorted(memberships.items())
             )
         )

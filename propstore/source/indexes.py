@@ -81,7 +81,7 @@ class SourceIndex:
             claims: list[
                 PromotedSourceClaim | MissingPromotedClaim | UnidentifiedSourceClaim
             ] = []
-            for source_claim in (() if source_claims is None else source_claims.claims):
+            for source_claim in () if source_claims is None else source_claims.claims:
                 artifact_id = source_claim.artifact_id
                 if not artifact_id:
                     claims.append(UnidentifiedSourceClaim(source_claim))

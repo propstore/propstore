@@ -67,3 +67,6 @@ Parent publishes this branch and checks PR CI. Issue #208 consumes the membershi
 API and deletes the existing ad hoc single-source collapse and synthetic CEL;
 that change is explicitly outside this branch. No issue, PR or branch was
 published by this worker.
+
+PR #375 full hosted tests, typing and import contracts passed. Parent applied
+the exact reported Ruff import/format corrections and is following updated CI.

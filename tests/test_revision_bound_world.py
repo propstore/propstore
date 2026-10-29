@@ -33,8 +33,8 @@ def _operator_bound() -> BoundWorld:
 def _atom_id_for_claim(bound: BoundWorld, claim_id: str) -> str:
     for atom in bound.revision_base().atoms:
         if any(
-            str(claim.claim_id) == claim_id
-            for claim in getattr(atom, "source_claims", ())
+            str(witness.claim.claim_id) == claim_id
+            for witness in getattr(atom, "source_support", ())
         ):
             return atom.atom_id
     raise AssertionError(f"missing projected claim {claim_id}")
@@ -63,8 +63,8 @@ def test_compute_entrenchment_allows_explicit_overrides_to_outrank_default_suppo
         atom.atom_id
         for atom in base.atoms
         if any(
-            str(claim.claim_id) == "claim_override_target"
-            for claim in atom.source_claims
+            str(witness.claim.claim_id) == "claim_override_target"
+            for witness in atom.source_support
         )
     )
 

@@ -9,6 +9,7 @@ from msgspec.structs import replace
 from msgspec.structs import replace as replace_struct
 
 from propstore.core.active_claims import ActiveClaim
+from propstore.core.labels import Label
 from propstore.families.claims import ClaimType
 from propstore.support_revision.entrenchment import EntrenchmentReport
 from propstore.support_revision.explanation_types import EntrenchmentReason
@@ -16,7 +17,11 @@ from propstore.support_revision.iterated import iterated_revise, make_epistemic_
 from propstore.support_revision.operator_inputs import (
     IteratedReviseInput,
 )
-from propstore.support_revision.state import BeliefBase, EpistemicState
+from propstore.support_revision.state import (
+    BeliefBase,
+    EpistemicState,
+    SourceSupportWitness,
+)
 from tests.support_revision.revision_assertion_helpers import make_assertion_atom
 from tests.test_revision_iterated import _history_sensitive_base
 
@@ -163,7 +168,18 @@ def _changed_semantic_state(state: EpistemicState, legacy_id: str) -> EpistemicS
             concept_id="concept_legacy",
             source_paper="paper:updated",
         )
-        changed_atoms.append(replace_struct(atom, source_claims=(source_claim,)))
+        changed_atoms.append(
+            replace_struct(
+                atom,
+                source_support=(
+                    SourceSupportWitness(
+                        claim=source_claim,
+                        label=Label.empty(),
+                        current_label=Label.empty(),
+                    ),
+                ),
+            )
+        )
     changed_base = replace_struct(
         state.base,
         atoms=tuple(changed_atoms),

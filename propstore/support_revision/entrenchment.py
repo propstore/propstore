@@ -14,6 +14,7 @@ from propstore.support_revision.explanation_types import (
     coerce_override_priority,
 )
 from propstore.support_revision.state import (
+    AssertionAtom,
     BeliefAtom,
     BeliefBase,
     is_assertion_atom,
@@ -68,7 +69,13 @@ def compute_entrenchment(
     for atom in base.atoms:
         _, override_key, override = _match_override(atom, base, override_map)
 
-        support_count = len(atom.label.environments) if atom.label is not None else 0
+        support_count = (
+            len(base.support_sets.get(atom.atom_id, ()))
+            if isinstance(atom, AssertionAtom)
+            else len(atom.label.environments)
+            if atom.label is not None
+            else 0
+        )
 
         reasons[atom.atom_id] = EntrenchmentReason(
             override_priority=(
@@ -166,8 +173,10 @@ def _override_source_ids(atom: BeliefAtom) -> tuple[str, ...]:
         return ()
 
     values: list[str] = []
-    for claim in atom.source_claims:
-        source_paper = claim.source_paper
+    for witness in atom.source_support:
+        if not witness.active:
+            continue
+        source_paper = witness.claim.source_paper
         if source_paper:
             values.append(source_paper)
     return tuple(dict.fromkeys(values))

@@ -7,6 +7,7 @@ from msgspec.structs import replace
 
 from propstore.core.anytime import EnumerationExceeded
 from propstore.core.id_types import AssumptionId
+from propstore.core.labels import Label, environment_assumption_ids
 from propstore.support_revision.belief_set_adapter import (
     FormalDecision,
     selected_world_atom_ids,
@@ -92,7 +93,10 @@ def realize_formal_decision(
         accepted_atom_ids=stabilized.accepted_atom_ids,
         rejected_atom_ids=stabilized.rejected_atom_ids,
         incision_set=incision_set,
-        source_claim_ids=_source_claim_ids(atoms_by_id, stabilized.accepted_atom_ids),
+        source_claim_ids=_source_claim_ids(
+            {atom.atom_id: atom for atom in stabilized.revised_base.atoms},
+            stabilized.accepted_atom_ids,
+        ),
         reasons=explanation,
     )
     return RevisionResult(
@@ -248,6 +252,7 @@ def stabilize_belief_base(
         rebuilt = _rebuild_base(
             active_base,
             [atom for atom in active_base.atoms if atom.atom_id in accepted_set],
+            incision_set=incised,
         )
         if tuple(atom.atom_id for atom in rebuilt.atoms) == tuple(
             atom.atom_id for atom in active_base.atoms
@@ -344,7 +349,11 @@ def _source_claim_ids(
         atom = atoms_by_id.get(atom_id)
         if atom is None or not is_assertion_atom(atom):
             continue
-        claim_ids.extend(str(claim.claim_id) for claim in atom.source_claims)
+        claim_ids.extend(
+            str(witness.claim.claim_id)
+            for witness in atom.source_support
+            if witness.active
+        )
     return tuple(dict.fromkeys(claim_ids))
 
 
@@ -359,13 +368,52 @@ def _has_surviving_support(
     )
 
 
-def _rebuild_base(base: BeliefBase, atoms: Sequence[BeliefAtom]) -> BeliefBase:
+def _rebuild_base(
+    base: BeliefBase,
+    atoms: Sequence[BeliefAtom],
+    *,
+    incision_set: Sequence[str] = (),
+) -> BeliefBase:
+    incised = set(incision_set)
+    current_atoms = tuple(
+        replace(
+            atom,
+            source_support=tuple(
+                replace(
+                    witness,
+                    current_label=(
+                        None
+                        if witness.current_label is None
+                        else Label(
+                            tuple(
+                                environment
+                                for environment in witness.current_label.environments
+                                if not incised.intersection(
+                                    environment_assumption_ids(environment)
+                                )
+                            )
+                        )
+                    ),
+                )
+                for witness in atom.source_support
+            ),
+        )
+        if is_assertion_atom(atom)
+        else atom
+        for atom in atoms
+    )
     accepted_ids = {atom.atom_id for atom in atoms}
+    support_sets = {
+        atom_id: tuple(
+            support for support in alternatives if not incised.intersection(support)
+        )
+        for atom_id, alternatives in base.support_sets.items()
+        if atom_id in accepted_ids
+    }
     supporting_assumption_ids = {
         str(assumption_id)
-        for atom_id, support_sets in base.support_sets.items()
-        if atom_id in accepted_ids
-        for support_set in support_sets
+        for alternatives in support_sets.values()
+        for support_set in alternatives
         for assumption_id in support_set
     }
     assumptions = tuple(
@@ -375,19 +423,15 @@ def _rebuild_base(base: BeliefBase, atoms: Sequence[BeliefAtom]) -> BeliefBase:
         or assumption.assumption_id in accepted_ids
         or assumption.assumption_id in supporting_assumption_ids
     )
-    support_sets = {
-        atom_id: support_sets
-        for atom_id, support_sets in base.support_sets.items()
-        if atom_id in accepted_ids
-    }
     essential_support = {
-        atom_id: support
-        for atom_id, support in base.essential_support.items()
-        if atom_id in accepted_ids
+        atom_id: tuple(sorted(set(alternatives[0]).intersection(*alternatives[1:])))
+        if alternatives
+        else ()
+        for atom_id, alternatives in support_sets.items()
     }
     return replace(
         base,
-        atoms=tuple(atoms),
+        atoms=current_atoms,
         assumptions=assumptions,
         support_sets=support_sets,
         essential_support=essential_support,

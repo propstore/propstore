@@ -73,7 +73,6 @@ from propstore.repository import Repository
 from propstore.source_trust_argumentation import calibrate_source_trust
 
 from .claim_concepts import build_promoted_claim, source_concept_ref_requires_mapping
-from .indexes import SourceIndex
 from .common import (
     load_source_claims_document,
     load_source_concepts_document,
@@ -87,6 +86,7 @@ from .common import (
     source_paper_slug,
     utc_now,
 )
+from .indexes import SourceIndex
 from .reference_indexes import primary_claim_index as build_primary_claim_index
 from .reference_indexes import resolve_source_or_primary_claim_id
 from .reference_indexes import source_claim_index as build_source_claim_index
