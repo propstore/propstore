@@ -1,7 +1,7 @@
 """Typed literal identity objects for the ASPIC+ bridge.
 
 A propositional literal in the bridge is identified by *structure*, not by a
-serialized UI string. The three key kinds below give one canonical spelling for
+serialized UI string. The two key kinds below give one canonical spelling for
 each way a claim or grounded atom becomes an ASPIC+ ``Literal``, so the bridge
 interns literals deterministically and never collapses two distinct propositions
 that happen to share a display name.
@@ -33,13 +33,6 @@ REPOSITORY_ROOT_CONTEXT_ID = to_context_id("propstore:context:root")
 
 
 @dataclass(frozen=True)
-class ClaimLiteralKey:
-    """Identity key for a claim-backed propositional literal."""
-
-    claim_id: str
-
-
-@dataclass(frozen=True)
 class IstLiteralKey:
     """Identity key for a context-scoped ``ist(c, p)`` proposition literal."""
 
@@ -65,7 +58,7 @@ class GroundLiteralKey:
     negated: bool
 
 
-LiteralKey: TypeAlias = ClaimLiteralKey | IstLiteralKey | GroundLiteralKey
+LiteralKey: TypeAlias = IstLiteralKey | GroundLiteralKey
 
 
 def claim_key(
@@ -93,7 +86,6 @@ def ground_key(atom: GroundAtom, negated: bool) -> GroundLiteralKey:
 
 __all__ = [
     "REPOSITORY_ROOT_CONTEXT_ID",
-    "ClaimLiteralKey",
     "GroundLiteralKey",
     "IstLiteralKey",
     "LiteralKey",
