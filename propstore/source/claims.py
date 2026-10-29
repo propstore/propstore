@@ -20,14 +20,16 @@ branch with provenance; there is no truth-gate and no render-time filtering here
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
 import msgspec
-from condition_ir import ConceptInfo, KindType, check_cel_expression
+from condition_ir import ConceptInfo, KindType
 from quire.documents import decode_document_path
 
 from propstore.canonical_namespaces import assert_namespace_not_reserved
+from propstore.cel_validation import CelCheckResult, check_cel_condition
 from propstore.claim_contracts import validate_claim_value_fields
 from propstore.core.scalars import ScalarValue
 from propstore.families.claims import ClaimType
@@ -67,6 +69,24 @@ from .common import (
 )
 
 _CANONICAL_CONCEPT_PREFIXES = ("ps:concept:", "tag:")
+
+
+@dataclass(frozen=True)
+class SourceCelCheck:
+    artifact_id: str
+    index: int
+    result: CelCheckResult
+    field: str = "conditions"
+
+
+class SourceCelValidationError(ValueError):
+    def __init__(self, checks: tuple[SourceCelCheck, ...]) -> None:
+        self.checks = checks
+        super().__init__("; ".join(
+            f"claim {check.artifact_id!r} has an invalid CEL condition "
+            f"at {check.field}[{check.index}]: {item}"
+            for check in checks for item in check.result.diagnostics
+        ))
 
 
 def coerce_claim_type(value: object) -> ClaimType:
@@ -203,18 +223,16 @@ def validate_source_claim_cel_expressions(
 
     if not registry:
         return registry
+    checks: list[SourceCelCheck] = []
     for claim in data.claims:
         if not claim.conditions:
             continue
         label = claim.source_local_id or claim.id or "<unnamed>"
-        for condition in claim.conditions:
-            errors = check_cel_expression(condition, registry)
-            if errors:
-                detail = "; ".join(str(error) for error in errors)
-                raise ValueError(
-                    f"claim {label!r} has an invalid CEL condition "
-                    f"{condition!r}: {detail}"
-                )
+        for index, condition in enumerate(claim.conditions):
+            result = check_cel_condition(condition, registry)
+            checks.append(SourceCelCheck(artifact_id=label, index=index, result=result))
+    if any(check.result.errors for check in checks):
+        raise SourceCelValidationError(tuple(checks))
     return registry
 
 

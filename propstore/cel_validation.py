@@ -1,8 +1,9 @@
-"""CEL identifier walking for the compiler's structural-concept invariant."""
+"""Generic severity-aware CEL checking and structural identifier traversal."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from cel_parser.ast import (
@@ -17,10 +18,38 @@ from cel_parser.ast import (
     Select,
 )
 from cel_parser.parser import parse
-from condition_ir import KindType
+from condition_ir import (
+    CelError,
+    CheckedCondition,
+    KindType,
+    check_cel_expression,
+    check_condition_ir,
+)
 
 if TYPE_CHECKING:
     from condition_ir import ConceptInfo
+
+
+@dataclass(frozen=True)
+class CelCheckResult:
+    checked: CheckedCondition | None
+    diagnostics: tuple[CelError, ...]
+
+    @property
+    def errors(self) -> tuple[CelError, ...]:
+        return tuple(item for item in self.diagnostics if not item.is_warning)
+
+
+def check_cel_condition(
+    expression: str, registry: Mapping[str, ConceptInfo]
+) -> CelCheckResult:
+    """Retain substrate diagnostics and lower only accepted expressions."""
+    diagnostics = tuple(check_cel_expression(expression, registry))
+    if any(not item.is_warning for item in diagnostics):
+        return CelCheckResult(checked=None, diagnostics=diagnostics)
+    return CelCheckResult(
+        checked=check_condition_ir(expression, registry), diagnostics=diagnostics
+    )
 
 
 def _collect_identifiers(node: Expr, names: set[str]) -> None:
@@ -99,6 +128,8 @@ def structural_concepts_in_expression(
 
 
 __all__ = [
+    "CelCheckResult",
+    "check_cel_condition",
     "iter_cel_identifiers",
     "structural_concepts_in_expression",
 ]

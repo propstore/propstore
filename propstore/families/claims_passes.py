@@ -85,6 +85,7 @@ def _error(
         filename=loaded.filename,
         artifact_id=loaded.claim_id,
         pass_name="claim.check",
+        field=field,
     )
 
 
@@ -105,11 +106,18 @@ def _check_one(
     condition_report = check_claim_conditions(claim, context.condition_registry)
     for condition_problem in condition_report.diagnostics:
         diagnostics.append(
-            _error(
-                "claim.condition",
-                f"{condition_problem.condition!r}: {condition_problem.message}",
-                loaded,
-                "conditions",
+            PassDiagnostic(
+                level="warning" if condition_problem.diagnostic.is_warning else "error",
+                code="claim.condition",
+                message=condition_problem.message,
+                family=_FAMILY,
+                stage=ClaimStage.CHECKED,
+                filename=loaded.filename,
+                artifact_id=loaded.claim_id,
+                pass_name="claim.check",
+                field="conditions",
+                index=condition_problem.index,
+                cel_diagnostic=condition_problem.diagnostic,
             )
         )
 
@@ -134,7 +142,7 @@ def _check_one(
     )
     return CheckedClaim(
         claim=normalized,
-        blocked=bool(diagnostics),
+        blocked=any(item.is_error for item in diagnostics),
         diagnostics=tuple(diagnostics),
     )
 

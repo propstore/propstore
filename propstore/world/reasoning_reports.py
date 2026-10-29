@@ -164,6 +164,9 @@ class WorldDiagnosticLine:
     target: str
     diagnostic_kind: str
     message: str
+    severity: str = "error"
+    file: str | None = None
+    detail_json: str | None = None
 
 
 @dataclass(frozen=True)
@@ -200,6 +203,9 @@ def query_world_concept(
             target=str(diagnostic.claim_id or diagnostic.source_ref or "?"),
             diagnostic_kind=str(diagnostic.diagnostic_kind),
             message=str(diagnostic.message),
+            severity=diagnostic.severity,
+            file=diagnostic.file,
+            detail_json=diagnostic.detail_json,
         )
         for diagnostic in world.build_diagnostics(request.policy)
     )
