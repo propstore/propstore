@@ -8,19 +8,12 @@ from condition_ir import ConceptInfo, KindType
 from propstore.compiler.context import CompilationContext
 from propstore.compiler.ir import ClaimCheckedBundle
 from propstore.conflict_detector import ConflictClass, detect_conflicts
-from propstore.core.lemon import (
-    LexicalEntry,
-    LexicalForm,
-    LexicalSense,
-    OntologyReference,
-)
 from propstore.families.claim_provenance import (
     BundledClaim,
     ClaimProvenanceIndex,
     UnbundledClaim,
 )
 from propstore.families.claims import Claim, ClaimStatus, ClaimType
-from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.families.forms import FormDefinition
 from propstore.families.micropublications import Micropublication
@@ -29,7 +22,8 @@ from propstore.provenance import Provenance, ProvenanceStatus
 from propstore.repository import Repository
 from propstore.world import RenderPolicy, WorldQuery
 from propstore.world.bound import recomputed_conflicts
-from tests.checked_claim_helpers import check_claims, concept
+from tests.canonical_claim_fixtures import concept_with_form
+from tests.checked_claim_helpers import check_claims
 from tests.merge_commit_helpers import author_param_claim
 
 
@@ -52,7 +46,7 @@ def _claims(
                 ("b", 300.0, conditions_b),
             )
         ),
-        (concept("temperature"),),
+        (concept_with_form("temperature", "temperature", "quantity"),),
         condition_registry={"x": ConceptInfo("x", "x", KindType.QUANTITY)},
     )
 
@@ -157,18 +151,7 @@ def test_build_world_and_merge_read_actual_raw_membership(tmp_path: Path) -> Non
     )
     repo.families.concept.save(
         "temperature",
-        Concept(
-            concept_id="temperature",
-            canonical_name="temperature",
-            lexical_entry=LexicalEntry(
-                identifier="entry:temperature",
-                canonical_form=LexicalForm(written_rep="temperature", language="en"),
-                senses=(
-                    LexicalSense(reference=OntologyReference(uri="u:temperature")),
-                ),
-                physical_dimension_form="temperature",
-            ),
-        ),
+        concept_with_form("temperature", "temperature", "temperature"),
         message="temperature concept",
     )
     repo.families.context.save(

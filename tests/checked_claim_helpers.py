@@ -7,12 +7,6 @@ from condition_ir import ConceptInfo, KindType
 
 from propstore.compiler.context import CompilationContext, build_compilation_context
 from propstore.compiler.ir import ClaimCheckedBundle
-from propstore.core.lemon import (
-    LexicalEntry,
-    LexicalForm,
-    LexicalSense,
-    OntologyReference,
-)
 from propstore.dimensions import UnitConversion
 from propstore.families.claims import Claim
 from propstore.families.claims_passes import ClaimFiles, LoadedClaim, run_claim_pipeline
@@ -50,21 +44,6 @@ def frequency_form() -> FormDefinition:
         conversions={
             "kHz": UnitConversion(unit="kHz", type="multiplicative", multiplier=1000.0)
         },
-    )
-
-
-def concept(concept_id: str, form: str = "quantity") -> Concept:
-    return Concept(
-        concept_id=concept_id,
-        canonical_name=concept_id,
-        lexical_entry=LexicalEntry(
-            identifier=f"entry:{concept_id}",
-            canonical_form=LexicalForm(written_rep=concept_id, language="en"),
-            senses=(
-                LexicalSense(reference=OntologyReference(uri=f"urn:{concept_id}")),
-            ),
-            physical_dimension_form=form,
-        ),
     )
 
 
