@@ -11,17 +11,14 @@ batch error, and an *unexpected* error (storage ``OperationalError`` or provider
 from __future__ import annotations
 
 import sqlite3
+import struct
 from collections.abc import Mapping, Sequence
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from propstore.core.embeddings import EmbeddingEntity
-from propstore.heuristic.embed import (
-    deserialize_float32,
-    embed_entities,
-    serialize_float32,
-)
+from propstore.heuristic.embed import embed_entities
 from propstore.heuristic.embedding_identity import EmbeddingModelIdentity
 
 
@@ -73,10 +70,6 @@ def _litellm_returning(vectors: list[list[float]]) -> MagicMock:
     return litellm
 
 
-def test_float32_round_trip() -> None:
-    assert deserialize_float32(serialize_float32([1.0, 2.0, 3.0])) == [1.0, 2.0, 3.0]
-
-
 def test_embeds_entity_and_prepares_model() -> None:
     store = _MemoryStore([EmbeddingEntity("c1", 7, "h1", "claim summary")])
     litellm = _litellm_returning([[1.0, 2.0]])
@@ -92,7 +85,7 @@ def test_embeds_entity_and_prepares_model() -> None:
     assert len(store.saved) == 1
     _identity, entity, blob, _at = store.saved[0]
     assert entity.entity_id == "c1"
-    assert deserialize_float32(blob) == [1.0, 2.0]
+    assert blob == struct.pack("2f", 1.0, 2.0)
 
 
 def test_skips_unchanged_content_hash() -> None:
