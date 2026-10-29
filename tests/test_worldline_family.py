@@ -13,6 +13,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+from quire.documents import DocumentSchemaError
+
 from propstore.families.registry import (
     PROPSTORE_FAMILY_REGISTRY,
     PropstoreFamily,
@@ -135,9 +138,16 @@ def test_worldline_is_mutable_on_the_current_branch(tmp_path: Path) -> None:
     repo.families.worldlines.save(WorldlineRef("wl"), _definition("wl"), message="v1")
 
     updated = _definition("wl")
-    updated.created = "2026-06-30"
+    updated.targets = ["Distance"]
     repo.families.worldlines.save(WorldlineRef("wl"), updated, message="v2")
 
     loaded = repo.families.worldlines.load(WorldlineRef("wl"))
     assert loaded is not None
-    assert loaded.created == "2026-06-30"
+    assert loaded.targets == ["Distance"]
+
+
+def test_worldline_rejects_removed_created_field() -> None:
+    codec = WorldlineDefinition.__charter__.document_codec()
+    payload = b"name: wl\nid: wl\ntargets: [Speed]\ncreated: arbitrary\n"
+    with pytest.raises(DocumentSchemaError, match="created"):
+        codec.decode(payload, WorldlineDefinition, source="worldlines/wl.yaml")

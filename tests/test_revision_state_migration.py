@@ -12,7 +12,11 @@ from pathlib import Path
 
 import pytest
 from msgspec.structs import replace
-from quire.documents import convert_document_value, to_document_builtins
+from quire.documents import (
+    DocumentSchemaError,
+    convert_document_value,
+    to_document_builtins,
+)
 
 from propstore.support_revision.history import (
     EpistemicSnapshot,
@@ -42,7 +46,7 @@ def _journal(data) -> TransitionJournal:
     )
 
 
-def test_prechange_snapshot_journal_and_worldline_remain_readable() -> None:
+def test_prechange_snapshot_and_journal_remain_readable() -> None:
     data = _fixture()
     assert data["producer_commit"] == "4b865edf992f73ff7fe99f3ab7b1545e8b6bcadc"
     for name in ("initial_snapshot", "final_snapshot"):
@@ -54,14 +58,12 @@ def test_prechange_snapshot_journal_and_worldline_remain_readable() -> None:
     journal = _journal(data)
     assert journal.check_chain_integrity().ok
     assert to_document_builtins(journal) == data["journal"]
-    worldline = convert_document_value(
-        data["worldline"], WorldlineDefinition, source="frozen worldline"
-    )
-    assert worldline.journal == journal
-    assert worldline.results is not None and worldline.results.revision is not None
-    assert worldline.results.revision.state == EpistemicSnapshot.from_mapping(
-        data["final_snapshot"]
-    )
+    # The snapshot and journal contracts remain supported. The surrounding
+    # worldline carries the removed creation field and must fail its strict schema.
+    with pytest.raises(DocumentSchemaError, match="created"):
+        convert_document_value(
+            data["worldline"], WorldlineDefinition, source="frozen worldline"
+        )
 
 
 def test_complete_original_journal_migrates_with_new_outcomes_and_hashes() -> None:
