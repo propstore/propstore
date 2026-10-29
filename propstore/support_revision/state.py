@@ -47,11 +47,7 @@ class SourceSupportWitness(
 
     @property
     def active(self) -> bool:
-        # An absent original label denotes an unsupported formal input, not
-        # evidence borrowed from another source of the same assertion.
-        return self.label is None or (
-            self.current_label is not None and bool(self.current_label.environments)
-        )
+        return self.current_label is not None and bool(self.current_label.environments)
 
 
 class AssertionAtom(
@@ -69,13 +65,20 @@ class AssertionAtom(
         expected_atom_id = str(self.assertion.assertion_id)
         if self.atom_id != expected_atom_id:
             raise ValueError("assertion atom id does not match situated assertion")
-        object.__setattr__(self, "source_support", tuple(sorted(
-            self.source_support, key=lambda witness: str(witness.claim.claim_id)
-        )))
+        object.__setattr__(
+            self,
+            "source_support",
+            tuple(
+                sorted(
+                    self.source_support, key=lambda witness: str(witness.claim.claim_id)
+                )
+            ),
+        )
 
     @property
     def assertion_id(self) -> AssertionId:
         return to_assertion_id(self.assertion.assertion_id)
+
 
 class AssumptionAtom(
     msgspec.Struct,

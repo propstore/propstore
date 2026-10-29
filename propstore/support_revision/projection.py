@@ -35,7 +35,10 @@ from propstore.core.id_types import AssumptionId
 from propstore.core.labels import SupportQuality, environment_assumption_ids
 from propstore.core.relations import RelationConceptRef, RoleBinding, RoleBindingSet
 from propstore.support_revision.state import (
-    AssertionAtom, BeliefBase, RevisionScope, SourceSupportWitness,
+    AssertionAtom,
+    BeliefBase,
+    RevisionScope,
+    SourceSupportWitness,
 )
 
 if TYPE_CHECKING:
@@ -87,7 +90,6 @@ def project_belief_base(
     atoms_by_id: dict[str, AssertionAtom] = {}
     supporting_assumption_ids: set[AssumptionId] = set()
     support_sets: dict[str, set[tuple[AssumptionId, ...]]] = {}
-    essential_support: dict[str, set[AssumptionId]] = {}
     for claim in sorted(bound.active_claims(None), key=lambda row: str(row.claim_id)):
         label, quality = bound.claim_support(claim)
         if quality is not SupportQuality.EXACT:
@@ -109,25 +111,25 @@ def project_belief_base(
         else:
             support_sets.setdefault(atom_id, set())
         essential = bound.claim_essential_support(str(claim.claim_id))
-        essential_support.setdefault(atom_id, set()).update(
-            environment_assumption_ids(essential) if essential is not None else ()
-        )
         existing = atoms_by_id.get(atom_id)
         atoms_by_id[atom_id] = AssertionAtom(
             atom_id=atom_id,
             assertion=assertion,
             source_support=(
                 (() if existing is None else existing.source_support)
-                + (SourceSupportWitness(
-                    claim=claim,
-                    label=label,
-                    current_label=label,
-                    quality=quality,
-                    essential_support=(
-                        environment_assumption_ids(essential)
-                        if essential is not None else ()
+                + (
+                    SourceSupportWitness(
+                        claim=claim,
+                        label=label,
+                        current_label=label,
+                        quality=quality,
+                        essential_support=(
+                            environment_assumption_ids(essential)
+                            if essential is not None
+                            else ()
+                        ),
                     ),
-                ),)
+                )
             ),
         )
 
@@ -149,8 +151,12 @@ def project_belief_base(
             atom_id: tuple(sorted(support)) for atom_id, support in support_sets.items()
         },
         essential_support={
-            atom_id: tuple(sorted(support))
-            for atom_id, support in essential_support.items()
+            atom_id: tuple(
+                sorted(set(next(iter(alternatives))).intersection(*alternatives))
+            )
+            if alternatives
+            else ()
+            for atom_id, alternatives in support_sets.items()
         },
     )
 

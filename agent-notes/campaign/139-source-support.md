@@ -29,3 +29,14 @@ Complete focused regression validation and commit the slice. Parent owns publica
 - Migrated every existing support-revision constructor/oracle. Adapter remains absent.
 - Logged authored/migrated test run: 40 passed, one diff/apply regression failed. Raw probe showed current base.assumptions loses the incised x assumption, but dependency deltas omitted assumptions. Classified that edge as IO-boundary-only carrier and extended the existing dependency diff/apply owner to encode its current assumptions.
 - Next: rerun authored tests and add real replay/IC/worldline acceptance for distinct source evidence.
+
+## Iteration 2
+- First vertical slice committed on campaign/139-source-support; eight focused source-support tests pass after the diff repair.
+- Added production BoundWorld contraction, worldline journal capture/replay/repository persistence and IC selected-world tests with two disjoint sources sharing one assertion.
+- The existing owners perform these workflows directly; no new adapter or generic mechanism is needed.
+- Source contract verified: BoundWorld.claim_support returns EXACT only with a label; unconditional evidence is Label.empty(). Removed the unsupported absent-label active policy and made synthetic unconditional fixtures explicit.
+- ATMS essential_support is the intersection of compatible environments. Assertion essential evidence now intersects current alternatives; original per-source essential evidence remains unchanged. Current environments alone decide source survival, without a second stale essential veto.
+- Added repeated-incision and unconditional-label regressions. Integration run before these final refinements passed all 11 tests, including replay and repository persistence.
+- Final semantic run: 46 passed across the authored source-support file and migrated bound-world/history/worldline files; log logs/test-runs/source-support-139-final-20261028-234231.log.
+- Search gate: no source_claims or primary_source_claim remains in propstore/support_revision. The af_adapter remains deleted. Applied formatting through apply_patch; package typing and remaining full checks belong to parent PR CI.
+- No implementation prerequisite remains. Parent should inspect the local branch, publish it, read CI and handle normal merge/issue closure under existing campaign authority.

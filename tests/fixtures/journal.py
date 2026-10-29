@@ -24,6 +24,7 @@ from propstore.core.assertions.refs import (
     ProvenanceGraphRef,
 )
 from propstore.core.assertions.situated import SituatedAssertion
+from propstore.core.labels import Label
 from propstore.core.relations import (
     RelationConceptRef,
     RoleBinding,
@@ -44,6 +45,7 @@ from propstore.support_revision.state import (
     BeliefBase,
     EpistemicState,
     RevisionScope,
+    SourceSupportWitness,
 )
 
 _DEFAULT_POLICY: Mapping[str, str] = {
@@ -91,11 +93,14 @@ def make_assertion_atom(
         source_claim_ids = tuple(
             f"propstore:claim:test/{local}" for local in source_claim_local_ids
         )
-    from propstore.support_revision.state import SourceSupportWitness
-
-    source_support = tuple(SourceSupportWitness(
-        claim=ActiveClaim(claim_id=claim_id), label=None, current_label=None,
-    ) for claim_id in source_claim_ids)
+    source_support = tuple(
+        SourceSupportWitness(
+            claim=ActiveClaim(claim_id=claim_id),
+            label=Label.empty(),
+            current_label=Label.empty(),
+        )
+        for claim_id in source_claim_ids
+    )
     return AssertionAtom(
         atom_id=str(assertion.assertion_id),
         assertion=assertion,

@@ -382,26 +382,30 @@ def _rebuild_base(
                 replace(
                     witness,
                     current_label=(
-                        None if witness.current_label is None else Label(tuple(
-                            environment
-                            for environment in witness.current_label.environments
-                            if not incised.intersection(
-                                environment_assumption_ids(environment)
+                        None
+                        if witness.current_label is None
+                        else Label(
+                            tuple(
+                                environment
+                                for environment in witness.current_label.environments
+                                if not incised.intersection(
+                                    environment_assumption_ids(environment)
+                                )
                             )
-                            and not incised.intersection(witness.essential_support)
-                        ))
+                        )
                     ),
                 )
                 for witness in atom.source_support
             ),
-        ) if is_assertion_atom(atom) else atom
+        )
+        if is_assertion_atom(atom)
+        else atom
         for atom in atoms
     )
     accepted_ids = {atom.atom_id for atom in atoms}
     support_sets = {
         atom_id: tuple(
-            support for support in alternatives
-            if not incised.intersection(support)
+            support for support in alternatives if not incised.intersection(support)
         )
         for atom_id, alternatives in base.support_sets.items()
         if atom_id in accepted_ids
@@ -420,9 +424,10 @@ def _rebuild_base(
         or assumption.assumption_id in supporting_assumption_ids
     )
     essential_support = {
-        atom_id: support
-        for atom_id, support in base.essential_support.items()
-        if atom_id in accepted_ids
+        atom_id: tuple(sorted(set(alternatives[0]).intersection(*alternatives[1:])))
+        if alternatives
+        else ()
+        for atom_id, alternatives in support_sets.items()
     }
     return replace(
         base,

@@ -71,7 +71,9 @@ def compute_entrenchment(
         support_count = (
             len(base.support_sets.get(atom.atom_id, ()))
             if is_assertion_atom(atom)
-            else len(atom.label.environments) if atom.label is not None else 0
+            else len(atom.label.environments)
+            if atom.label is not None
+            else 0
         )
 
         reasons[atom.atom_id] = EntrenchmentReason(
