@@ -69,6 +69,7 @@ class ConflictClaim:
             variables=claim.variables,
         )
 
+
 class ConflictClass(Enum):
     COMPATIBLE = "COMPATIBLE"
     UNKNOWN = "UNKNOWN"
