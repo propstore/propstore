@@ -2,8 +2,8 @@
 
 ``csaf_to_projection`` maps the argumentation package's ``CSAF`` (built by
 ``build_bridge_csaf``) onto the propstore-facing :class:`StructuredProjection`:
-one :class:`StructuredArgument` per CSAF argument, carrying its projected backend
-atom, source-assertion provenance, support label/quality, and the Dung framework
+one :class:`StructuredArgument` per CSAF argument, carrying its construction
+fields and support label/quality, and the Dung framework
 over argument ids. The CSAF is the package's own type, used directly (CLAUDE.md
 substrate boundary): there is no propstore mirror and no coercer.
 
@@ -14,7 +14,6 @@ CSAF→projection map.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import statistics
 from collections.abc import Mapping, Sequence
@@ -38,10 +37,7 @@ from propstore.core.labels import Label, SupportMetadata, SupportQuality
 from propstore.core.literal_keys import IstLiteralKey
 from propstore.grounding.bundle import GroundedRulesBundle
 from propstore.preference import claim_strength
-from propstore.provenance import ProjectionFrameProvenanceRecord
 from propstore.structured_projection import (
-    ProjectionAtom,
-    ProjectionLossWitness,
     StructuredArgument,
     StructuredProjection,
 )
@@ -88,48 +84,6 @@ def _projection_backend_atom_id(literal: Literal) -> str:
         },
         sort_keys=True,
         separators=(",", ":"),
-    )
-
-
-def _source_assertion_ids_for_claim(claim: ActiveClaim | None) -> tuple[str, ...]:
-    return () if claim is None else claim.source_assertion_ids
-
-
-def _projection_atom_for_literal(
-    literal: Literal,
-    *,
-    claim: ActiveClaim | None,
-) -> ProjectionAtom:
-    backend_atom_id = _projection_backend_atom_id(literal)
-    source_assertion_ids = _source_assertion_ids_for_claim(claim)
-    loss = None
-    if not source_assertion_ids:
-        loss = ProjectionLossWitness(
-            backend="aspic",
-            kind="missing_source_assertion",
-            reason=(
-                "ASPIC literal projection has no source situated assertion id "
-                "to attribute the backend atom"
-            ),
-            backend_atom_id=backend_atom_id,
-        )
-    provenance = None
-    if source_assertion_ids:
-        frame_digest = hashlib.sha256(backend_atom_id.encode("utf-8")).hexdigest()
-        provenance = ProjectionFrameProvenanceRecord(
-            frame_id=f"urn:propstore:projection:aspic:{frame_digest}",
-            backend="aspic",
-            projected_at="projection-boundary-v2",
-            source_assertion_ids=source_assertion_ids,
-        )
-    return ProjectionAtom(
-        backend="aspic",
-        backend_atom=literal.atom,
-        backend_atom_id=backend_atom_id,
-        negated=literal.negated,
-        source_assertion_ids=source_assertion_ids,
-        provenance=provenance,
-        loss=loss,
     )
 
 
@@ -261,7 +215,6 @@ def csaf_to_projection(
 
         projected = StructuredArgument(
             arg_id=arg_id,
-            projection=_projection_atom_for_literal(conclusion, claim=claim),
             claim_id=claim_id,
             conclusion_concept_id=(
                 None

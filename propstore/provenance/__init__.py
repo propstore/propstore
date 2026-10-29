@@ -36,7 +36,6 @@ from quire.notes import NotesRef, read_git_note, write_git_note
 
 from propstore.provenance._jsonld import JSONLD_CONTEXT as _CONTEXT
 from propstore.provenance._jsonld import URI_SCHEME_PREFIXES as _GRAPH_NAME_PREFIXES
-from propstore.provenance.records import ProjectionFrameProvenanceRecord
 
 PROVENANCE_NOTES_REF = b"refs/notes/provenance"
 PROVENANCE_NOTES = NotesRef("refs/notes/provenance")
@@ -312,7 +311,6 @@ def read_provenance_note(
 __all__ = [
     "PROVENANCE_NOTES",
     "PROVENANCE_NOTES_REF",
-    "ProjectionFrameProvenanceRecord",
     "Provenance",
     "ProvenanceStatus",
     "ProvenanceWitness",

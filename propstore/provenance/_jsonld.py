@@ -1,9 +1,7 @@
 """Single home for the provenance JSON-LD constants.
 
 The named-graph carrier (:mod:`propstore.provenance`) uses the JSON-LD
-``@context`` and shares the accepted URI scheme prefixes with the typed records
-(:mod:`propstore.provenance.records`). They live here so there is exactly one
-spelling of each (PLAN §12.6: no duplicated ``_CONTEXT`` / ``_URI_PREFIXES``).
+``@context`` and accepted URI scheme prefixes defined here.
 This module imports nothing from the package, so importing it never cycles.
 """
 
@@ -15,6 +13,5 @@ JSONLD_CONTEXT: dict[str, str] = {
     "swp": "http://www.w3.org/2004/03/trix/swp-2/",
 }
 
-# Schemes accepted for a provenance URI: a named graph id, a derived-from graph
-# pointer, and every record identifier must be a real URI under one of these.
+# Schemes accepted for a named graph id or derived-from graph pointer.
 URI_SCHEME_PREFIXES: tuple[str, ...] = ("urn:", "ni://", "http://", "https://")
