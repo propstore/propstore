@@ -22,7 +22,7 @@ from propstore.families.coreference import (
     derive_coreference_argument_id,
     stated_provenance,
 )
-from propstore.families.registry import registered_family_names
+from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY
 from propstore.provenance import ProvenanceStatus
 from propstore.repository import Repository
 
@@ -60,7 +60,7 @@ def test_branch_and_id_are_fixed_and_content_derived() -> None:
 
 
 def test_family_is_registered() -> None:
-    assert "proposal_coreference" in registered_family_names()
+    assert "proposal_coreference" in PROPSTORE_FAMILY_REGISTRY.names()
 
 
 def test_standalone_round_trip_and_sidecar_projects_every_rival(tmp_path: Path) -> None:

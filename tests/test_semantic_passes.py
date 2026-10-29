@@ -13,7 +13,7 @@ from enum import StrEnum
 
 import pytest
 
-from propstore.families.registry import PropstoreFamily, registered_family_names
+from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY, PropstoreFamily
 from propstore.semantic_passes.registry import PipelineRegistry, PipelineRegistryError
 from propstore.semantic_passes.runner import PipelineExecutionError, run_pipeline
 from propstore.semantic_passes.types import PassDiagnostic, PassResult
@@ -192,7 +192,7 @@ def test_propstore_family_matches_registry() -> None:
     # Drift gate: the typed family enum must stay in lockstep with the
     # charter-derived registry. Adding a charter without a member fails here.
     assert {member.value for member in PropstoreFamily} == set(
-        registered_family_names()
+        PROPSTORE_FAMILY_REGISTRY.names()
     )
     assert (
         PropstoreFamily.GROUNDING_BUILD_CONFIGURATION.value
