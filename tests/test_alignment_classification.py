@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from doxa import Opinion
 
@@ -12,8 +10,6 @@ from propstore.families.alignment import AlignmentArgument
 from propstore.source.alignment import (
     build_alignment_artifact,
     classify_relation,
-    load_alignment_artifact,
-    save_alignment_artifact,
 )
 
 
@@ -172,27 +168,3 @@ def test_build_alignment_artifact_records_symmetric_attack() -> None:
 def test_build_alignment_artifact_requires_an_argument() -> None:
     with pytest.raises(ValueError, match="at least one"):
         build_alignment_artifact([])
-
-
-def test_alignment_artifact_round_trips_through_codec(tmp_path: Path) -> None:
-    artifact = build_alignment_artifact(
-        [
-            _argument(
-                argument_id="left",
-                name="Mass",
-                definition="Quantity of matter.",
-                ontology_uri="https://example.org/ontology-a#mass",
-            ),
-            _argument(
-                argument_id="right",
-                name="Mass",
-                definition="Resistance to acceleration.",
-                ontology_uri="https://example.org/ontology-b#mass",
-                origin="repo-b",
-            ),
-        ]
-    )
-    path = tmp_path / "alignment.yaml"
-    save_alignment_artifact(artifact, path)
-
-    assert load_alignment_artifact(path) == artifact

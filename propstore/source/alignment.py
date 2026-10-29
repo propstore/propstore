@@ -12,7 +12,6 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Sequence
 from itertools import product
-from pathlib import Path
 
 import msgspec
 from argumentation.frameworks.partial_af import (
@@ -241,22 +240,6 @@ def align_repository_snapshots(
         message=f"Align imported repository snapshots {slug}",
     )
     return artifact
-
-
-def save_alignment_artifact(artifact: ConceptAlignmentArtifact, path: Path) -> None:
-    """Serialize an alignment artifact through its charter codec."""
-
-    path.write_bytes(
-        ConceptAlignmentArtifact.__charter__.document_codec().encode(artifact)
-    )
-
-
-def load_alignment_artifact(path: Path) -> ConceptAlignmentArtifact:
-    """Load an alignment artifact through its charter codec."""
-
-    return ConceptAlignmentArtifact.__charter__.document_codec().decode(
-        path.read_bytes(), ConceptAlignmentArtifact, source=str(path)
-    )
 
 
 def _load_repo_alignment(
