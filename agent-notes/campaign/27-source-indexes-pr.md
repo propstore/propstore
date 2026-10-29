@@ -11,3 +11,5 @@ It preserves the original typed bundle objects and adds no claim identity fields
 Four focused owner-path tests passed through the logged pytest wrapper. PR CI
 must supply the package typing and full suite results. The conflict consumer
 cutover and deletion of synthetic source conditions are tracked separately in #208.
+
+Fixes #27.
