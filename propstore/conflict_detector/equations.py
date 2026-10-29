@@ -12,7 +12,7 @@ import logging
 from collections.abc import Collection, Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from condition_ir import ConceptInfo, ConditionSolver
+from condition_ir import ConceptInfo, ConditionSolver, to_cel_exprs
 from eq_equiv import (
     EquationComparisonStatus,
     EquationFailure,
@@ -78,8 +78,8 @@ def detect_equation_conflicts(
                     claim_a.checked_conditions,
                     claim_b.checked_conditions,
                 )
-                conditions_a = list(checked_a.sources)
-                conditions_b = list(checked_b.sources)
+                conditions_a = list(to_cel_exprs(checked_a.sources))
+                conditions_b = list(to_cel_exprs(checked_b.sources))
                 value_a = claim_a.expression or claim_a.sympy or left.canonical
                 value_b = claim_b.expression or claim_b.sympy or right.canonical
                 if comparison.status == EquationComparisonStatus.UNKNOWN:

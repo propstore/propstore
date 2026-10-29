@@ -13,7 +13,7 @@ from propstore.families.claims import Claim
 
 from .collectors import collect_measurement_claims
 from .models import ConflictRecord
-from .quantitative import _compare_quantitative_groups
+from .quantitative import compare_quantitative_groups
 
 if TYPE_CHECKING:
     from propstore.context_lifting import LiftingSystem
@@ -29,13 +29,14 @@ def detect_measurement_conflicts(
     solver: ConditionSolver | None = None,
 ) -> list[ConflictRecord]:
     require_admitted_claims(claims, admissions)
-    return _compare_quantitative_groups(
+    return compare_quantitative_groups(
         (
             (concept_id, group)
             for (concept_id, _measure), group in collect_measurement_claims(
                 claims
             ).items()
         ),
+        admissions=admissions,
         solver=solver if solver is not None else ConditionSolver(cel_registry),
         provenance=provenance,
         lifting_system=lifting_system,

@@ -31,7 +31,12 @@ from dataclasses import dataclass
 from itertools import product
 from typing import TYPE_CHECKING
 
-from condition_ir import CelExpr, CheckedConditionSet, checked_condition_set
+from condition_ir import (
+    CelExpr,
+    CheckedConditionSet,
+    checked_condition_set,
+    to_cel_exprs,
+)
 from human_to_sympy import (
     NumericEvaluation,
     NumericEvaluationStatus,
@@ -92,7 +97,7 @@ class DerivedConflictValue:
 
     @property
     def conditions(self) -> tuple[CelExpr, ...]:
-        return self.checked_conditions.sources
+        return to_cel_exprs(self.checked_conditions.sources)
 
 
 class _Sentinel(enum.Enum):
@@ -183,7 +188,7 @@ def _filtered_edges(
 
 
 def _normalize_claim_value(
-    value: int | float,
+    value: float,
     claim: Claim,
 ) -> int | float:
     evidence = claim.quantitative
@@ -438,7 +443,7 @@ def _append_parameterization_record(
             claim_a_id=direct_claim.claim_id,
             claim_b_id=_representative_source_claim_id(derived_state.source_claim_ids),
             warning_class=warning_class,
-            conditions_a=list(direct_claim.checked_conditions.sources),
+            conditions_a=list(to_cel_exprs(direct_claim.checked_conditions.sources)),
             conditions_b=list(derived_state.conditions),
             value_a=value_str(
                 direct_claim.quantitative.point,

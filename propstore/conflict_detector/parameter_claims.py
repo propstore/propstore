@@ -13,7 +13,7 @@ from propstore.families.claims import Claim
 
 from .collectors import collect_parameter_claims
 from .models import ConflictRecord
-from .quantitative import _compare_quantitative_groups
+from .quantitative import compare_quantitative_groups
 
 if TYPE_CHECKING:
     from propstore.context_lifting import LiftingSystem
@@ -30,8 +30,9 @@ def detect_parameter_conflicts(
 ) -> tuple[list[ConflictRecord], dict[str, list[Claim]]]:
     require_admitted_claims(claims, admissions)
     groups = collect_parameter_claims(claims)
-    return _compare_quantitative_groups(
+    return compare_quantitative_groups(
         groups.items(),
+        admissions=admissions,
         solver=solver if solver is not None else ConditionSolver(cel_registry),
         provenance=provenance,
         lifting_system=lifting_system,

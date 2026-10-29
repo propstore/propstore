@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 from ast_equiv import AlgorithmParseError
 from ast_equiv import compare as ast_compare
-from condition_ir import ConceptInfo, ConditionSolver
+from condition_ir import ConceptInfo, ConditionSolver, to_cel_exprs
 
 from propstore.algorithm_bindings import AlgorithmBindingError, algorithm_bindings
 from propstore.families.claim_admission import ClaimAdmission, require_admitted_claims
@@ -83,8 +83,8 @@ def detect_algorithm_conflicts(
                     claim_a.checked_conditions,
                     claim_b.checked_conditions,
                 )
-                conditions_a = list(checked_a.sources)
-                conditions_b = list(checked_b.sources)
+                conditions_a = list(to_cel_exprs(checked_a.sources))
+                conditions_b = list(to_cel_exprs(checked_b.sources))
                 derivation_chain = (
                     f"similarity:{result.similarity:.3f} tier:{result.tier}"
                 )

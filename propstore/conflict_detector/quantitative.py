@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Collection, Iterable, Sequence
 from itertools import combinations
 from typing import TYPE_CHECKING
 
-from condition_ir import ConditionSolver
+from condition_ir import ConditionSolver, to_cel_exprs
 
+from propstore.families.claim_admission import ClaimAdmission, require_admitted_claims
 from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claim_quantitative import AbsentValue
 from propstore.families.claims import Claim
@@ -21,15 +22,21 @@ if TYPE_CHECKING:
     from propstore.context_lifting import LiftingSystem
 
 
-def _compare_quantitative_groups(
+def compare_quantitative_groups(
     groups: Iterable[tuple[str, Sequence[Claim]]],
     *,
+    admissions: Collection[ClaimAdmission],
     solver: ConditionSolver,
     provenance: ClaimProvenanceIndex,
     lifting_system: LiftingSystem | None,
 ) -> list[ConflictRecord]:
+    checked_groups = tuple(groups)
+    require_admitted_claims(
+        tuple(claim for _concept_id, group in checked_groups for claim in group),
+        admissions,
+    )
     records: list[ConflictRecord] = []
-    for concept_id, group in groups:
+    for concept_id, group in checked_groups:
         for claim_a, claim_b in combinations(group, 2):
             evidence_a, evidence_b = claim_a.quantitative, claim_b.quantitative
             if isinstance(evidence_a.value, AbsentValue) or isinstance(
@@ -48,8 +55,8 @@ def _compare_quantitative_groups(
                 claim_b.checked_conditions,
             )
             conditions_a, conditions_b = (
-                list(checked_a.sources),
-                list(checked_b.sources),
+                list(to_cel_exprs(checked_a.sources)),
+                list(to_cel_exprs(checked_b.sources)),
             )
             value_a, value_b = (
                 value_str(evidence_a.point, evidence_a),
