@@ -1,0 +1,198 @@
+"""Source attribution remains evidence through detector/build/world/merge paths."""
+
+from dataclasses import replace
+from pathlib import Path
+
+import pytest
+from condition_ir import ConceptInfo, KindType, to_cel_exprs
+
+from propstore.conflict_detector import ConflictClass, detect_conflicts
+from propstore.conflict_detector.models import ConflictClaim
+from propstore.core.lemon import LexicalEntry, LexicalForm, LexicalSense, OntologyReference
+from propstore.families.claim_provenance import (
+    BundledClaim,
+    ClaimProvenanceIndex,
+    UnbundledClaim,
+)
+from propstore.families.claims import Claim, ClaimStatus, ClaimType
+from propstore.families.concepts import Concept
+from propstore.families.contexts import Context
+from propstore.families.forms import FormDefinition
+from propstore.families.micropublications import Micropublication
+from propstore.merge.merge_commit import _read_branch_merge_claims
+from propstore.provenance import Provenance, ProvenanceStatus
+from propstore.repository import Repository
+from propstore.world import RenderPolicy, WorldQuery
+from propstore.world.bound import recomputed_conflicts
+from tests.merge_commit_helpers import author_param_claim
+
+
+def _claims() -> list[ConflictClaim]:
+    return [
+        ConflictClaim.from_claim(
+            Claim(
+                claim_id=claim_id,
+                claim_type=ClaimType.PARAMETER,
+                output_concept="temperature",
+                value=value,
+                unit="K",
+            )
+        )
+        for claim_id, value in (("a", 200.0), ("b", 300.0))
+    ]
+
+
+def _bundle(artifact_id: str, claim_id: str, source: str) -> Micropublication:
+    return Micropublication(
+        artifact_id=artifact_id, context_id="ctx", claims=(claim_id,), source=source
+    )
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "paperA",
+        "paperB",
+        "O'Reilly 2026",
+        'a "quoted" source',
+        "x' || true || '",
+        "来源 – Ü",
+        "  source with whitespace  ",
+        "https://example.org/a?q=1&x=2#fragment",
+        "line one\nline two",
+    ],
+)
+def test_source_identity_cannot_change_applicability(source: str) -> None:
+    first = _bundle("mp:a", "a", "paperA")
+    second = _bundle("mp:b", "b", source)
+    records = detect_conflicts(
+        _claims(),
+        {},
+        {},
+        provenance=ClaimProvenanceIndex.from_micropublications((first, second)),
+    )
+    assert len(records) == 1
+    record = records[0]
+    assert record.warning_class is ConflictClass.CONFLICT
+    assert record.conditions_a == record.conditions_b == []
+    assert isinstance(record.provenance_a, BundledClaim)
+    assert isinstance(record.provenance_b, BundledClaim)
+    assert record.provenance_a.micropublications[0] is first
+    assert record.provenance_b.micropublications[0] is second
+
+
+def test_all_memberships_survive_and_source_less_is_not_unbundled() -> None:
+    first = _bundle("mp:a", "a", "paperA")
+    second = _bundle("mp:b", "a", "paperB")
+    source_less = Micropublication(
+        artifact_id="mp:c",
+        context_id="ctx",
+        claims=("a",),
+        provenance=Provenance(status=ProvenanceStatus.STATED),
+    )
+    for bundles in ((first, second, source_less), (source_less, second, first)):
+        record = detect_conflicts(
+            _claims(),
+            {},
+            {},
+            provenance=ClaimProvenanceIndex.from_micropublications(bundles),
+        )[0]
+        assert record.warning_class is ConflictClass.CONFLICT
+        assert isinstance(record.provenance_a, BundledClaim)
+        assert record.provenance_a.micropublications == (first, second, source_less)
+        assert record.provenance_a.micropublications[2] is source_less
+        assert record.provenance_b == UnbundledClaim("b")
+
+
+def test_only_authored_conditions_establish_disjoint_applicability() -> None:
+    claims = _claims()
+    claims[0] = replace(claims[0], conditions=to_cel_exprs(("x > 10",)))
+    claims[1] = replace(claims[1], conditions=to_cel_exprs(("x < 5",)))
+    record = detect_conflicts(
+        claims,
+        {},
+        {"x": ConceptInfo("x", "x", KindType.QUANTITY)},
+        provenance=ClaimProvenanceIndex.from_micropublications(
+            (_bundle("mp:a", "a", "same"), _bundle("mp:b", "b", "same"))
+        ),
+    )[0]
+    assert record.warning_class is ConflictClass.PHI_NODE
+    assert [str(condition) for condition in record.conditions_a] == ["x > 10"]
+    assert [str(condition) for condition in record.conditions_b] == ["x < 5"]
+
+
+def test_build_world_and_merge_read_actual_raw_membership(tmp_path: Path) -> None:
+    repo = Repository.init(tmp_path / "knowledge")
+    repo.families.form.save(
+        "temperature",
+        FormDefinition(
+            name="temperature",
+            kind=KindType.QUANTITY,
+            unit_symbol="K",
+            allowed_units=("K",),
+            dimensions={"Theta": 1},
+        ),
+        message="temperature form",
+    )
+    repo.families.concept.save(
+        "temperature",
+        Concept(
+            concept_id="temperature",
+            canonical_name="temperature",
+            lexical_entry=LexicalEntry(
+                identifier="entry:temperature",
+                canonical_form=LexicalForm(written_rep="temperature", language="en"),
+                senses=(LexicalSense(reference=OntologyReference(uri="u:temperature")),),
+                physical_dimension_form="temperature",
+            ),
+        ),
+        message="temperature concept",
+    )
+    repo.families.context.save(
+        "ctx", Context(context_id="ctx", name="ctx"), message="context"
+    )
+    author_param_claim(repo, "a", "temperature", 200.0)
+    author_param_claim(repo, "b", "temperature", 300.0)
+    repo.families.claim.save(
+        "blocked",
+        Claim(
+            claim_id="blocked",
+            claim_type=ClaimType.OBSERVATION,
+            statement="",
+            status=ClaimStatus.BLOCKED,
+        ),
+        message="blocked peer",
+    )
+    # The peer is not admitted into semantic compute; raw membership must still
+    # provide the actual bundle evidence for its valid member.
+    bundle = Micropublication(
+        artifact_id="mp:a",
+        context_id="ctx",
+        claims=("a", "blocked"),
+        principal_claim="a",
+        source="O'Reilly 2026 / 来源\n' || true || '",
+    )
+    repo.families.micropublication.save("mp:a", bundle, message="raw membership")
+    second = _bundle("mp:b", "a", "second source")
+    repo.families.micropublication.save("mp:b", second, message="second membership")
+    commit = str(repo.require_git().head_sha())
+    merge_claims = _read_branch_merge_claims(repo, "master", commit)
+    membership = next(
+        claim.provenance for claim in merge_claims if claim.claim_id == "a"
+    )
+    assert isinstance(membership, BundledClaim)
+    assert {item.artifact_id for item in membership.micropublications} == {"mp:a", "mp:b"}
+    assert any(item.claims == ("a", "blocked") for item in membership.micropublications)
+    with WorldQuery(repo) as world:
+        stored = world.conflicts()
+        assert len(stored) == 1, world.build_diagnostics(
+            RenderPolicy(show_quarantined=True)
+        )
+        assert stored[0].warning_class is ConflictClass.CONFLICT
+        assert stored[0].provenance_a == membership
+        assert stored[0].provenance_b == UnbundledClaim("b")
+        recomputed = recomputed_conflicts(world, world.claims_for(None))
+        assert len(recomputed) == 1
+        assert recomputed[0].warning_class is ConflictClass.CONFLICT
+        assert recomputed[0].provenance_a == membership
+        assert recomputed[0].provenance_b == UnbundledClaim("b")

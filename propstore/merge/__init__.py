@@ -16,7 +16,6 @@ from propstore.merge.merge_classifier import (
     IntegrityConstraint,
     IntegrityConstraintViolation,
     MergeArgument,
-    MergeComparisonProvenanceError,
     RepositoryMergeFramework,
     build_merge_framework,
 )
@@ -46,7 +45,6 @@ __all__ = [
     "IntegrityConstraintViolation",
     "MergeArgument",
     "MergeClaim",
-    "MergeComparisonProvenanceError",
     "MergeStanceRow",
     "NonClaimMergeConflict",
     "ProvenanceWitness",

@@ -43,6 +43,7 @@ from propstore.core.lemon import (
     OntologyReference,
 )
 from propstore.dimensions import UnitConversion
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import ClaimType, Exactness
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
@@ -362,6 +363,7 @@ def test_single_hop_conflict_requires_lifted_contexts() -> None:
         {},
         lifting_system=lifting_system,
         parameterizations=parameterizations,
+        provenance=ClaimProvenanceIndex.from_micropublications(()),
     )
     assert len(records) == 1
     assert records[0].warning_class == ConflictClass.CONTEXT_PHI_NODE
@@ -402,7 +404,11 @@ def test_transitive_propagation_normalizes_units() -> None:
     ]
     concepts, parameterizations = _inputs(concept_registry)
     conflicts = detect_transitive_conflicts(
-        claims, concepts, parameterizations, forms=forms
+        claims,
+        concepts,
+        parameterizations,
+        forms=forms,
+        provenance=ClaimProvenanceIndex.from_micropublications(()),
     )
     # 0.1 kHz -> 100 Hz; chain 100*2=200, 200+100=300 == direct 300: no conflict.
     param_conflicts = [
@@ -450,8 +456,18 @@ def test_transitive_conflict_detection_is_order_independent() -> None:
         _param_claim("out_direct", "concept_out", 25.0),
     ]
     concepts, parameterizations = _inputs(concept_registry)
-    first_records = detect_transitive_conflicts(forward, concepts, parameterizations)
-    second_records = detect_transitive_conflicts(reverse, concepts, parameterizations)
+    first_records = detect_transitive_conflicts(
+        forward,
+        concepts,
+        parameterizations,
+        provenance=ClaimProvenanceIndex.from_micropublications(()),
+    )
+    second_records = detect_transitive_conflicts(
+        reverse,
+        concepts,
+        parameterizations,
+        provenance=ClaimProvenanceIndex.from_micropublications(()),
+    )
     assert len(first_records) == 1
     assert len(second_records) == 1
     assert first_records[0].warning_class == ConflictClass.PARAM_CONFLICT

@@ -79,6 +79,7 @@ def _check_transitive_consistency(store: WorldStore) -> WorldConsistencyReport:
         conflict_claims,
         inputs.concepts,
         inputs.parameterizations,
+        provenance=inputs.provenance,
         forms=inputs.forms,
     )
     return WorldConsistencyReport(
