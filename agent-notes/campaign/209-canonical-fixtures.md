@@ -4,7 +4,7 @@
 Migrate detector, parameterization and source-applicability tests onto actual canonical Claim documents and compiler admission. protocols:cleanup-refactor remains the active control surface.
 
 ## State
-Isolated branch campaign/209-canonical-fixtures starts from campaign/209-canonical-detectors. Ownership is tests/test_conflict_detector.py, tests/test_param_conflicts.py, tests/test_source_applicability.py and tests/checked_claim_helpers.py only. Detector owner is changing production APIs concurrently; no tests run until that owner reports coherent source.
+Isolated branch campaign/209-canonical-fixtures starts from campaign/209-canonical-detectors. Ownership is tests/test_conflict_detector.py, tests/test_param_conflicts.py, tests/test_source_applicability.py and tests/checked_claim_helpers.py only. All fixture edits are complete. Detector owner is changing production APIs concurrently; no tests run until that owner reports coherent source.
 
 ## Decisions and why
 Smallest full change: delete mirror constructors and compact dict fixture conversion, use canonical Claim constructors, and invoke the real form/concept/claim compiler pipelines in a shared test helper returning existing ClaimCheckedBundle plus CompilationContext. Estimate roughly 650-850 test lines replacing roughly 1,000 lines, plus a small shared pipeline fixture owner. No field-compatible adapters, payload conversion, or forged admissions.
@@ -21,4 +21,18 @@ Classifications/dispositions before editing:
 The prior #208 worktree was already cleaned up after merge; no dirty work was lost. New tests must use #145's real form-aware quantitative admission rather than instantiate numerical claim subsets.
 
 ## Next step
-Write shared real compiler fixture and migrate the three owned suites; notify detector owner when edits are complete, then integrate coherent source for focused test execution.
+Detector owner merges fixture branch, then reports coherent core source. Integrate that source and run only the three actively authored test files through logged wrapper; repair within fixture scope or report verified source defects to the detector owner. No local CI gates or publication.
+
+## Checkpoint
+Shared actual compiler helper committed and handed to detector owner for reuse.
+Replaced mirror/compact-dict fixtures in detector and parameterization suites with canonical Claim inputs and actual compiler bundle/admissions.
+Source-applicability direct fixtures now compile canonical claims; real repository path remains intact.
+No tests executed: production detector owner is still completing coherent source.
+Next: add absent-value regression, format through editing tool, commit migration and merge coherent core before focused execution.
+
+## Completed fixture slice
+The shared helper returns existing ClaimCheckedBundle and CompilationContext after actual form/concept/claim pipelines; it does not synthesize admission tokens or mirror claim fields. Classifier tests supply checked condition sets. Detector tests pass actual normalized documents plus their actual compiler admissions. Invalid equation behavior now asserts QUARANTINED ClaimAdmissionError; missing/stale tokens and categorical/boolean disagreement have canonical behavioral cases. Measure-only MEASUREMENT versus numeric value remains admitted and expects no conflict.
+
+Parameterization fixtures now declare actual typed Claim and ParameterizationEdge objects, with checked forms/units and explicit contexts. Deleted old by_concept input cloning, compact payload factories, mirror mapping assertions, and lifted-clone/cache source inspection. Source tests retain actual bundle reference identity checks and raw quarantine-member coverage.
+
+Search gate found zero ConflictClaim, loose dict[str, Any], payload, lifting-clone or cache references in the four owned files. Formatting changes were generated read-only by Ruff and applied exclusively through apply_patch. No tests or local CI gates have run on this incomplete production base.

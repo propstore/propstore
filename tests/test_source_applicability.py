@@ -1,14 +1,19 @@
 """Source attribution remains evidence through detector/build/world/merge paths."""
 
-from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from condition_ir import ConceptInfo, KindType, to_cel_exprs
+from condition_ir import ConceptInfo, KindType
 
+from propstore.compiler.context import CompilationContext
+from propstore.compiler.ir import ClaimCheckedBundle
 from propstore.conflict_detector import ConflictClass, detect_conflicts
-from propstore.conflict_detector.models import ConflictClaim
-from propstore.core.lemon import LexicalEntry, LexicalForm, LexicalSense, OntologyReference
+from propstore.core.lemon import (
+    LexicalEntry,
+    LexicalForm,
+    LexicalSense,
+    OntologyReference,
+)
 from propstore.families.claim_provenance import (
     BundledClaim,
     ClaimProvenanceIndex,
@@ -24,22 +29,32 @@ from propstore.provenance import Provenance, ProvenanceStatus
 from propstore.repository import Repository
 from propstore.world import RenderPolicy, WorldQuery
 from propstore.world.bound import recomputed_conflicts
+from tests.checked_claim_helpers import check_claims, concept
 from tests.merge_commit_helpers import author_param_claim
 
 
-def _claims() -> list[ConflictClaim]:
-    return [
-        ConflictClaim.from_claim(
+def _claims(
+    conditions_a: tuple[str, ...] = (),
+    conditions_b: tuple[str, ...] = (),
+) -> tuple[ClaimCheckedBundle, CompilationContext]:
+    return check_claims(
+        tuple(
             Claim(
                 claim_id=claim_id,
                 claim_type=ClaimType.PARAMETER,
                 output_concept="temperature",
                 value=value,
-                unit="K",
+                unit="1",
+                conditions=conditions,
             )
-        )
-        for claim_id, value in (("a", 200.0), ("b", 300.0))
-    ]
+            for claim_id, value, conditions in (
+                ("a", 200.0, conditions_a),
+                ("b", 300.0, conditions_b),
+            )
+        ),
+        (concept("temperature"),),
+        condition_registry={"x": ConceptInfo("x", "x", KindType.QUANTITY)},
+    )
 
 
 def _bundle(artifact_id: str, claim_id: str, source: str) -> Micropublication:
@@ -65,10 +80,13 @@ def _bundle(artifact_id: str, claim_id: str, source: str) -> Micropublication:
 def test_source_identity_cannot_change_applicability(source: str) -> None:
     first = _bundle("mp:a", "a", "paperA")
     second = _bundle("mp:b", "b", source)
+    bundle, context = _claims()
+    assert not bundle.blocked_claims, bundle.diagnostics
     records = detect_conflicts(
-        _claims(),
-        {},
-        {},
+        [entry.claim for entry in bundle.claims],
+        dict(context.concepts_by_id),
+        context.condition_registry,
+        admissions=tuple(entry.admission for entry in bundle.claims),
         provenance=ClaimProvenanceIndex.from_micropublications((first, second)),
     )
     assert len(records) == 1
@@ -91,10 +109,13 @@ def test_all_memberships_survive_and_source_less_is_not_unbundled() -> None:
         provenance=Provenance(status=ProvenanceStatus.STATED),
     )
     for bundles in ((first, second, source_less), (source_less, second, first)):
+        bundle, context = _claims()
+        assert not bundle.blocked_claims, bundle.diagnostics
         record = detect_conflicts(
-            _claims(),
-            {},
-            {},
+            [entry.claim for entry in bundle.claims],
+            dict(context.concepts_by_id),
+            context.condition_registry,
+            admissions=tuple(entry.admission for entry in bundle.claims),
             provenance=ClaimProvenanceIndex.from_micropublications(bundles),
         )[0]
         assert record.warning_class is ConflictClass.CONFLICT
@@ -105,13 +126,13 @@ def test_all_memberships_survive_and_source_less_is_not_unbundled() -> None:
 
 
 def test_only_authored_conditions_establish_disjoint_applicability() -> None:
-    claims = _claims()
-    claims[0] = replace(claims[0], conditions=to_cel_exprs(("x > 10",)))
-    claims[1] = replace(claims[1], conditions=to_cel_exprs(("x < 5",)))
+    bundle, context = _claims(("x > 10",), ("x < 5",))
+    assert not bundle.blocked_claims, bundle.diagnostics
     record = detect_conflicts(
-        claims,
-        {},
-        {"x": ConceptInfo("x", "x", KindType.QUANTITY)},
+        [entry.claim for entry in bundle.claims],
+        dict(context.concepts_by_id),
+        context.condition_registry,
+        admissions=tuple(entry.admission for entry in bundle.claims),
         provenance=ClaimProvenanceIndex.from_micropublications(
             (_bundle("mp:a", "a", "same"), _bundle("mp:b", "b", "same"))
         ),
@@ -142,7 +163,9 @@ def test_build_world_and_merge_read_actual_raw_membership(tmp_path: Path) -> Non
             lexical_entry=LexicalEntry(
                 identifier="entry:temperature",
                 canonical_form=LexicalForm(written_rep="temperature", language="en"),
-                senses=(LexicalSense(reference=OntologyReference(uri="u:temperature")),),
+                senses=(
+                    LexicalSense(reference=OntologyReference(uri="u:temperature")),
+                ),
                 physical_dimension_form="temperature",
             ),
         ),
@@ -181,7 +204,10 @@ def test_build_world_and_merge_read_actual_raw_membership(tmp_path: Path) -> Non
         claim.provenance for claim in merge_claims if claim.claim_id == "a"
     )
     assert isinstance(membership, BundledClaim)
-    assert {item.artifact_id for item in membership.micropublications} == {"mp:a", "mp:b"}
+    assert {item.artifact_id for item in membership.micropublications} == {
+        "mp:a",
+        "mp:b",
+    }
     assert any(item.claims == ("a", "blocked") for item in membership.micropublications)
     with WorldQuery(repo) as world:
         stored = world.conflicts()
