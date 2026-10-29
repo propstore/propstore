@@ -676,9 +676,6 @@ Deferred:
   `source finalize` invocation -> **9** (CLI adapter); 8-3a writes the report to
   the fixed-file `finalize-report.yaml` placement on the source branch and is
   driven through the owner function.
-- `parameterization_group_merges` on the finalize report is left empty in 8-3a;
-  `preview_source_parameterization_group_merges` (`source/registry.py`) lands in
-  **8-3b** with promote.
 
 ## Phase 8-3b — source-branch promote + trust calibration (DONE)
 
@@ -737,13 +734,6 @@ Deferred:
   `Claim` charter carries no source pointer), so promotion writes no master-side
   source artifact; the reference `CanonicalSourceRef`/sources-family write is
   dropped.
-- `source/registry.py` parameterization-group merge preview
-  (`projected_source_concepts`, `parameterization_group_merge_preview`,
-  `preview_source_parameterization_group_merges`, `test_param_group_merge_preview`)
-  -> later: it projects concept parameterization relationships that the flat
-  rewrite `Concept` charter does not yet model (the rewrite exposes
-  `build_parameterization_groups(edges)`, a different shape than the reference's
-  `build_groups(concept_payloads)`).
 - `source/passes.py` (the semantic-import normalization pipeline) -> **8-5**
   (import); promote does not depend on it.
 

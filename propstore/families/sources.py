@@ -343,12 +343,6 @@ class SourceMicropublicationDocument(_Struct):
     source: str | None = None
 
 
-class SourceParameterizationGroupMergeDocument(_Struct):
-    merged_group: tuple[str, ...]
-    previous_groups: tuple[tuple[str, ...], ...]
-    introduced_by: tuple[str, ...]
-
-
 class SourceFinalizeCalibrationDocument(_Struct):
     prior_base_rate_status: str
     source_quality_status: str
@@ -469,7 +463,7 @@ class SourceMicropublicationsDocument(CharterDoc):
 @charter(
     key="source_finalize_reports",
     name="source_finalize_reports",
-    contract_version=_SOURCE_CONTRACT_VERSION,
+    contract_version="2026.10.28",
     placement=FixedFilePlacement("finalize-report.yaml", branch=SOURCE_BRANCH),
 )
 class SourceFinalizeReportDocument(CharterDoc):
@@ -496,7 +490,4 @@ class SourceFinalizeReportDocument(CharterDoc):
     stance_reference_errors: Annotated[tuple[str, ...], charter_field(json=True)] = ()
     concept_alignment_candidates: Annotated[
         tuple[str, ...], charter_field(json=True)
-    ] = ()
-    parameterization_group_merges: Annotated[
-        tuple[SourceParameterizationGroupMergeDocument, ...], charter_field(json=True)
     ] = ()
