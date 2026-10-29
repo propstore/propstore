@@ -7,7 +7,6 @@ from collections.abc import Sequence
 
 from eq_equiv import BoundEquation, EquationSymbolBinding, equation_signature
 
-from propstore.claim_equations import bound_equation
 from propstore.families.claims import ClaimType
 
 from .models import ConflictClaim
@@ -26,7 +25,7 @@ def equation_bound_for_claim(claim: ConflictClaim) -> BoundEquation:
         for variable in claim.variables
         if variable.symbol
     )
-    return bound_equation(expression, bindings)
+    return BoundEquation(expression=expression, variables=bindings)
 
 
 def collect_measurement_claims(
