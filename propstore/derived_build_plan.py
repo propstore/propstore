@@ -114,11 +114,7 @@ class SidecarBuildPlan:
 
 
 def _conflict_claims(claims: tuple[Claim, ...]) -> list[ConflictClaim]:
-    return [
-        ConflictClaim.from_claim(claim)
-        for claim in claims
-        if claim.claim_id
-    ]
+    return [ConflictClaim.from_claim(claim) for claim in claims if claim.claim_id]
 
 
 def _parameterizations_by_output(
