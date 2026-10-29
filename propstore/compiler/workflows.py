@@ -319,30 +319,6 @@ def _compile_repository(repo: Repository, *, commit: str | None) -> _CompiledRep
         )
         if isinstance(document, Concept)
     ]
-    if not loaded_concepts:
-        empty_result = run_concept_pipeline([])
-        if not isinstance(empty_result.output, ConceptCheckedRegistry):
-            raise _abort(
-                PropstoreFamily.CONCEPT,
-                ConceptStage.CHECKED,
-                "Build aborted: concept validation failed.",
-                empty_result.errors,
-            )
-        empty_context = build_compilation_context(empty_result.output)
-        return _CompiledRepository(
-            concepts=(),
-            form_registry={},
-            context_ids=frozenset(),
-            loaded_contexts=(),
-            loaded_lifting_rules=(),
-            claim_bundle=ClaimCheckedBundle(),
-            compilation_context=empty_context,
-            messages=(),
-            concept_count=0,
-            claim_count=0,
-            no_concepts=True,
-        )
-
     loaded_contexts = [
         LoadedContext(context=document, filename=name)
         for name, document in _load_documents(
@@ -450,6 +426,7 @@ def _compile_repository(repo: Repository, *, commit: str | None) -> _CompiledRep
         messages=tuple(messages),
         concept_count=len(loaded_concepts),
         claim_count=len(loaded_claims),
+        no_concepts=not loaded_concepts and not loaded_claims,
     )
 
 
@@ -458,7 +435,7 @@ def compile_repository_checked_bundle(
 ) -> RepositoryCheckedBundle | None:
     """Run the shared compiler and package the checked state for the sidecar build.
 
-    Returns ``None`` when the repository has no concepts (nothing to project). This
+    Returns ``None`` when the repository has neither concepts nor claims to project. This
     is the one bridge from the shared pass output to ``derived_build``; ``pks build``
     and ``pks validate`` still run the very same ``_compile_repository`` (PLAN.md
     §12.6), build only adding the materialize sink downstream of it.

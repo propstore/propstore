@@ -17,7 +17,10 @@ from propstore.families.claims import Claim, ClaimStatus, ClaimType
 from propstore.families.contexts import Context
 from propstore.families.forms import FormDefinition
 from propstore.families.micropublications import Micropublication
-from propstore.merge.merge_commit import _read_branch_merge_claims
+from propstore.merge.merge_commit import (
+    QuarantinedMergeClaimsError,
+    _read_branch_merge_claims,
+)
 from propstore.provenance import Provenance, ProvenanceStatus
 from propstore.repository import Repository
 from propstore.world import RenderPolicy, WorldQuery
@@ -182,17 +185,19 @@ def test_build_world_and_merge_read_actual_raw_membership(tmp_path: Path) -> Non
     second = _bundle("mp:b", "a", "second source")
     repo.families.micropublication.save("mp:b", second, message="second membership")
     commit = str(repo.require_git().head_sha())
-    merge_claims = _read_branch_merge_claims(repo, "master", commit)
-    membership = next(
-        claim.provenance for claim in merge_claims if claim.claim_id == "a"
-    )
-    assert isinstance(membership, BundledClaim)
-    assert {item.artifact_id for item in membership.micropublications} == {
-        "mp:a",
-        "mp:b",
-    }
-    assert any(item.claims == ("a", "blocked") for item in membership.micropublications)
+    with pytest.raises(QuarantinedMergeClaimsError) as rejected:
+        _read_branch_merge_claims(repo, "master", commit)
+    assert [entry.claim.claim_id for entry in rejected.value.artifacts] == ["blocked"]
     with WorldQuery(repo) as world:
+        membership = world.claim_provenance().for_claim("a")
+        assert isinstance(membership, BundledClaim)
+        assert {item.artifact_id for item in membership.micropublications} == {
+            "mp:a",
+            "mp:b",
+        }
+        assert any(
+            item.claims == ("a", "blocked") for item in membership.micropublications
+        )
         stored = world.conflicts()
         assert len(stored) == 1, world.build_diagnostics(
             RenderPolicy(show_quarantined=True)
@@ -205,3 +210,19 @@ def test_build_world_and_merge_read_actual_raw_membership(tmp_path: Path) -> Non
         assert recomputed[0].warning_class is ConflictClass.CONFLICT
         assert recomputed[0].provenance_a == membership
         assert recomputed[0].provenance_b == UnbundledClaim("b")
+    repo.families.claim.save(
+        "blocked",
+        Claim(
+            claim_id="blocked",
+            claim_type=ClaimType.OBSERVATION,
+            statement="Retained peer observation",
+            status=ClaimStatus.BLOCKED,
+        ),
+        message="Repair peer observation for checked merge admission",
+    )
+    merge_claims = _read_branch_merge_claims(
+        repo, "master", str(repo.require_git().head_sha())
+    )
+    assert next(
+        claim.provenance for claim in merge_claims if claim.claim_id == "a"
+    ) == membership

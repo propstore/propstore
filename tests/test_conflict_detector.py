@@ -279,7 +279,7 @@ def test_measurement_comparison_uses_checked_conditions(
     )
 
 
-@pytest.mark.parametrize("failure", ["partition", "disjoint"])
+@pytest.mark.parametrize("failure", ["equivalence", "disjoint"])
 def test_solver_runtime_errors_preserve_cause_text(failure: str) -> None:
     bundle, context = check_claims(
         tuple(
@@ -289,9 +289,11 @@ def test_solver_runtime_errors_preserve_cause_text(failure: str) -> None:
                 output_concept="outcome",
                 value=float(index),
                 unit="1",
-                conditions=("intention_to_treat == true",),
+                conditions=(
+                    f"intention_to_treat == {'true' if index == 0 else 'false'}",
+                ),
             )
-            for index in range(3)
+            for index in range(2)
         ),
         (concept_with_form("outcome", "outcome", "quantity"),),
         condition_registry={
@@ -303,18 +305,15 @@ def test_solver_runtime_errors_preserve_cause_text(failure: str) -> None:
         },
     )
     assert not bundle.blocked_claims, bundle.diagnostics
-    solver = MagicMock()
+    solver = MagicMock(wraps=ConditionSolver(context.condition_registry))
     underlying = (
         "Structural concept 'intention_to_treat' cannot appear in CEL expressions"
     )
-    if failure == "partition":
-        solver.partition_equivalence_classes.side_effect = Z3TranslationError(
-            underlying
-        )
+    if failure == "equivalence":
+        solver.are_equivalent_result.side_effect = Z3TranslationError(underlying)
     else:
-        solver.partition_equivalence_classes.return_value = [[0], [1, 2]]
         solver.are_disjoint_result.side_effect = Z3TranslationError(underlying)
-    with pytest.raises(RuntimeError) as caught:
+    with pytest.raises(Z3TranslationError) as caught:
         detect_parameter_conflicts(
             [entry.claim for entry in bundle.claims],
             context.condition_registry,
@@ -323,9 +322,6 @@ def test_solver_runtime_errors_preserve_cause_text(failure: str) -> None:
             solver=solver,
         )
     assert underlying in str(caught.value)
-    assert ("partitioning" if failure == "partition" else "disjointness") in str(
-        caught.value
-    )
 
 
 @pytest.mark.parametrize(

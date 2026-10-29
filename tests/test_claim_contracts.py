@@ -7,6 +7,8 @@ delegates sympy generation to human-to-sympy while never aborting.
 
 from __future__ import annotations
 
+import msgspec
+import pytest
 from condition_ir import ConceptInfo, KindType
 
 from propstore.claim_contracts import (
@@ -18,14 +20,7 @@ from propstore.claim_contracts import (
     validate_claim,
 )
 from propstore.compiler.context import CompilationContext, build_compilation_context
-from propstore.core.lemon import (
-    LexicalEntry,
-    LexicalForm,
-    LexicalSense,
-    OntologyReference,
-)
 from propstore.families.claims import Claim, ClaimType
-from propstore.families.concepts import Concept
 from propstore.families.concepts_passes import (
     ConceptCheckedRegistry,
     ConceptPipelineContext,
@@ -38,29 +33,24 @@ from propstore.families.forms_passes import (
     LoadedForm,
     run_form_pipeline,
 )
+from tests.canonical_claim_fixtures import concept_with_form
 
 
-def _context(form: FormDefinition) -> CompilationContext:
+def _context(
+    form: FormDefinition,
+    *,
+    category_values: tuple[str, ...] = (),
+    category_extensible: bool = True,
+) -> CompilationContext:
     forms = run_form_pipeline([LoadedForm(form=form)])
     assert isinstance(forms.output, FormCheckedRegistry)
     concepts = run_concept_pipeline(
         [
             LoadedConcept(
-                concept=Concept(
-                    concept_id=form.name,
-                    canonical_name=form.name,
-                    lexical_entry=LexicalEntry(
-                        identifier=f"entry:{form.name}",
-                        canonical_form=LexicalForm(
-                            written_rep=form.name, language="en"
-                        ),
-                        senses=(
-                            LexicalSense(
-                                reference=OntologyReference(uri=f"urn:{form.name}")
-                            ),
-                        ),
-                        physical_dimension_form=form.name,
-                    ),
+                concept=msgspec.structs.replace(
+                    concept_with_form(form.name, form.name, form.name),
+                    category_values=category_values,
+                    category_extensible=category_extensible,
                 )
             ),
         ],
@@ -161,6 +151,7 @@ def test_validate_quantity_value_checks_type_and_bounds() -> None:
             value=200.0,
         ),
         form=form,
+        context=_context(form),
     )
     assert any(d.field == "value" and "above" in d.message for d in report.diagnostics)
 
@@ -172,6 +163,7 @@ def test_validate_quantity_value_checks_type_and_bounds() -> None:
             value="hot",
         ),
         form=form,
+        context=_context(form),
     )
     assert any(
         d.field == "value" and "must be numeric" in d.message
@@ -186,11 +178,9 @@ def test_validate_category_uses_closed_vocabulary_without_numeric_checks() -> No
         min_value=0.0,
         max_value=1.0,
     )
-    info = ConceptInfo(
-        id="severity",
-        canonical_name="severity",
-        kind=KindType.CATEGORY,
-        category_values=["low", "high"],
+    context = _context(
+        form,
+        category_values=("low", "high"),
         category_extensible=False,
     )
     accepted = validate_claim(
@@ -201,8 +191,7 @@ def test_validate_category_uses_closed_vocabulary_without_numeric_checks() -> No
             value="low",
         ),
         form=form,
-        concept_info=info,
-        context=_context(form),
+        context=context,
     )
     assert not accepted.diagnostics
 
@@ -214,8 +203,7 @@ def test_validate_category_uses_closed_vocabulary_without_numeric_checks() -> No
             value="critical",
         ),
         form=form,
-        concept_info=info,
-        context=_context(form),
+        context=context,
     )
     assert any("closed category vocabulary" in d.message for d in rejected.diagnostics)
 
@@ -256,16 +244,21 @@ def test_validate_boolean_requires_bool_and_rejects_bounds() -> None:
     assert {d.field for d in report.diagnostics} == {"value", "lower_bound"}
 
 
-def test_validate_structural_adds_no_scalar_policy() -> None:
+@pytest.mark.parametrize("lower_bound", [None, 0.0])
+def test_validate_structural_preserves_opaque_points_but_rejects_numeric_intervals(
+    lower_bound: float | None,
+) -> None:
     report = validate_claim(
         Claim(
             claim_id="structural",
             claim_type=ClaimType.PARAMETER,
             output_concept="structure",
             value="opaque",
-            lower_bound=0.0,
+            lower_bound=lower_bound,
         ),
         form=FormDefinition(name="structure", kind=KindType.STRUCTURAL),
         context=_context(FormDefinition(name="structure", kind=KindType.STRUCTURAL)),
     )
-    assert not report.diagnostics
+    assert [problem.code for problem in report.diagnostics] == (
+        [] if lower_bound is None else ["claim.quantitative.interval.numeric"]
+    )

@@ -31,6 +31,7 @@ from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.families.forms import FormDefinition
 from propstore.repository import Repository
+from propstore.world import WorldQuery
 
 
 def _repo(tmp_path: Path) -> Repository:
@@ -58,6 +59,30 @@ def _structural_concept() -> Concept:
 
 
 # --- happy path ------------------------------------------------------------ #
+
+
+def test_concept_free_observation_is_checked_and_projected(tmp_path: Path) -> None:
+    repo = Repository.init(tmp_path)
+    repo.families.claim.save(
+        "observation",
+        Claim(
+            claim_id="observation",
+            claim_type=ClaimType.OBSERVATION,
+            statement="A concept-free observation",
+        ),
+        message="Author observation",
+    )
+    summary = validate_repository(repo)
+    assert summary.ok
+    assert summary.claim_count == 1
+    built = build_repository(repo)
+    assert built.concept_count == 0
+    assert built.claim_count == 1
+    assert built.blocked_claim_count == 0
+    with WorldQuery(repo) as world:
+        claim = world.get_claim("observation")
+        assert claim is not None
+        world.claim_admissions()[claim.claim_id].require_admitted(claim)
 
 
 def test_validate_clean_repo_is_ok(tmp_path: Path) -> None:
