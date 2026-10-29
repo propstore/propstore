@@ -11,7 +11,7 @@ from quire.charter_class import CharterDoc, charter, charter_field
 
 from propstore.families.claims import Claim
 
-CLAIM_CHECK_VERSION = "1"
+CLAIM_CHECK_VERSION = "2"
 
 
 class ClaimAdmissionState(StrEnum):

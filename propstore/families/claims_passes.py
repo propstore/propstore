@@ -21,6 +21,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 
+import msgspec
+
 from propstore.claim_conditions import check_claim, check_claim_conditions
 from propstore.claim_contracts import validate_claim
 from propstore.compiler.context import CompilationContext
@@ -144,6 +146,7 @@ def _check_one(
         )
 
     normalized = check_claim(claim, context.condition_registry)
+    normalized = msgspec.structs.replace(normalized, quantitative_ir=contract_report.quantitative)
     return CheckedClaim(
         claim=normalized,
         blocked=bool(diagnostics),
