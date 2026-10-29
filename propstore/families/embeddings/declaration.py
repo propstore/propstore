@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
@@ -88,7 +88,7 @@ def _content_hash(value: str) -> str:
 
 
 @contextmanager
-def embedding_connection(path: Path, *, readonly: bool) -> Iterator[Connection]:
+def embedding_connection(path: Path, *, readonly: bool) -> Generator[Connection]:
     """Yield a sqlite-vec-enabled SQLAlchemy connection to a sidecar file."""
 
     _require_sqlite_vec()

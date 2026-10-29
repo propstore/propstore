@@ -17,7 +17,7 @@ can attach its commands via ``@claim.command``.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 
 import click
@@ -104,7 +104,7 @@ def lifecycle_policy(
 
 
 @contextmanager
-def open_world(repo: Repository) -> Iterator[WorldQuery]:
+def open_world(repo: Repository) -> Generator[WorldQuery]:
     """Open a world reader, mapping a missing sidecar to a clean CLI failure."""
 
     try:

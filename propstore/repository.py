@@ -12,7 +12,7 @@ store, a registry, or a placement.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
@@ -159,7 +159,7 @@ class Repository:
         _write_bootstrap_manifest(self.require_git(), seed_commit=seed_commit)
 
     @contextmanager
-    def mutation_guard(self) -> Iterator[None]:
+    def mutation_guard(self) -> Generator[None]:
         git = self.git
         if git is None:
             raise ValueError("repository mutations require a git-backed repository")

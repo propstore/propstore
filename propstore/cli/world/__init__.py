@@ -15,7 +15,7 @@ group and helpers exist, so each can attach its commands via ``@world.command``.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Generator, Mapping, Sequence
 from contextlib import contextmanager
 from typing import Any, TypeGuard
 
@@ -94,7 +94,7 @@ def is_json_array(value: object) -> TypeGuard[list[Any]]:
 
 
 @contextmanager
-def open_world(repo: Repository) -> Iterator[WorldQuery]:
+def open_world(repo: Repository) -> Generator[WorldQuery]:
     """Open a world reader, mapping a missing sidecar to a clean CLI failure."""
 
     try:
