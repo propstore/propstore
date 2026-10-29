@@ -32,7 +32,7 @@ converted to charter-generated family documents, not kept:
 
 - `propstore/families/sources/declaration.py`: `SourceOriginDocument`,
   `SourceTrustQualityDocument`, `SourceTrustDocument`,
-  `SourceMetadataDocument`, `SourceParameterizationGroupMergeDocument`,
+  `SourceMetadataDocument`,
   `SourceFinalizeCalibrationDocument`, `SourceFinalizeReportDocument`.
 - `propstore/families/concepts/declaration.py`: `SourceConceptAliasDocument`,
   `SourceConceptRegistryMatchDocument`,

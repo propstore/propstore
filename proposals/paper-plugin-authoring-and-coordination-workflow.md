@@ -419,7 +419,6 @@ claim_reference_errors: []
 stance_reference_errors: []
 concept_alignment_candidates:
   - "align:weak_identity_relations"
-parameterization_group_merges: []
 artifact_code_status: complete
 calibration:
   prior_base_rate_status: covered

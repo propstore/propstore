@@ -16,6 +16,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import msgspec
+import pytest
+from quire.documents import DocumentSchemaError
 
 from propstore.artifact_codes import (
     claim_artifact_code,
@@ -34,6 +36,7 @@ from propstore.families.registry import SourceRef
 from propstore.families.sources import (
     SourceClaimDocument,
     SourceClaimsDocument,
+    SourceFinalizeReportDocument,
     SourceJustificationDocument,
     SourceJustificationsDocument,
     SourceMicropublicationDocument,
@@ -103,6 +106,26 @@ def _save_claims(repo: Repository, *claims: SourceClaimDocument) -> None:
 # ---------------------------------------------------------------------------
 # finalize: micropublication-coverage precondition
 # ---------------------------------------------------------------------------
+
+
+def test_finalize_report_rejects_removed_group_preview(tmp_path: Path) -> None:
+    repo = _new_source(tmp_path)
+    _author_contexted_claim(repo)
+    finalize_source_branch(repo, _SOURCE)
+    report = load_source_finalize_report(repo, _SOURCE)
+    assert report is not None
+    codec = SourceFinalizeReportDocument.__charter__.document_codec()
+    payload = codec.payload(report)
+    assert "parameterization_group_merges" not in payload
+    assert (
+        codec.decode(
+            codec.encode(report), SourceFinalizeReportDocument, source="finalize report"
+        )
+        == report
+    )
+    payload["parameterization_group_merges"] = []
+    with pytest.raises(DocumentSchemaError, match="parameterization_group_merges"):
+        codec.convert(payload, SourceFinalizeReportDocument, source="stored report")
 
 
 def test_finalize_blocks_claim_without_context_before_writing_micropubs(
