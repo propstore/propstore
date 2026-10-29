@@ -18,7 +18,6 @@ from argumentation.core.dung import (
     preferred_extensions,
     stable_extensions,
 )
-from argumentation.structured.aspic.aspic import GroundAtom
 
 from propstore.core.labels import Label, SupportQuality
 from propstore.core.reasoning import (
@@ -26,39 +25,11 @@ from propstore.core.reasoning import (
     ReasoningBackend,
     validate_backend_semantics,
 )
-from propstore.provenance import ProjectionFrameProvenanceRecord
-
-
-@dataclass(frozen=True)
-class ProjectionLossWitness:
-    backend: str
-    kind: str
-    reason: str
-    backend_atom_id: str | None = None
-
-
-@dataclass(frozen=True)
-class ProjectionAtom:
-    backend: str
-    backend_atom: GroundAtom
-    backend_atom_id: str
-    negated: bool
-    source_assertion_ids: tuple[str, ...]
-    provenance: ProjectionFrameProvenanceRecord | None = None
-    loss: ProjectionLossWitness | None = None
-
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self,
-            "source_assertion_ids",
-            tuple(sorted({str(value) for value in self.source_assertion_ids})),
-        )
 
 
 @dataclass(frozen=True)
 class StructuredArgument:
     arg_id: str
-    projection: ProjectionAtom
     claim_id: str | None
     conclusion_concept_id: str | None
     premise_claim_ids: tuple[str, ...]
