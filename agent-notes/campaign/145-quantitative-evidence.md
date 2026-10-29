@@ -43,6 +43,8 @@ Root found a real precision defect in the first comparison rewrite: float interv
 
 Latest authored focused proof: `tests/test_claim_quantitative.py`, 31 passed, `logs/test-runs/pytest-20261029-000836.log`; includes large integers, common-unit normalization, source lowering, measure-only/optional-unit contracts, no-target-mutation merge failure, and fresh overlay admission. `tests/test_preference.py`, 12 passed, `logs/test-runs/pytest-20261028-235908.log`. No CI/typecheck/suite gate run locally. Parent owns the combined PR's CI and final acceptance.
 
+Follow-up slice: interval-only claim detail rendering now reports a known bounded value rather than missing scalar evidence. Its focused regression brings the authored quantitative file to 32 passing cases, `logs/test-runs/pytest-20261029-001039.log`.
+
 Remaining forbidden raw readers in conflict_detector belong to the #209 worker and are not accepted as final state. The existing test constructors were migrated to typed quantitative input; full fixture/source compatibility remains for combined CI. The contract manifest and claim/source-claims versions were updated for the new projection/source confidence field.
 
 ## Draft PR description

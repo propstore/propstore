@@ -29,6 +29,7 @@ from propstore.families.claim_quantitative import AbsoluteUncertainty, IntervalV
 from propstore.families.concepts import Concept
 from propstore.reporting import JsonReportMixin
 from propstore.world import RenderPolicy, WorldQuery
+from propstore.value_comparison import value_str
 
 # Claim types whose assertion is not a single scalar value: an absent ``value``
 # on one of these is expected (``NOT_APPLICABLE``), not a hole (``MISSING``).
@@ -240,6 +241,13 @@ def _claim_concept(claim: Claim, concept: Concept | None) -> ClaimViewConcept:
 def _claim_value(claim: Claim) -> ClaimViewValue:
     evidence = claim.quantitative
     value = evidence.point
+    if isinstance(evidence.value, IntervalValue) and value is None:
+        return ClaimViewValue(
+            state=ViewState.KNOWN,
+            value=None,
+            unit=evidence.unit,
+            sentence=f"Value is bounded by {value_str(None, evidence, with_unit=True)}.",
+        )
     if value is None:
         if claim.claim_type in _NON_SCALAR_CLAIM_TYPES:
             return ClaimViewValue(
