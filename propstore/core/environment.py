@@ -105,11 +105,6 @@ class RelationshipCatalogStore(Protocol):
 
 
 @runtime_checkable
-class ExplanationStore(Protocol):
-    def explain(self, claim_id: str) -> Sequence[Stance]: ...
-
-
-@runtime_checkable
 class ClaimStanceInventoryStore(Protocol):
     def all_claim_stances(self) -> Sequence[Stance]: ...
 
@@ -125,25 +120,8 @@ class ConflictStore(Protocol):
 
 
 @runtime_checkable
-class ParameterizationLookupStore(Protocol):
-    def parameterizations_for(
-        self, concept_id: str
-    ) -> Sequence[ParameterizationEdge]: ...
-
-
-@runtime_checkable
 class ParameterizationCatalogStore(Protocol):
     def all_parameterizations(self) -> Sequence[ParameterizationEdge]: ...
-
-
-@runtime_checkable
-class MicropublicationCatalogStore(Protocol):
-    def all_micropublications(self) -> Sequence[Micropublication]: ...
-
-
-@runtime_checkable
-class ConditionSolverStore(Protocol):
-    def condition_solver(self) -> ConditionSolver: ...
 
 
 @runtime_checkable
