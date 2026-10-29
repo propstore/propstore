@@ -163,7 +163,11 @@ def _changed_semantic_state(state: EpistemicState, legacy_id: str) -> EpistemicS
             concept_id="concept_legacy",
             source_paper="paper:updated",
         )
-        changed_atoms.append(replace_struct(atom, source_claims=(source_claim,)))
+        from propstore.support_revision.state import SourceSupportWitness
+
+        changed_atoms.append(replace_struct(atom, source_support=(
+            SourceSupportWitness(claim=source_claim, label=None, current_label=None),
+        )))
     changed_base = replace_struct(
         state.base,
         atoms=tuple(changed_atoms),

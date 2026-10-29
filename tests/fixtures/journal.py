@@ -65,7 +65,7 @@ def make_assertion_atom(
     source_claim_local_ids: tuple[str, ...] = (),
     source_claim_ids: tuple[str, ...] | None = None,
 ) -> AssertionAtom:
-    """Return a real ``AssertionAtom`` whose source_claims are real ActiveClaims.
+    """Return an assertion atom with typed source-support witnesses.
 
     The atom_id is derived from the assertion (relation + role bindings +
     context + condition), as production demands. ``source_claim_local_ids`` are
@@ -91,13 +91,15 @@ def make_assertion_atom(
         source_claim_ids = tuple(
             f"propstore:claim:test/{local}" for local in source_claim_local_ids
         )
-    source_claims = tuple(
-        ActiveClaim(claim_id=claim_id) for claim_id in source_claim_ids
-    )
+    from propstore.support_revision.state import SourceSupportWitness
+
+    source_support = tuple(SourceSupportWitness(
+        claim=ActiveClaim(claim_id=claim_id), label=None, current_label=None,
+    ) for claim_id in source_claim_ids)
     return AssertionAtom(
         atom_id=str(assertion.assertion_id),
         assertion=assertion,
-        source_claims=source_claims,
+        source_support=source_support,
     )
 
 
@@ -129,8 +131,8 @@ def synthetic_belief_space_with(*atoms: AssertionAtom) -> SyntheticBeliefSpace:
     """Build a belief space whose rows cover every source_claim of every atom."""
     space = SyntheticBeliefSpace()
     for atom in atoms:
-        for claim in atom.source_claims:
-            space.add_claim(str(claim.claim_id))
+        for witness in atom.source_support:
+            space.add_claim(str(witness.claim.claim_id))
     return space
 
 

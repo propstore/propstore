@@ -34,7 +34,9 @@ from propstore.core.assertions.situated import SituatedAssertion
 from propstore.core.id_types import AssumptionId
 from propstore.core.labels import SupportQuality, environment_assumption_ids
 from propstore.core.relations import RelationConceptRef, RoleBinding, RoleBindingSet
-from propstore.support_revision.state import AssertionAtom, BeliefBase, RevisionScope
+from propstore.support_revision.state import (
+    AssertionAtom, BeliefBase, RevisionScope, SourceSupportWitness,
+)
 
 if TYPE_CHECKING:
     from propstore.support_revision.history import EpistemicSnapshot
@@ -44,20 +46,17 @@ if TYPE_CHECKING:
 def snapshot_to_claim_ids(snapshot: EpistemicSnapshot) -> set[str]:
     """Project an ``EpistemicSnapshot`` to the set of source-claim ids it accepts.
 
-    For each ``AssertionAtom`` in the snapshot's belief base whose ``atom_id`` is
-    in ``snapshot.state.accepted_atom_ids``, collect the string-form ``claim_id``
-    of every ``ActiveClaim`` in ``atom.source_claims``. Many-to-one is honored: an
-    accepted atom with N source claims contributes all N ids. This is the
-    read-direction inverse of :func:`project_belief_base`.
+    Only surviving source witnesses of accepted assertions contribute claim IDs.
     """
 
     state = snapshot.state
     accepted = set(state.accepted_atom_ids)
     return {
-        str(claim.claim_id)
+        str(witness.claim.claim_id)
         for atom in state.base.atoms
         if isinstance(atom, AssertionAtom) and atom.atom_id in accepted
-        for claim in atom.source_claims
+        for witness in atom.source_support
+        if witness.active
     }
 
 
@@ -117,10 +116,19 @@ def project_belief_base(
         atoms_by_id[atom_id] = AssertionAtom(
             atom_id=atom_id,
             assertion=assertion,
-            source_claims=(
-                (claim,) if existing is None else existing.source_claims + (claim,)
+            source_support=(
+                (() if existing is None else existing.source_support)
+                + (SourceSupportWitness(
+                    claim=claim,
+                    label=label,
+                    current_label=label,
+                    quality=quality,
+                    essential_support=(
+                        environment_assumption_ids(essential)
+                        if essential is not None else ()
+                    ),
+                ),)
             ),
-            label=label if existing is None else existing.label,
         )
 
     scope = _revision_scope_from_bound(bound)
