@@ -19,15 +19,14 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from propstore.heuristic.relatable import RelatableClaim
 from propstore.heuristic.calibrate import (
     CalibrationSource,
     CategoryPrior,
     CategoryPriorRegistry,
 )
+from propstore.heuristic.relatable import RelatableClaim
 from propstore.provenance import Provenance, ProvenanceStatus
 from propstore.stances import VALID_STANCE_TYPES
-
 
 # ---------------------------------------------------------------------------
 # Helpers

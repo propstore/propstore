@@ -18,19 +18,18 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from propstore.core.id_types import to_concept_id
-from propstore.world.types import Environment
 from propstore.world.types import (
+    Environment,
     ReasoningBackend,
     RenderPolicy,
-    ResolvedResult,
     ResolutionStrategy,
+    ResolvedResult,
     ValueStatus,
 )
 from propstore.worldline.definition import WorldlineDefinition, WorldlineInputs
 from propstore.worldline.resolution import ResolutionContext
-from propstore.worldline.runner import _capture_sensitivity, run_worldline
 from propstore.worldline.result_types import WorldlineCaptureError, WorldlineTargetValue
-
+from propstore.worldline.runner import _capture_sensitivity, run_worldline
 
 # ── helpers ──────────────────────────────────────────────────────────
 
@@ -106,7 +105,8 @@ class _FakeWorld:
 class _FakeBound:
     """Minimal stand-in for a bound WorldQuery."""
 
-    _bindings: dict = {}
+    def __init__(self) -> None:
+        self._bindings: dict = {}
 
     def value_of(self, concept_id: str) -> _FakeValueResult:
         return _FakeValueResult()

@@ -8,6 +8,7 @@ silently coerced).
 from __future__ import annotations
 
 import pytest
+from quire.documents import DocumentSchemaError
 
 from propstore.families.claims import Claim, ClaimType
 
@@ -23,7 +24,7 @@ def test_valid_claim_type_decodes_to_enum_member() -> None:
 
 def test_unknown_claim_type_fails_to_decode() -> None:
     codec = Claim.__charter__.document_codec()
-    with pytest.raises(Exception):
+    with pytest.raises(DocumentSchemaError):
         codec.convert({"claim_id": "c1", "claim_type": "bogus"}, Claim, source="test")
 
 

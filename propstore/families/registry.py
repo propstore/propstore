@@ -38,17 +38,35 @@ from propstore.families.grounding import GroundingBuildConfiguration
 from propstore.families.justifications import Justification
 from propstore.families.merge_manifests import MergeManifest
 from propstore.families.micropublications import Micropublication
-from propstore.families.predicates import Predicate, PredicateProposal
+
+# Re-exported so the proposal subsystem and tests can use
+# ``propstore.families.registry`` as the one import site for proposal refs.
+from propstore.families.predicates import (
+    Predicate,
+    PredicateProposal,
+    PredicateProposalRef,
+)
 from propstore.families.relations import Stance, StanceProposal
-from propstore.families.rules import DefeasibleRule, RuleProposal, RuleSuperiority
+from propstore.families.rules import (
+    DefeasibleRule,
+    RuleProposal,
+    RuleProposalRef,
+    RuleSuperiority,
+)
 from propstore.families.sameas import SameAs
+
+# Re-exported here so the source subsystem can use ``propstore.families.registry``
+# as the one import site for source-branch refs and placement (matching the
+# canonical-source/claim/etc. refs that also live with the registry).
 from propstore.families.sources import (
+    SOURCE_BRANCH,
     SourceClaimsDocument,
     SourceConceptsDocument,
     SourceDocument,
     SourceFinalizeReportDocument,
     SourceJustificationsDocument,
     SourceMicropublicationsDocument,
+    SourceRef,
     SourceStancesDocument,
 )
 from propstore.families.temporal import (
@@ -56,22 +74,26 @@ from propstore.families.temporal import (
     HappensBeforeEdgeDoc,
     TemporalFrameDoc,
 )
-from propstore.worldline.definition import WorldlineDefinition
-
-# Re-exported here so the source subsystem can use ``propstore.families.registry``
-# as the one import site for source-branch refs and placement (matching the
-# canonical-source/claim/etc. refs that also live with the registry).
-from propstore.families.sources import SOURCE_BRANCH as SOURCE_BRANCH
-from propstore.families.sources import SourceRef as SourceRef
-
-# Re-exported so the proposal subsystem and tests can use
-# ``propstore.families.registry`` as the one import site for proposal refs.
-from propstore.families.predicates import PredicateProposalRef as PredicateProposalRef
-from propstore.families.rules import RuleProposalRef as RuleProposalRef
 
 # Re-exported so the worldline owner/CLI subsystem can use
 # ``propstore.families.registry`` as the one import site for the worldline ref.
-from propstore.worldline.definition import WorldlineRef as WorldlineRef
+from propstore.worldline.definition import WorldlineDefinition, WorldlineRef
+
+__all__ = [
+    "PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION",
+    "SOURCE_BRANCH",
+    "PredicateProposalRef",
+    "PropstoreFamily",
+    "RuleProposalRef",
+    "SourceRef",
+    "WorldlineRef",
+    "registered_charters",
+    "semantic_charters",
+    "semantic_foreign_keys",
+    "semantic_import_families",
+    "semantic_import_roots",
+    "semantic_init_roots",
+]
 
 PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION = contract_version("2026.10.20.3")
 """Wire-contract version of the assembled registry (stamped into bootstrap)."""

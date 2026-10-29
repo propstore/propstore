@@ -17,6 +17,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
+import msgspec
 from doxa import Opinion
 
 from propstore.core.id_types import AssertionId
@@ -122,14 +123,22 @@ class BaseRateAssertionRecord:
         concept = claim_payload.get("concept")
         value = claim_payload.get("value")
         unit = claim_payload.get("unit")
-        if not isinstance(claim_id, str):
-            raise ValueError("base-rate source claim requires string id")
-        if not isinstance(concept, str):
-            raise ValueError("base-rate source claim requires string concept")
-        if isinstance(value, bool) or not isinstance(value, int | float):
-            raise ValueError("base-rate source claim requires numeric value")
-        if not isinstance(unit, str):
-            raise ValueError("base-rate source claim requires string unit")
+        try:
+            claim_id = msgspec.convert(claim_id, str)
+        except msgspec.ValidationError as exc:
+            raise ValueError("base-rate source claim requires string id") from exc
+        try:
+            concept = msgspec.convert(concept, str)
+        except msgspec.ValidationError as exc:
+            raise ValueError("base-rate source claim requires string concept") from exc
+        try:
+            value = msgspec.convert(value, float)
+        except msgspec.ValidationError as exc:
+            raise ValueError("base-rate source claim requires numeric value") from exc
+        try:
+            unit = msgspec.convert(unit, str)
+        except msgspec.ValidationError as exc:
+            raise ValueError("base-rate source claim requires string unit") from exc
 
         return cls(
             source_key=source_key,

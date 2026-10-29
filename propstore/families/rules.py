@@ -42,10 +42,10 @@ from quire.sqlalchemy_store import (
     readonly_session,
     writable_session,
 )
-
-from propstore.families import SEMANTIC_FOREIGN_KEY_CONTRACT_VERSION
-from propstore.core.scalars import ScalarValue
 from sqlalchemy import select
+
+from propstore.core.scalars import ScalarValue
+from propstore.families import SEMANTIC_FOREIGN_KEY_CONTRACT_VERSION
 
 RuleKind = Literal["strict", "defeasible", "proper_defeater", "blocking_defeater"]
 TermKind = Literal["var", "const"]

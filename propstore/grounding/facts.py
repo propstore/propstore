@@ -18,8 +18,8 @@ from dataclasses import dataclass
 
 import gunray
 
-from propstore.families.claims import Claim
 from propstore.core.scalars import ScalarValue
+from propstore.families.claims import Claim
 from propstore.grounding.predicates import (
     DerivedFromSpec,
     PredicateAtom,

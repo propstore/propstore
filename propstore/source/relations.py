@@ -10,7 +10,7 @@ claim id — never a raw source-local handle.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import msgspec
@@ -39,11 +39,9 @@ from .common import (
     load_source_stances_document,
     normalize_source_slug,
 )
-from .reference_indexes import (
-    primary_claim_index as build_primary_claim_index,
-    resolve_source_or_primary_claim_id,
-    source_claim_index as build_source_claim_index,
-)
+from .reference_indexes import primary_claim_index as build_primary_claim_index
+from .reference_indexes import resolve_source_or_primary_claim_id
+from .reference_indexes import source_claim_index as build_source_claim_index
 
 _ALLOWED_JUSTIFICATION_RULE_KINDS = frozenset(
     {
@@ -63,7 +61,7 @@ _ALLOWED_JUSTIFICATION_RULE_STRENGTHS = frozenset({"strict", "defeasible"})
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _validate_justification_rule_fields(

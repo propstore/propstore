@@ -72,13 +72,13 @@ def web(
     run_web_server(app, host=host, port=port)
 
 
-def create_web_app(*, repository_root: "Path") -> "FastAPI":
+def create_web_app(*, repository_root: Path) -> FastAPI:
     from propstore.web.app import create_app
 
     return create_app(repository_root=repository_root)
 
 
-def run_web_server(app: "FastAPI", *, host: str, port: int) -> None:
+def run_web_server(app: FastAPI, *, host: str, port: int) -> None:
     import uvicorn
 
     uvicorn.run(app, host=host, port=port)

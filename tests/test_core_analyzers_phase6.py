@@ -131,7 +131,7 @@ def test_analyze_aspic_backend_preserves_package_status(
 
     assert result.aspic_query_status is status
     assert len(result.extensions) == (1 if status is ASPICQueryStatus.SUCCESS else 0)
-    assert all(key != "_".join(("package", "status")) for key, _ in result.metadata)
+    assert all(key != "package_status" for key, _ in result.metadata)
 
 
 def test_supersede_builds_directed_defeat_and_grounded_winner() -> None:

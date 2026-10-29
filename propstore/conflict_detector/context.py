@@ -15,7 +15,7 @@ from condition_ir import CelExpr
 
 from propstore.families.contexts import LiftingDecisionStatus
 
-from .models import ConflictClass, ConflictClaim, ConflictRecord
+from .models import ConflictClaim, ConflictClass, ConflictRecord
 
 if TYPE_CHECKING:
     from propstore.context_lifting import LiftingDecision, LiftingSystem

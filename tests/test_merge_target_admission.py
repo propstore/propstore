@@ -1,7 +1,7 @@
 """A two-parent publication must contain the existing target's history."""
 
-from pathlib import Path
 from dataclasses import FrozenInstanceError
+from pathlib import Path
 
 import pytest
 import yaml
@@ -9,11 +9,16 @@ from click.testing import CliRunner
 from quire.git_store import HeadMismatchError
 
 from propstore.app.merge import (
-    MergeCommitRequest, MergeInspectRequest, commit_merge, inspect_merge,
+    MergeCommitRequest,
+    MergeInspectRequest,
+    commit_merge,
+    inspect_merge,
 )
 from propstore.cli import cli
 from propstore.merge.merge_commit import (
-    DivergentMergeTargetError, create_merge_commit, plan_merge_commit,
+    DivergentMergeTargetError,
+    create_merge_commit,
+    plan_merge_commit,
 )
 from propstore.repository import Repository
 from tests.merge_commit_helpers import author_concept, author_obs_claim, init_repo
@@ -30,7 +35,9 @@ def _branches(tmp_path: Path) -> tuple[Repository, str, str, str]:
 
 
 @pytest.mark.parametrize("operation", ["core", "inspect", "app"])
-def test_divergent_target_preserves_its_head_and_data(tmp_path: Path, monkeypatch, operation) -> None:
+def test_divergent_target_preserves_its_head_and_data(
+    tmp_path: Path, monkeypatch, operation
+) -> None:
     repo, base, left, right = _branches(tmp_path)
     git = repo.require_git()
     git.create_branch("target", source_commit=base)
@@ -45,9 +52,13 @@ def test_divergent_target_preserves_its_head_and_data(tmp_path: Path, monkeypatc
         if operation == "core":
             create_merge_commit(repo, "master", "right", target_branch="target")
         elif operation == "inspect":
-            inspect_merge(repo, MergeInspectRequest("master", "right", target_branch="target"))
+            inspect_merge(
+                repo, MergeInspectRequest("master", "right", target_branch="target")
+            )
         else:
-            commit_merge(repo, MergeCommitRequest("master", "right", target_branch="target"))
+            commit_merge(
+                repo, MergeCommitRequest("master", "right", target_branch="target")
+            )
 
     assert caught.value.target_branch == "target"
     assert caught.value.target_sha == target
@@ -57,25 +68,44 @@ def test_divergent_target_preserves_its_head_and_data(tmp_path: Path, monkeypatc
     assert (git.branch_sha("master"), git.branch_sha("right")) == (left, right)
 
 
-@pytest.mark.parametrize("target", ["absent", "master", "right", "ancestor", "left-alias", "right-alias"])
-def test_inspect_and_commit_share_admission_and_exact_parents(tmp_path: Path, target: str) -> None:
+@pytest.mark.parametrize(
+    "target", ["absent", "master", "right", "ancestor", "left-alias", "right-alias"]
+)
+def test_inspect_and_commit_share_admission_and_exact_parents(
+    tmp_path: Path, target: str
+) -> None:
     repo, base, left, right = _branches(tmp_path)
     git = repo.require_git()
     if target in ("ancestor", "left-alias", "right-alias"):
-        git.create_branch(target, source_commit={"ancestor": base, "left-alias": left, "right-alias": right}[target])
+        git.create_branch(
+            target,
+            source_commit={"ancestor": base, "left-alias": left, "right-alias": right}[
+                target
+            ],
+        )
     expected_target = git.branch_sha(target)
 
-    preview = inspect_merge(repo, MergeInspectRequest("master", "right", target_branch=target))
+    preview = inspect_merge(
+        repo, MergeInspectRequest("master", "right", target_branch=target)
+    )
     plan = preview.plan
-    assert (plan.left_sha, plan.right_sha, plan.target_sha) == (left, right, expected_target)
+    assert (plan.left_sha, plan.right_sha, plan.target_sha) == (
+        left,
+        right,
+        expected_target,
+    )
     assert plan.base_sha == base
-    assert plan.target_admission == ("absent" if expected_target is None else "contained")
+    assert plan.target_admission == (
+        "absent" if expected_target is None else "contained"
+    )
     assert preview.to_json()["target_admission"] == plan.target_admission
     assert git.branch_sha(target) == expected_target  # Inspect is read-only.
     with pytest.raises(FrozenInstanceError):
         plan.target_sha = "invalid"
 
-    report = commit_merge(repo, MergeCommitRequest("master", "right", target_branch=target))
+    report = commit_merge(
+        repo, MergeCommitRequest("master", "right", target_branch=target)
+    )
     assert report.plan == plan
     assert report.target_admission == plan.target_admission
     assert tuple(git.iter_commit_parent_shas(report.commit_sha)) == (left, right)
@@ -83,11 +113,15 @@ def test_inspect_and_commit_share_admission_and_exact_parents(tmp_path: Path, ta
     assert repo.families.claim.load("left", commit=report.commit_sha) is not None
     assert repo.families.claim.load("right", commit=report.commit_sha) is not None
     if expected_target is not None:
-        assert expected_target in git.ancestor_distances(left) or expected_target in git.ancestor_distances(right)
+        assert expected_target in git.ancestor_distances(
+            left
+        ) or expected_target in git.ancestor_distances(right)
 
 
 @pytest.mark.parametrize("target", ["absent", "ancestor", "master", "right"])
-def test_planned_publication_rejects_target_move_without_retry(tmp_path: Path, target: str) -> None:
+def test_planned_publication_rejects_target_move_without_retry(
+    tmp_path: Path, target: str
+) -> None:
     repo, base, left, right = _branches(tmp_path)
     git = repo.require_git()
     if target == "ancestor":
@@ -110,7 +144,9 @@ def test_planned_publication_rejects_target_move_without_retry(tmp_path: Path, t
 
 
 @pytest.mark.parametrize("side", ["master", "right"])
-def test_target_strictly_ancestral_to_only_one_parent_is_admitted(tmp_path: Path, side: str) -> None:
+def test_target_strictly_ancestral_to_only_one_parent_is_admitted(
+    tmp_path: Path, side: str
+) -> None:
     repo, _base, _left, _right = _branches(tmp_path)
     git = repo.require_git()
     target = git.branch_sha(side)
@@ -120,22 +156,40 @@ def test_target_strictly_ancestral_to_only_one_parent_is_admitted(tmp_path: Path
     descendant = author_obs_claim(repo, "descendant", "later on one side", branch=side)
     assert descendant != target
     left, right = git.branch_sha("master"), git.branch_sha("right")
-    preview = inspect_merge(repo, MergeInspectRequest("master", "right", target_branch="target"))
+    preview = inspect_merge(
+        repo, MergeInspectRequest("master", "right", target_branch="target")
+    )
     assert preview.plan.target_sha == target
     assert preview.plan.target_admission == "contained"
-    report = commit_merge(repo, MergeCommitRequest("master", "right", target_branch="target"))
+    report = commit_merge(
+        repo, MergeCommitRequest("master", "right", target_branch="target")
+    )
     assert report.plan == preview.plan
     assert tuple(git.iter_commit_parent_shas(report.commit_sha)) == (left, right)
     assert repo.families.claim.load("descendant", commit=report.commit_sha) is not None
 
 
 @pytest.mark.parametrize("command", ["inspect", "commit"])
-def test_cli_refuses_divergent_target_without_mutating_it(tmp_path: Path, command: str) -> None:
+def test_cli_refuses_divergent_target_without_mutating_it(
+    tmp_path: Path, command: str
+) -> None:
     repo, base, left, right = _branches(tmp_path)
     git = repo.require_git()
     git.create_branch("target", source_commit=base)
     target = author_concept(repo, "target-only", branch="target")
-    result = CliRunner().invoke(cli, ["-C", str(repo.root), "merge", command, "master", "right", "--target-branch", "target"])
+    result = CliRunner().invoke(
+        cli,
+        [
+            "-C",
+            str(repo.root),
+            "merge",
+            command,
+            "master",
+            "right",
+            "--target-branch",
+            "target",
+        ],
+    )
     assert result.exit_code != 0
     assert "not an ancestor of either parent" in result.output
     assert target in result.output
@@ -160,11 +214,16 @@ def test_cli_preview_and_commit_expose_target_admission(tmp_path: Path) -> None:
     actual = yaml.safe_load(committed.output)
     assert actual["plan"] == expected["plan"]
     assert actual["target_admission"] == expected["target_admission"]
-    assert tuple(repo.require_git().iter_commit_parent_shas(actual["commit_sha"])) == (left, right)
+    assert tuple(repo.require_git().iter_commit_parent_shas(actual["commit_sha"])) == (
+        left,
+        right,
+    )
 
 
 @pytest.mark.parametrize("existing", [False, True])
-def test_cli_stale_target_reports_expected_actual_and_preserves_data(tmp_path: Path, monkeypatch, existing) -> None:
+def test_cli_stale_target_reports_expected_actual_and_preserves_data(
+    tmp_path: Path, monkeypatch, existing
+) -> None:
     from propstore.merge import merge_commit
 
     repo, base, _left, _right = _branches(tmp_path)
@@ -184,7 +243,19 @@ def test_cli_stale_target_reports_expected_actual_and_preserves_data(tmp_path: P
         return result
 
     monkeypatch.setattr(merge_commit, "_transport_family_occurrences", advance_target)
-    result = CliRunner().invoke(cli, ["-C", str(repo.root), "merge", "commit", "master", "right", "--target-branch", "result"])
+    result = CliRunner().invoke(
+        cli,
+        [
+            "-C",
+            str(repo.root),
+            "merge",
+            "commit",
+            "master",
+            "right",
+            "--target-branch",
+            "result",
+        ],
+    )
     assert result.exit_code != 0
     assert "result" in result.output
     assert str(expected) in result.output

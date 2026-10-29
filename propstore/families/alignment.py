@@ -19,7 +19,6 @@ from quire.refs import single_field_ref_type
 
 from propstore.core.lemon import LexicalEntry, OntologyReference
 
-
 CONCEPT_ALIGNMENT_BRANCH = BranchPlacement(
     policy="fixed", fixed_branch="proposal/concepts"
 )

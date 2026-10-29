@@ -23,11 +23,11 @@ from propstore.core.labels import Label
 from propstore.core.scalars import ScalarValue
 from propstore.reporting import json_ready
 from propstore.support_revision.decision_trace import DecisionTrace, RankingProvenance
-from propstore.support_revision.integrity_constraints import IntegrityConstraintSpec
 from propstore.support_revision.explanation_types import (
     EntrenchmentReason,
     RevisionAtomDetail,
 )
+from propstore.support_revision.integrity_constraints import IntegrityConstraintSpec
 
 
 def _is_mapping(value: object) -> TypeGuard[Mapping[str, Any]]:
@@ -408,7 +408,9 @@ class EpistemicState(
 
     def __post_init__(self) -> None:
         if (self.inventory is None) != (self.initial_atom_ids is None):
-            raise ValueError("continuation inventory and initial seed must occur together")
+            raise ValueError(
+                "continuation inventory and initial seed must occur together"
+            )
         if self.initial_atom_ids is not None:
             object.__setattr__(self, "initial_atom_ids", tuple(self.initial_atom_ids))
         object.__setattr__(

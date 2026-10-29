@@ -30,7 +30,6 @@ import msgspec
 
 from propstore.core.id_types import ConceptId, to_concept_id
 
-
 BOOTSTRAP_RELATION_IDS: frozenset[str] = frozenset(
     {
         "relation_concept",
@@ -186,10 +185,10 @@ class RoleSignature:
         observed = bindings.roles()
         missing = expected.difference(observed)
         if missing:
-            raise ValueError(f"missing role binding: {sorted(missing)[0]}")
+            raise ValueError(f"missing role binding: {min(missing)}")
         unknown = observed.difference(expected)
         if unknown:
-            raise ValueError(f"unknown role binding: {sorted(unknown)[0]}")
+            raise ValueError(f"unknown role binding: {min(unknown)}")
 
     def identity_payload(
         self,

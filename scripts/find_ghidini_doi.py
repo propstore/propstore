@@ -1,7 +1,7 @@
 """Search CrossRef for Ghidini & Giunchiglia 2001 paper DOI."""
 
-import urllib.request
 import json
+import urllib.request
 
 url = "https://api.crossref.org/works?query=Local+Models+Semantics+Contextual+Reasoning+Ghidini+Giunchiglia&rows=5"
 req = urllib.request.Request(url, headers={"User-Agent": "propstore/1.0"})

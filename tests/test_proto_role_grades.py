@@ -30,7 +30,6 @@ from propstore.provenance import Provenance, ProvenanceStatus, ProvenanceWitness
 from propstore.repository import Repository
 from propstore.storage import ConceptRepository
 
-
 NONFINITE = pytest.mark.parametrize(
     "value", [float("nan"), float("inf"), float("-inf")], ids=["nan", "inf", "-inf"]
 )

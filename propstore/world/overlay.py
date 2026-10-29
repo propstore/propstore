@@ -29,9 +29,9 @@ from condition_ir import (
 )
 
 from propstore.conflict_detector import ConflictRecord
+from propstore.core.activation import activate_compiled_world_graph
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.environment import WorldStore
-from propstore.core.activation import activate_compiled_world_graph
 from propstore.core.graph_build import build_compiled_world_graph
 from propstore.core.graph_types import CompiledWorldGraph
 from propstore.core.id_types import ConceptId, to_concept_id

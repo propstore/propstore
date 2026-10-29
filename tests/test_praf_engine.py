@@ -17,6 +17,8 @@ from argumentation.probabilistic.probabilistic import (
 )
 from doxa import Opinion
 
+from propstore.families.claims import Claim
+from propstore.families.relations import Stance
 from propstore.opinion_provenance import OpinionWithProvenance
 from propstore.praf import (
     NoCalibration,
@@ -26,8 +28,6 @@ from propstore.praf import (
     p_relation_from_stance,
 )
 from propstore.provenance import Provenance, ProvenanceStatus
-from propstore.families.claims import Claim
-from propstore.families.relations import Stance
 
 
 def _vacuous() -> Provenance:

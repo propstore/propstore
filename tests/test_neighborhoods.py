@@ -62,29 +62,25 @@ def test_edges_carry_stance_kind_and_sentence(tmp_path: Path) -> None:
 
 def test_unsupported_focus_kind_raises(tmp_path: Path) -> None:
     repo = build_demo_repo(tmp_path)
-    with WorldQuery(repo) as world:
-        with pytest.raises(SemanticNeighborhoodUnsupportedFocusError):
-            build_semantic_neighborhood(
-                world, "concept", "speed", policy=_default_policy()
-            )
+    with (
+        WorldQuery(repo) as world,
+        pytest.raises(SemanticNeighborhoodUnsupportedFocusError),
+    ):
+        build_semantic_neighborhood(world, "concept", "speed", policy=_default_policy())
 
 
 def test_unknown_focus_claim_raises(tmp_path: Path) -> None:
     repo = build_demo_repo(tmp_path)
-    with WorldQuery(repo) as world:
-        with pytest.raises(ClaimViewUnknownClaimError):
-            build_semantic_neighborhood(
-                world, "claim", "nope", policy=_default_policy()
-            )
+    with WorldQuery(repo) as world, pytest.raises(ClaimViewUnknownClaimError):
+        build_semantic_neighborhood(world, "claim", "nope", policy=_default_policy())
 
 
 def test_blocked_focus_claim_raises(tmp_path: Path) -> None:
     repo = build_demo_repo(tmp_path)
-    with WorldQuery(repo) as world:
-        with pytest.raises(ClaimViewBlockedError):
-            build_semantic_neighborhood(
-                world, "claim", "p_blocked", policy=_default_policy()
-            )
+    with WorldQuery(repo) as world, pytest.raises(ClaimViewBlockedError):
+        build_semantic_neighborhood(
+            world, "claim", "p_blocked", policy=_default_policy()
+        )
 
 
 def test_report_is_json_ready(tmp_path: Path) -> None:

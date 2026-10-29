@@ -19,7 +19,6 @@ from __future__ import annotations
 from typing import Annotated
 
 import msgspec
-
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.references import ForeignKeySpec
 
@@ -78,7 +77,10 @@ def principal_claim_id(
 
 
 def _transport_identity(document: Micropublication) -> Micropublication:
-    from propstore.families.identity.micropubs import micropub_artifact_id, micropub_version_id
+    from propstore.families.identity.micropubs import (
+        micropub_artifact_id,
+        micropub_version_id,
+    )
 
     return msgspec.structs.replace(
         document,

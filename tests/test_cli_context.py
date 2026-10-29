@@ -12,9 +12,9 @@ from pathlib import Path
 
 from click.testing import CliRunner, Result
 
-from tests.app_render_helpers import build_demo_repo
 from propstore.cli import cli
 from propstore.repository import Repository
+from tests.app_render_helpers import build_demo_repo
 
 
 def _invoke(repo: Repository, args: list[str]) -> Result:

@@ -12,8 +12,8 @@ from propstore.support_revision.entrenchment import EntrenchmentReport
 from propstore.support_revision.input_normalization import normalize_revision_input
 from propstore.support_revision.realization import realize_formal_decision
 from propstore.support_revision.state import (
-    AssumptionAtom,
     AssertionAtom,
+    AssumptionAtom,
     BeliefAtom,
     BeliefBase,
     RevisionResult,

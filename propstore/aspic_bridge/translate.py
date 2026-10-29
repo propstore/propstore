@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
+import msgspec
 from argumentation.core.preference import strict_partial_order_closure
 from argumentation.structured.aspic.aspic import (
     ContrarinessFn,
@@ -33,15 +34,13 @@ from argumentation.structured.aspic.aspic import (
 from argumentation.structured.aspic.datalog_grounding import GroundRuleOrigin
 
 from propstore.core.active_claims import ActiveClaim
-from propstore.families.justifications import Justification
 from propstore.core.literal_keys import (
     REPOSITORY_ROOT_CONTEXT_ID,
     IstLiteralKey,
     LiteralKey,
     claim_key,
 )
-import msgspec
-
+from propstore.families.justifications import Justification
 from propstore.preference import MetadataStrengthVector, metadata_strength_vector
 from propstore.stances import StanceType
 

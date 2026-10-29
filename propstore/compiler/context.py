@@ -25,7 +25,11 @@ from propstore.families.concepts_passes import (
     run_concept_pipeline,
 )
 from propstore.families.forms import FormDefinition
-from propstore.families.forms_passes import FormCheckedRegistry, LoadedForm, run_form_pipeline
+from propstore.families.forms_passes import (
+    FormCheckedRegistry,
+    LoadedForm,
+    run_form_pipeline,
+)
 
 if TYPE_CHECKING:
     from propstore.repository import Repository
@@ -62,7 +66,9 @@ def build_compilation_context(
     """Build compiler symbol tables from the checked concept owner output."""
 
     return CompilationContext(
-        form_registry=form_registry if form_registry is not None else FormCheckedRegistry(forms=(), registry={}),
+        form_registry=form_registry
+        if form_registry is not None
+        else FormCheckedRegistry(forms=(), registry={}),
         context_ids=frozenset(context_ids or ()),
         concepts_by_id=MappingProxyType(dict(checked_concepts.by_id)),
         claim_index=MappingProxyType(build_compiler_claim_index(claims)),
@@ -90,19 +96,23 @@ def build_compilation_context_from_repo(
             handle.document.name: handle.document
             for handle in repo.families.by_name("form").iter_handles(commit=commit)
         }
-    form_result = run_form_pipeline([
-        LoadedForm(form=form) for form in form_registry.values()
-    ])
-    if not isinstance(form_result.output, FormCheckedRegistry):
+    form_result = run_form_pipeline(
+        [LoadedForm(form=form) for form in form_registry.values()]
+    )
+    if form_result.output is None:
         detail = "; ".join(diagnostic.message for diagnostic in form_result.diagnostics)
         raise ValueError(f"form validation failed: {detail}")
+    if not isinstance(form_result.output, FormCheckedRegistry):
+        raise TypeError("form pipeline returned an unexpected output type")
     result = run_concept_pipeline(
         [LoadedConcept(concept=concept) for concept in concepts],
         context=ConceptPipelineContext(form_registry=form_registry),
     )
-    if not isinstance(result.output, ConceptCheckedRegistry):
+    if result.output is None:
         detail = "; ".join(diagnostic.message for diagnostic in result.diagnostics)
         raise ValueError(f"concept validation failed: {detail}")
+    if not isinstance(result.output, ConceptCheckedRegistry):
+        raise TypeError("concept pipeline returned an unexpected output type")
     return build_compilation_context(
         result.output,
         form_registry=form_result.output,

@@ -21,7 +21,6 @@ from __future__ import annotations
 from typing import Annotated
 
 import msgspec
-
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.family_transport import FamilyReferenceImage
 

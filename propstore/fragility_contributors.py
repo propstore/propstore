@@ -21,6 +21,7 @@ section predicate ids as positive literals.
 from __future__ import annotations
 
 import json
+import logging
 import warnings
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -53,8 +54,8 @@ from propstore.fragility_types import (
     BridgeUndercutTarget,
     ConflictTarget,
     FragilityWorld,
-    GroundFactTarget,
     GroundedRuleTarget,
+    GroundFactTarget,
     InterventionFamily,
     InterventionKind,
     InterventionProvenance,
@@ -70,6 +71,7 @@ from propstore.world.types import (
     coerce_queryable_assumptions,
 )
 
+_LOGGER = logging.getLogger(__name__)
 _ASSUMPTION_VAR_PREFIX = "ps:source:assumption:"
 
 
@@ -194,6 +196,7 @@ def derive_scored_concepts(bound: FragilityWorld) -> list[str]:
                 concepts.add(str(claim.concept_id))
         return sorted(concepts)
     except Exception as exc:
+        _LOGGER.exception("Fragility concept discovery failed")
         warnings.warn(
             f"Fragility concept discovery failed: {exc}",
             FragilityWarning,
@@ -226,6 +229,7 @@ def collect_assumption_interventions(
                 concept_id, normalized_queryables, limit=atms_limit
             )
         except Exception as exc:
+            _LOGGER.exception("ATMS fragility failed for %s", concept_id)
             warnings.warn(
                 f"ATMS fragility failed for {concept_id}: {exc}",
                 FragilityWarning,
@@ -385,6 +389,7 @@ def collect_conflict_interventions(
             active_graph
         ).argumentation_framework
     except Exception as exc:
+        _LOGGER.exception("Conflict fragility failed to build framework")
         warnings.warn(
             f"Conflict fragility failed to build framework: {exc}",
             FragilityWarning,
@@ -451,8 +456,10 @@ _SECTION_FRAGILITY = {
 
 def _coefficient_provenance_notes(*, formula: str, citation: str) -> tuple[str, ...]:
     return (
-        "status=vacuous; "
-        f"fragility coefficient heuristic; formula={formula}; citation={citation}",
+        (
+            "status=vacuous; "
+            f"fragility coefficient heuristic; formula={formula}; citation={citation}"
+        ),
     )
 
 
@@ -537,7 +544,7 @@ def collect_grounded_rule_interventions(
 ) -> tuple[RankedIntervention, ...]:
     projection = project_grounded_rules(bundle, {})
     undercut_counts: dict[Rule, int] = {}
-    for _rule, origin in projection.origins.items():
+    for origin in projection.origins.values():
         if origin.role != "undercut" or origin.target_rule is None:
             continue
         undercut_counts[origin.target_rule] = (

@@ -114,9 +114,7 @@ def _check_one(
         context=context,
     )
     for problem in contract_report.diagnostics:
-        diagnostics.append(
-            _error(problem.code, problem.message, loaded, problem.field)
-        )
+        diagnostics.append(_error(problem.code, problem.message, loaded, problem.field))
 
     condition_report = check_claim_conditions(claim, context.condition_registry)
     for condition_problem in condition_report.diagnostics:

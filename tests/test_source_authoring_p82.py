@@ -13,6 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from condition_ir import KindType
 from quire.references import AmbiguousReferenceError
 
 from propstore.canonical_namespaces import ReservedNamespaceViolation
@@ -47,8 +48,6 @@ from propstore.source.relations import (
     commit_source_stance_proposal,
 )
 from propstore.stances import StanceType
-
-from condition_ir import KindType
 
 _SOURCE = "Demo Paper 2024"
 

@@ -13,7 +13,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-
 from propstore.conflict_detector.models import ConflictClaim
 from propstore.core.environment import Environment, WorldStore
 from propstore.reporting import JsonReportMixin

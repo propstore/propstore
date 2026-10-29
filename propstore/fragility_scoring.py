@@ -15,13 +15,13 @@ fabricated certainty.
 
 from __future__ import annotations
 
+import logging
 import warnings
 from collections.abc import Mapping, Sequence
 from itertools import combinations
 from typing import TYPE_CHECKING
 
 from condition_ir import CelExpr
-from doxa import opinion_sensitivity as opinion_sensitivity
 from provenance_semiring import (
     ProvenanceNogood,
     ProvenancePolynomial,
@@ -46,6 +46,9 @@ if TYPE_CHECKING:
     from argumentation.core.dung import ArgumentationFramework
 
     from propstore.opinion_provenance import OpinionWithProvenance
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class FragilityWarning(UserWarning):
@@ -230,6 +233,7 @@ def detect_interactions(
     try:
         engine = bound.atms_engine()
     except Exception:
+        _LOGGER.exception("ATMS engine unavailable for fragility interactions")
         return tuple(
             FragilityInteraction(
                 intervention_a_id=min(
@@ -263,6 +267,7 @@ def detect_interactions(
                 concept_id, queryables, limit=atms_limit
             )
         except Exception:
+            _LOGGER.exception("ATMS fragility interaction failed for %s", concept_id)
             continue
         witnesses = stability.witnesses
         singleton_by_qcel: dict[str, set[str]] = {}

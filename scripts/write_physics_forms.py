@@ -1,6 +1,7 @@
 """Write enriched and new physics form YAML files to forms/ directory."""
 
 from pathlib import Path
+
 import yaml
 
 forms_dir = Path(__file__).parent.parent / "propstore" / "_resources" / "forms"

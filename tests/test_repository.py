@@ -5,12 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from quire.git_store import GitStore
 
+from propstore.families.claims import Claim
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
-from propstore.families.claims import Claim
 from propstore.families.micropublications import (
     Micropublication,
     MicropublicationEvidence,
@@ -160,9 +159,8 @@ def test_tree_returns_a_path_for_a_git_repo(tmp_path: Path) -> None:
 
 def test_mutation_guard_requires_git(tmp_path: Path) -> None:
     repo = Repository(tmp_path)  # no init -> not git-backed
-    with pytest.raises(ValueError, match="git-backed"):
-        with repo.mutation_guard():
-            pass
+    with pytest.raises(ValueError, match="git-backed"), repo.mutation_guard():
+        pass
 
 
 def test_mutation_guard_runs_on_git_repo(tmp_path: Path) -> None:

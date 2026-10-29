@@ -32,8 +32,8 @@ from propstore.compiler.context import build_compilation_context_from_repo
 from propstore.core.scalars import ScalarValue
 from propstore.core.source_types import SourceKind, SourceOriginType
 from propstore.families.claims import Claim, ClaimStatus, ClaimType
-from propstore.families.contexts import Context
 from propstore.families.concepts import Concept
+from propstore.families.contexts import Context
 from propstore.families.forms import FormDefinition
 from propstore.families.sources import SourceConceptFormParametersDocument
 from propstore.provenance import ProvenanceStatus, read_provenance_note
@@ -44,11 +44,11 @@ from propstore.source import (
     promote_source_branch,
     source_branch_name,
 )
+from propstore.source.claims import commit_source_claim_proposal
 from propstore.source.common import (
     commit_source_metadata,
     load_source_claims_document,
 )
-from propstore.source.claims import commit_source_claim_proposal
 from propstore.source.concepts import commit_source_concept_proposal
 from propstore.world import WorldQuery
 

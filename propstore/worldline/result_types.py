@@ -45,7 +45,7 @@ def validated_revision_target(operation: str, target: object) -> str | None:
         return None
     target_id = str(target)
     if operation == "contract" and not (
-        target_id.startswith("ps:assertion:") or target_id.startswith("assumption:")
+        target_id.startswith(("ps:assertion:", "assumption:"))
     ):
         raise WorldlineRevisionTargetValidationError(
             "Worldline revision target must be an assertion or assumption atom id: "
@@ -85,7 +85,7 @@ class WorldlineInputSource:
     formula: str | None = None
     reason: str | None = None
     strategy: str | None = None
-    inputs_used: Mapping[str, "WorldlineInputSource"] = field(
+    inputs_used: Mapping[str, WorldlineInputSource] = field(
         default_factory=dict[str, "WorldlineInputSource"]
     )
 

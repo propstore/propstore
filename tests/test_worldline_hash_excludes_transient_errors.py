@@ -4,17 +4,21 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from propstore.world.types import Environment
-from propstore.world.types import ReasoningBackend, RenderPolicy, ResolutionStrategy
+from propstore.reporting import json_ready
+from propstore.world.types import (
+    Environment,
+    ReasoningBackend,
+    RenderPolicy,
+    ResolutionStrategy,
+)
 from propstore.worldline.definition import WorldlineDefinition, WorldlineInputs
 from propstore.worldline.hashing import compute_worldline_content_hash
-from propstore.worldline.runner import run_worldline
-from propstore.reporting import json_ready
 from propstore.worldline.result_types import (
     WorldlineArgumentationState,
     WorldlineDependencies,
     WorldlineTargetValue,
 )
+from propstore.worldline.runner import run_worldline
 
 
 class _FakeWorld:
@@ -52,7 +56,9 @@ class _FakeBound:
 
 class _FakeValueResult:
     status = "no_claims"
-    claims = []
+
+    def __init__(self) -> None:
+        self.claims = []
 
 
 def _argumentation_definition() -> WorldlineDefinition:

@@ -18,6 +18,12 @@ from condition_ir import (
 
 from propstore.compiler.context import build_compilation_context
 from propstore.compiler.ir import ClaimCheckedBundle
+from propstore.core.lemon import (
+    LexicalEntry,
+    LexicalForm,
+    LexicalSense,
+    OntologyReference,
+)
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.claims_passes import ClaimFiles, LoadedClaim, run_claim_pipeline
 from propstore.families.concepts import Concept
@@ -34,19 +40,12 @@ from propstore.families.contexts_passes import (
     LoadedLiftingRule,
     run_context_pipeline,
 )
-from propstore.core.lemon import (
-    LexicalEntry,
-    LexicalForm,
-    LexicalSense,
-    OntologyReference,
-)
 from propstore.families.forms import FormDefinition
 from propstore.families.forms_passes import (
     FormCheckedRegistry,
     LoadedForm,
     run_form_pipeline,
 )
-
 
 # --- forms ----------------------------------------------------------------- #
 

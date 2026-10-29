@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from belief_set import Atom, TOP, merge_belief_profile
+from belief_set import TOP, Atom, merge_belief_profile
 
 from propstore.support_revision.belief_set_adapter import decide_ic_merge
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-from propstore.core.environment import WorldStore, Environment
+from propstore.core.environment import Environment, WorldStore
 from propstore.world.types import BeliefSpace, RenderPolicy
 
 if TYPE_CHECKING:

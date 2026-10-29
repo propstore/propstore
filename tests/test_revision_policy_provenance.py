@@ -2,12 +2,8 @@ from __future__ import annotations
 
 from msgspec.structs import replace
 
-
 from propstore.provenance import ProvenanceStatus
 from propstore.support_revision.decision_trace import RankingProvenance
-from propstore.support_revision.operator_inputs import (
-    ReviseInput,
-)
 from propstore.support_revision.dispatch import dispatch
 from propstore.support_revision.history import (
     JournalOperator,
@@ -16,6 +12,9 @@ from propstore.support_revision.history import (
     TransitionOperation,
 )
 from propstore.support_revision.iterated import make_epistemic_state
+from propstore.support_revision.operator_inputs import (
+    ReviseInput,
+)
 from tests.support_revision.formal_realization_helpers import revise_via_formal_decision
 from tests.support_revision.revision_assertion_helpers import make_assertion_atom
 from tests.test_revision_operators import _base_with_shared_support

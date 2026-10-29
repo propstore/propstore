@@ -36,7 +36,7 @@ from __future__ import annotations
 from collections.abc import Generator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from causal_models import InterventionWorld, ObservationWorld, Value
 from condition_ir import ConditionSolver, to_cel_exprs, with_standard_synthetic_bindings
@@ -49,7 +49,6 @@ from quire.sqlalchemy_store import readonly_session, validate_sqlalchemy_store
 from propstore.conflict_detector.models import ConflictRecord
 from propstore.core.activation import activate_compiled_world_graph
 from propstore.core.active_claims import ActiveClaim
-from propstore.core.scalars import ScalarValue
 from propstore.core.environment import Environment, WorldStore
 from propstore.core.graph_build import build_compiled_world_graph
 from propstore.core.graph_types import (
@@ -63,6 +62,7 @@ from propstore.core.labels import (
     compile_environment_assumptions,
     environment_assumption_ids,
 )
+from propstore.core.scalars import ScalarValue
 from propstore.core.store_results import (
     ClaimSimilarityHit,
     ConceptSearchHit,
@@ -479,7 +479,7 @@ class WorldQuery(WorldStore):
         self._parameterizations: tuple[ParameterizationEdge, ...] | None = None
         self._grounding_bundle: GroundedRulesBundle | None = None
 
-    def __enter__(self) -> WorldQuery:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc: object) -> None:

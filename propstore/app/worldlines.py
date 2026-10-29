@@ -28,6 +28,8 @@ from typing import TYPE_CHECKING, Any
 from quire.documents import DocumentSchemaError
 
 from propstore.app.world import WorldSidecarMissingError, open_app_world_model
+from propstore.core.id_types import to_context_id
+from propstore.core.scalars import ScalarValue
 from propstore.families.registry import WorldlineRef
 from propstore.policies import policy_profile_from_render_policy
 from propstore.world.types import (
@@ -38,8 +40,6 @@ from propstore.world.types import (
     cli_argumentation_semantics_values,
     validate_backend_semantics,
 )
-from propstore.core.id_types import to_context_id
-from propstore.core.scalars import ScalarValue
 from propstore.worldline.definition import (
     WorldlineDefinition,
     WorldlineInputs,
@@ -48,11 +48,11 @@ from propstore.worldline.query import (
     WorldlineResult,
     WorldlineRevisionQuery,
 )
+from propstore.worldline.revision_capture import capture_journal
 from propstore.worldline.revision_types import (
     RevisionAtomRef,
     RevisionConflictSelection,
 )
-from propstore.worldline.revision_capture import capture_journal
 from propstore.worldline.runner import run_worldline
 from propstore.worldline.runner import worldline_is_stale as _render_is_stale
 

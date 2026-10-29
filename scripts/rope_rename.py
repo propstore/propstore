@@ -6,7 +6,6 @@ from pathlib import Path
 from rope.base.project import Project
 from rope.refactor.rename import Rename
 
-
 IGNORED_RESOURCES = [
     ".git",
     ".git/*",

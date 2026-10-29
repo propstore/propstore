@@ -16,14 +16,14 @@ from itertools import product
 from typing import Any
 
 import pytest
+from assignment_selection import Assignment, MergeOperator, SourceAssignment
+from assignment_selection.solver import claim_distance, enumerate_candidate_assignments
+from condition_ir import ConceptInfo, KindType
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 
 import propstore.storage as repo_api
 import propstore.world.assignment_selection_merge as merge_module
-from assignment_selection import Assignment, MergeOperator, SourceAssignment
-from assignment_selection.solver import claim_distance, enumerate_candidate_assignments
-from condition_ir import ConceptInfo, KindType
 from propstore.world.assignment_selection_merge import (
     AssignmentSelectionRequest,
     _compile_cel_constraint,
@@ -37,7 +37,6 @@ from propstore.world.types import (
     RenderPolicy,
     ResolutionStrategy,
 )
-
 
 # ── Builders ─────────────────────────────────────────────────────────
 

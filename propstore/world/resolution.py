@@ -582,8 +582,10 @@ def _resolve_praf(
     if omitted_target_arguments:
         return (
             None,
-            "PrAF target calibration omitted for "
-            f"{', '.join(omitted_target_arguments)} via {strategy_used} ({semantics})",
+            (
+                "PrAF target calibration omitted for "
+                f"{', '.join(omitted_target_arguments)} via {strategy_used} ({semantics})"
+            ),
             {},
         )
 
@@ -601,8 +603,10 @@ def _resolve_praf(
             )
             return (
                 winner,
-                f"PrAF extension probability ({probability_text}) "
-                f"via {strategy_used} ({semantics})",
+                (
+                    f"PrAF extension probability ({probability_text}) "
+                    f"via {strategy_used} ({semantics})"
+                ),
                 None,
             )
         if not best_claims:
@@ -613,8 +617,10 @@ def _resolve_praf(
             )
         return (
             None,
-            f"{len(best_claims)} claims share extension-probability witness "
-            f"via {strategy_used} ({semantics})",
+            (
+                f"{len(best_claims)} claims share extension-probability witness "
+                f"via {strategy_used} ({semantics})"
+            ),
             None,
         )
 
@@ -673,15 +679,19 @@ def _resolve_praf(
                 winner = dv_winners[0]
                 return (
                     winner,
-                    f"PrAF acceptance tie ({best_prob:.4f}) broken by "
-                    f"{decision_criterion} ({best_dv:.4f}) via {strategy_used} ({semantics})",
+                    (
+                        f"PrAF acceptance tie ({best_prob:.4f}) broken by "
+                        f"{decision_criterion} ({best_dv:.4f}) via {strategy_used} ({semantics})"
+                    ),
                     acceptance,
                 )
 
     return (
         None,
-        f"{len(best_claims)} claims tied at acceptance {best_prob:.4f} "
-        f"via {strategy_used} ({semantics})",
+        (
+            f"{len(best_claims)} claims tied at acceptance {best_prob:.4f} "
+            f"via {strategy_used} ({semantics})"
+        ),
         acceptance,
     )
 

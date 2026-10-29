@@ -5,7 +5,6 @@ from pathlib import Path
 
 import yaml
 
-
 # Known alias merges: alias -> canonical
 ALIAS_MERGES = {
     "non-monotonic-reasoning": "nonmonotonic-reasoning",

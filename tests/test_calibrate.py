@@ -11,9 +11,9 @@ from __future__ import annotations
 import math
 
 import pytest
+from doxa import Opinion
 from hypothesis import given, settings
 from hypothesis import strategies as st
-from doxa import Opinion
 
 from propstore.core.base_rates import BaseRateUnresolved
 from propstore.heuristic.calibrate import (

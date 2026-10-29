@@ -1,18 +1,10 @@
 from __future__ import annotations
 
 import pytest
+from belief_set import TOP, Atom, disjunction
 from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
-from belief_set import Atom, TOP, disjunction
-
-from propstore.support_revision.integrity_constraints import (
-    AtomConstraint,
-    TopConstraint,
-)
-from propstore.support_revision.operator_inputs import (
-    ICMergeInput,
-)
 from propstore.support_revision.belief_set_adapter import (
     decide_ic_merge,
     decide_ic_merge_profile,
@@ -24,7 +16,14 @@ from propstore.support_revision.history import (
     TransitionJournal,
     TransitionOperation,
 )
+from propstore.support_revision.integrity_constraints import (
+    AtomConstraint,
+    TopConstraint,
+)
 from propstore.support_revision.iterated import make_epistemic_state
+from propstore.support_revision.operator_inputs import (
+    ICMergeInput,
+)
 from propstore.support_revision.realization import realize_ic_merge_decision
 from propstore.support_revision.state import (
     BeliefBase,
@@ -33,7 +32,6 @@ from propstore.support_revision.state import (
 )
 from tests.fixtures.journal import make_journal_entry
 from tests.support_revision.revision_assertion_helpers import make_assertion_atom
-
 
 _POLICY = {
     "revision_policy_version": "revision.v1",

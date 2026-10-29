@@ -32,7 +32,6 @@ from pathlib import Path
 from typing import Annotated, Protocol
 
 import msgspec
-
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.charters import charter_catalog
 from quire.family_store import DocumentFamilyStore

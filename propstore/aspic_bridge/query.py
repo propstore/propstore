@@ -35,8 +35,8 @@ from propstore.aspic_bridge.translate import (
     preference_sensitive_stance_pairs,
 )
 from propstore.core.active_claims import ActiveClaim
-from propstore.families.justifications import Justification
 from propstore.core.literal_keys import IstLiteralKey, LiteralKey, claim_key, ground_key
+from propstore.families.justifications import Justification
 from propstore.grounding.bundle import GroundedRulesBundle
 
 

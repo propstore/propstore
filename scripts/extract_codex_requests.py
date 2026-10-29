@@ -109,9 +109,7 @@ def is_context_only_message(text: str) -> bool:
         return True
     if stripped.startswith("<turn_aborted>"):
         return True
-    if stripped.startswith("<subagent_notification>"):
-        return True
-    return False
+    return stripped.startswith("<subagent_notification>")
 
 
 def turn_key(turn: UserTurn) -> tuple[str, str]:

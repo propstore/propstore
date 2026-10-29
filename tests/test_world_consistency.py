@@ -6,7 +6,6 @@ from propstore.world.consistency import (
     WorldConsistencyRequest,
     check_world_consistency,
 )
-
 from tests.atms_feed import ClaimSpec, ConflictSpec, build_bound
 
 

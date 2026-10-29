@@ -25,7 +25,6 @@ from propstore.families.rules import Atom, BodyLiteral, DefeasibleRule, Term
 from propstore.observatory import EvaluationScenario
 from propstore.repository import Repository
 
-
 # --- import-repository -------------------------------------------------------
 
 

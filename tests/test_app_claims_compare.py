@@ -81,12 +81,10 @@ def test_compare_equivalent_algorithm_bodies(tmp_path: Path) -> None:
 
 
 def test_compare_unknown_claim_raises(tmp_path: Path) -> None:
-    with WorldQuery(_repo(tmp_path)) as world:
-        with pytest.raises(UnknownClaimError):
-            compare_algorithm_claims(world, ClaimCompareRequest("alg1", "nope"))
+    with WorldQuery(_repo(tmp_path)) as world, pytest.raises(UnknownClaimError):
+        compare_algorithm_claims(world, ClaimCompareRequest("alg1", "nope"))
 
 
 def test_compare_non_algorithm_claim_raises(tmp_path: Path) -> None:
-    with WorldQuery(_repo(tmp_path)) as world:
-        with pytest.raises(ClaimComparisonError):
-            compare_algorithm_claims(world, ClaimCompareRequest("alg1", "p1"))
+    with WorldQuery(_repo(tmp_path)) as world, pytest.raises(ClaimComparisonError):
+        compare_algorithm_claims(world, ClaimCompareRequest("alg1", "p1"))

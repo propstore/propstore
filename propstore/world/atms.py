@@ -26,13 +26,12 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from itertools import combinations, product
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Protocol,
     TypeGuard,
     TypeVar,
@@ -87,8 +86,8 @@ from propstore.core.labels import (
     merge_labels,
 )
 from propstore.core.scalars import ScalarValue
-from propstore.families.micropublications import Micropublication
 from propstore.families.claims import Claim
+from propstore.families.micropublications import Micropublication
 from propstore.propagation import (
     ParameterizationEvaluationStatus,
     evaluate_parameterization,
@@ -1540,7 +1539,9 @@ class ATMSEngine:
                 continue
 
             if param.equation_claim_id is not None:
-                equation_node_id = self._claim_node_ids.get(str(param.equation_claim_id))
+                equation_node_id = self._claim_node_ids.get(
+                    str(param.equation_claim_id)
+                )
                 if equation_node_id is None:
                     continue
                 condition_antecedents = [(equation_node_id,)]
@@ -1971,9 +1972,10 @@ class ATMSEngine:
                 return True
             for antecedent_id in justification.antecedent_ids:
                 antecedent = self._nodes[antecedent_id]
-                if not antecedent.label.environments:
-                    if self._was_pruned_by_nogood(antecedent_id, _visited):
-                        return True
+                if not antecedent.label.environments and self._was_pruned_by_nogood(
+                    antecedent_id, _visited
+                ):
+                    return True
         return False
 
     def _cycle_support_pruned_by_nogood(self, node_id: str) -> bool:

@@ -11,7 +11,10 @@ from quire.git_store import AmbiguousMergeBaseError
 from quire.references import ForeignKeyValidationError
 
 from propstore.app.merge import (
-    MergeCommitRequest, MergeInspectRequest, commit_merge, inspect_merge,
+    MergeCommitRequest,
+    MergeInspectRequest,
+    commit_merge,
+    inspect_merge,
 )
 from propstore.cli import cli
 from propstore.families.concepts import Concept
@@ -33,11 +36,21 @@ def _seed(tmp_path: Path, family: str):
         document = Concept(concept_id=ref, canonical_name="ordinary")
     elif family == "stance":
         ref = "edge"
-        document = Stance(stance_id=ref, source_claim_id="c", target_claim_id="c", stance_type=StanceType.SUPPORTS, confidence=0.4)
+        document = Stance(
+            stance_id=ref,
+            source_claim_id="c",
+            target_claim_id="c",
+            stance_type=StanceType.SUPPORTS,
+            confidence=0.4,
+        )
     else:
-        repo.families.context.save("ctx", Context(context_id="ctx", name="ctx"), message="context")
+        repo.families.context.save(
+            "ctx", Context(context_id="ctx", name="ctx"), message="context"
+        )
         ref = "ni:///bundle/evidence"
-        document = Micropublication(artifact_id=ref, context_id="ctx", claims=("c",), source="urn:paper:base")
+        document = Micropublication(
+            artifact_id=ref, context_id="ctx", claims=("c",), source="urn:paper:base"
+        )
     bound = repo.families.by_name(family)
     base = bound.save(ref, document, message="base ordinary evidence")
     repo.require_git().create_branch("peer", source_commit=base)
@@ -66,7 +79,9 @@ def test_unchanged_peer_does_not_resurrect_deleted_family(tmp_path, family, reve
     actual = bound.load(ref, commit=merged)
     assert actual is None
     assert verify_claim_tree(repo, commit=merged).ok
-    assert list(git.iter_commit_parent_shas(merged)) == ([base, deleted] if reverse else [deleted, base])
+    assert list(git.iter_commit_parent_shas(merged)) == (
+        [base, deleted] if reverse else [deleted, base]
+    )
     assert bound.require(ref, commit=base) == original
     assert git.branch_sha("master") == deleted
     assert git.branch_sha("peer") == base
@@ -74,10 +89,14 @@ def test_unchanged_peer_does_not_resurrect_deleted_family(tmp_path, family, reve
 
 @pytest.mark.parametrize("family", ["concept", "stance", "micropublication"])
 @pytest.mark.parametrize("reverse", [False, True])
-def test_modify_delete_conflict_keeps_target_and_parent_evidence(tmp_path, family, reverse):
+def test_modify_delete_conflict_keeps_target_and_parent_evidence(
+    tmp_path, family, reverse
+):
     repo, bound, ref, original, base = _seed(tmp_path, family)
     modified_document = _changed(original)
-    modified = bound.save(ref, modified_document, message="changed evidence", branch="master")
+    modified = bound.save(
+        ref, modified_document, message="changed evidence", branch="master"
+    )
     deleted = bound.delete(ref, message="competing deletion", branch="peer")
     git = repo.require_git()
     git.create_branch("result", source_commit=base)
@@ -85,7 +104,11 @@ def test_modify_delete_conflict_keeps_target_and_parent_evidence(tmp_path, famil
     with pytest.raises(NonClaimMergeConflict) as caught:
         create_merge_commit(repo, *sources, target_branch="result")
     assert caught.value.family == family
-    stored_path = next(handle.address.require_path() for handle in bound.iter_handles(commit=base) if handle.document == original)
+    stored_path = next(
+        handle.address.require_path()
+        for handle in bound.iter_handles(commit=base)
+        if handle.document == original
+    )
     assert caught.value.path == stored_path
     assert git.branch_sha("result") == base
     assert (git.branch_sha("master"), git.branch_sha("peer")) == (modified, deleted)
@@ -95,7 +118,9 @@ def test_modify_delete_conflict_keeps_target_and_parent_evidence(tmp_path, famil
 
 @pytest.mark.parametrize("family", ["concept", "stance", "micropublication"])
 @pytest.mark.parametrize("reverse", [False, True])
-def test_one_sided_ordinary_modification_uses_selected_parent_document(tmp_path, family, reverse):
+def test_one_sided_ordinary_modification_uses_selected_parent_document(
+    tmp_path, family, reverse
+):
     repo, bound, ref, original, base = _seed(tmp_path, family)
     changed = _changed(original)
     modified = bound.save(ref, changed, message="one-sided edit", branch="master")
@@ -109,14 +134,30 @@ def test_one_sided_ordinary_modification_uses_selected_parent_document(tmp_path,
 
 @pytest.mark.parametrize("family", ["stance", "micropublication"])
 @pytest.mark.parametrize("entrypoint", ["app", "cli"])
-def test_app_and_cli_keep_deletion_and_both_parent_snapshots(tmp_path, family, entrypoint):
+def test_app_and_cli_keep_deletion_and_both_parent_snapshots(
+    tmp_path, family, entrypoint
+):
     repo, bound, ref, original, base = _seed(tmp_path, family)
     deleted = bound.delete(ref, message="explicit deletion", branch="master")
     if entrypoint == "app":
-        report = commit_merge(repo, MergeCommitRequest("master", "peer", target_branch="result"))
+        report = commit_merge(
+            repo, MergeCommitRequest("master", "peer", target_branch="result")
+        )
         merged = report.commit_sha
     else:
-        result = CliRunner().invoke(cli, ["-C", str(repo.root), "merge", "commit", "master", "peer", "--target-branch", "result"])
+        result = CliRunner().invoke(
+            cli,
+            [
+                "-C",
+                str(repo.root),
+                "merge",
+                "commit",
+                "master",
+                "peer",
+                "--target-branch",
+                "result",
+            ],
+        )
         assert result.exit_code == 0, result.output
         merged = yaml.safe_load(result.output)["commit_sha"]
     git = repo.require_git()
@@ -134,7 +175,19 @@ def test_cli_modify_delete_renders_conflict_and_keeps_target(tmp_path, family):
     deleted = bound.delete(ref, message="delete", branch="peer")
     git = repo.require_git()
     git.create_branch("result", source_commit=base)
-    result = CliRunner().invoke(cli, ["-C", str(repo.root), "merge", "commit", "master", "peer", "--target-branch", "result"])
+    result = CliRunner().invoke(
+        cli,
+        [
+            "-C",
+            str(repo.root),
+            "merge",
+            "commit",
+            "master",
+            "peer",
+            "--target-branch",
+            "result",
+        ],
+    )
     assert result.exit_code == 1
     assert "non-claim merge conflict" in result.output
     assert f"family {family!r}" in result.output
@@ -144,8 +197,10 @@ def test_cli_modify_delete_renders_conflict_and_keeps_target(tmp_path, family):
 
 
 @pytest.mark.parametrize("reverse", [False, True])
-def test_selected_stance_edit_follows_only_its_own_rival_claim_version(tmp_path, reverse):
-    repo, bound, ref, original, base = _seed(tmp_path, "stance")
+def test_selected_stance_edit_follows_only_its_own_rival_claim_version(
+    tmp_path, reverse
+):
+    repo, bound, ref, original, _base = _seed(tmp_path, "stance")
     author_param_claim(repo, "c", "x", 300.0, branch="master")
     author_param_claim(repo, "c", "x", 150.0, branch="peer")
     changed = _changed(original)
@@ -153,7 +208,10 @@ def test_selected_stance_edit_follows_only_its_own_rival_claim_version(tmp_path,
     right = repo.require_git().branch_sha("peer")
     sources = ("peer", "master") if reverse else ("master", "peer")
     merged = create_merge_commit(repo, *sources, target_branch="result")
-    claims = {h.document.claim_id: h.document for h in repo.families.claim.iter_handles(commit=merged)}
+    claims = {
+        h.document.claim_id: h.document
+        for h in repo.families.claim.iter_handles(commit=merged)
+    }
     assert {document.value for document in claims.values()} == {300.0, 150.0}
     stances = tuple(bound.iter_handles(commit=merged))
     assert len(stances) == 1
@@ -162,19 +220,27 @@ def test_selected_stance_edit_follows_only_its_own_rival_claim_version(tmp_path,
     assert claims[stance.source_claim_id].value == 300.0
     assert claims[stance.target_claim_id].value == 300.0
     manifest = next(repo.families.merge_manifest.iter_handles(commit=merged)).document
-    assert {image.source_commit for image in manifest.reference_images if image.family == "stance"} == {left}
+    assert {
+        image.source_commit
+        for image in manifest.reference_images
+        if image.family == "stance"
+    } == {left}
     assert bound.require(ref, commit=right) == original
     assert bound.require(ref, commit=left) == changed
     assert verify_claim_tree(repo, commit=merged).ok
 
 
 @pytest.mark.parametrize("reverse", [False, True])
-def test_combined_reference_violation_rejects_valid_parents_before_publication(tmp_path, reverse):
+def test_combined_reference_violation_rejects_valid_parents_before_publication(
+    tmp_path, reverse
+):
     repo = init_repo(tmp_path / "knowledge")
     base = author_concept(repo, "x")
     git = repo.require_git()
     git.create_branch("peer", source_commit=base)
-    removed = repo.families.concept.delete("x", message="remove unused concept", branch="master")
+    removed = repo.families.concept.delete(
+        "x", message="remove unused concept", branch="master"
+    )
     added = author_param_claim(repo, "c", "x", 250.0, branch="peer")
     assert verify_claim_tree(repo, commit=removed).ok
     assert verify_claim_tree(repo, commit=added).ok
@@ -189,8 +255,12 @@ def test_combined_reference_violation_rejects_valid_parents_before_publication(t
 
 @pytest.mark.parametrize("reverse", [False, True])
 @pytest.mark.parametrize("existing_target", [False, True])
-@pytest.mark.parametrize("entrypoint", ["owner", "app", "cli", "inspect", "cli-inspect"])
-def test_criss_cross_opposite_concept_resolutions_refuse_before_writes(tmp_path, reverse, existing_target, entrypoint):
+@pytest.mark.parametrize(
+    "entrypoint", ["owner", "app", "cli", "inspect", "cli-inspect"]
+)
+def test_criss_cross_opposite_concept_resolutions_refuse_before_writes(
+    tmp_path, reverse, existing_target, entrypoint
+):
     repo = init_repo(tmp_path / "knowledge")
     origin = author_concept(repo, "x", name="O")
     git = repo.require_git()
@@ -198,8 +268,12 @@ def test_criss_cross_opposite_concept_resolutions_refuse_before_writes(tmp_path,
     git.create_branch("right", source_commit=origin)
     a = author_concept(repo, "x", name="A", branch="left")
     b = author_concept(repo, "x", name="B", branch="right")
-    left = git.commit_flat_tree(dict(git.iter_flat_tree_entries(a)), "retain A", parents=[a, b], branch="left")
-    right = git.commit_flat_tree(dict(git.iter_flat_tree_entries(b)), "retain B", parents=[b, a], branch="right")
+    left = git.commit_flat_tree(
+        dict(git.iter_flat_tree_entries(a)), "retain A", parents=[a, b], branch="left"
+    )
+    right = git.commit_flat_tree(
+        dict(git.iter_flat_tree_entries(b)), "retain B", parents=[b, a], branch="right"
+    )
     if existing_target:
         git.create_branch("result", source_commit=origin)
     refs_before = git.raw_repo.refs.as_dict()
@@ -208,7 +282,18 @@ def test_criss_cross_opposite_concept_resolutions_refuse_before_writes(tmp_path,
     assert set(git.iter_merge_bases(left, right)) == {a, b}
     if entrypoint in ("cli", "cli-inspect"):
         command = "inspect" if entrypoint == "cli-inspect" else "commit"
-        result = CliRunner().invoke(cli, ["-C", str(repo.root), "merge", command, *sources, "--target-branch", "result"])
+        result = CliRunner().invoke(
+            cli,
+            [
+                "-C",
+                str(repo.root),
+                "merge",
+                command,
+                *sources,
+                "--target-branch",
+                "result",
+            ],
+        )
         assert result.exit_code == 1
         assert "Multiple best merge bases" in result.output
         assert a in result.output and b in result.output
@@ -217,11 +302,15 @@ def test_criss_cross_opposite_concept_resolutions_refuse_before_writes(tmp_path,
             if entrypoint == "owner":
                 create_merge_commit(repo, *sources, target_branch="result")
             elif entrypoint == "inspect":
-                inspect_merge(repo, MergeInspectRequest(*sources, target_branch="result"))
+                inspect_merge(
+                    repo, MergeInspectRequest(*sources, target_branch="result")
+                )
             else:
                 commit_merge(repo, MergeCommitRequest(*sources, target_branch="result"))
         assert set(caught.value.base_shas) == {a, b}
-        assert (caught.value.left_sha, caught.value.right_sha) == ((right, left) if reverse else (left, right))
+        assert (caught.value.left_sha, caught.value.right_sha) == (
+            (right, left) if reverse else (left, right)
+        )
     assert git.raw_repo.refs.as_dict() == refs_before
     assert set(git.raw_repo.object_store) == objects_before
     assert repo.families.concept.require("x", commit=left).canonical_name == "A"
@@ -230,8 +319,18 @@ def test_criss_cross_opposite_concept_resolutions_refuse_before_writes(tmp_path,
 
 @pytest.mark.parametrize("reverse", [False, True])
 @pytest.mark.parametrize("entrypoint", ["owner", "cli"])
-@pytest.mark.parametrize("timestamps", [(100, 100, 100, 100), (100, 100, 100, 101), (300, 100, 200, 400), (100, 200, 300, 400)])
-def test_repeated_public_merges_use_only_the_best_base(tmp_path, monkeypatch, reverse, entrypoint, timestamps):
+@pytest.mark.parametrize(
+    "timestamps",
+    [
+        (100, 100, 100, 100),
+        (100, 100, 100, 101),
+        (300, 100, 200, 400),
+        (100, 200, 300, 400),
+    ],
+)
+def test_repeated_public_merges_use_only_the_best_base(
+    tmp_path, monkeypatch, reverse, entrypoint, timestamps
+):
     clock = 2_000_000_000 + timestamps[0]
     monkeypatch.setattr(git_store.time, "time", lambda: clock)
     repo = init_repo(tmp_path / "knowledge")
@@ -246,11 +345,17 @@ def test_repeated_public_merges_use_only_the_best_base(tmp_path, monkeypatch, re
         if p2 < q < p1:
             break
     else:
-        pytest.fail("fixed-time family commits did not produce the regression SHA ordering")
+        pytest.fail(
+            "fixed-time family commits did not produce the regression SHA ordering"
+        )
     git.create_branch("feature", source_commit=p2)
     clock = 2_000_000_000 + timestamps[3]
-    left = create_merge_commit(repo, "master", "feature", target_branch="left", message="L")
-    right = create_merge_commit(repo, "master", "feature", target_branch="right", message="R")
+    left = create_merge_commit(
+        repo, "master", "feature", target_branch="left", message="L"
+    )
+    right = create_merge_commit(
+        repo, "master", "feature", target_branch="right", message="R"
+    )
     assert list(git.iter_commit_parent_shas(left)) == [q, p2]
     assert list(git.iter_commit_parent_shas(right)) == [q, p2]
     assert tuple(git.iter_merge_bases(left, right)) == (q,)
@@ -258,11 +363,27 @@ def test_repeated_public_merges_use_only_the_best_base(tmp_path, monkeypatch, re
     if entrypoint == "owner":
         merged = create_merge_commit(repo, *sources, target_branch="result")
     else:
-        result = CliRunner().invoke(cli, ["-C", str(repo.root), "merge", "commit", *sources, "--target-branch", "result"])
+        result = CliRunner().invoke(
+            cli,
+            [
+                "-C",
+                str(repo.root),
+                "merge",
+                "commit",
+                *sources,
+                "--target-branch",
+                "result",
+            ],
+        )
         assert result.exit_code == 0, result.output
         merged = yaml.safe_load(result.output)["commit_sha"]
-    assert repo.families.concept.require("x", commit=merged).canonical_name == f"Q {attempt}"
+    assert (
+        repo.families.concept.require("x", commit=merged).canonical_name
+        == f"Q {attempt}"
+    )
     assert (git.branch_sha("master"), git.branch_sha("feature")) == (q, p2)
     assert (git.branch_sha("left"), git.branch_sha("right")) == (left, right)
-    assert list(git.iter_commit_parent_shas(merged)) == ([right, left] if reverse else [left, right])
+    assert list(git.iter_commit_parent_shas(merged)) == (
+        [right, left] if reverse else [left, right]
+    )
     assert verify_claim_tree(repo, commit=merged).ok

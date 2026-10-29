@@ -185,7 +185,7 @@ def lifecycle_policy(
 # Import the command modules last so they can attach their commands to the
 # ``world`` group; re-exported via ``__all__`` so the side-effect imports read as
 # the package's public command surface rather than unused imports.
-from propstore.cli.world import analysis, query, reasoning, revision  # noqa: E402
+from propstore.cli.world import analysis, query, reasoning, revision
 
 __all__ = [
     "analysis",

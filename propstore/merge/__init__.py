@@ -12,11 +12,6 @@ family-materialized ``MergeManifest``, and writes a single two-parent git commit
 """
 
 from propstore.merge.merge_claims import MergeClaim
-from propstore.merge.merge_commit import (
-    NonClaimMergeConflict,
-    build_repository_merge_framework,
-    create_merge_commit,
-)
 from propstore.merge.merge_classifier import (
     IntegrityConstraint,
     IntegrityConstraintViolation,
@@ -24,6 +19,11 @@ from propstore.merge.merge_classifier import (
     MergeComparisonProvenanceError,
     RepositoryMergeFramework,
     build_merge_framework,
+)
+from propstore.merge.merge_commit import (
+    NonClaimMergeConflict,
+    build_repository_merge_framework,
+    create_merge_commit,
 )
 from propstore.merge.merge_report import (
     semantic_candidate_details,
@@ -55,8 +55,8 @@ __all__ = [
     "build_branch_structured_summary",
     "build_merge_framework",
     "build_repository_merge_framework",
-    "create_merge_commit",
     "build_structured_merge_candidates",
+    "create_merge_commit",
     "semantic_candidate_details",
     "summarize_merge_framework",
 ]

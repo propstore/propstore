@@ -7,8 +7,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from msgspec.structs import replace as replace_struct
-
 from belief_set import (
     TOP,
     AlphabetBudgetExceeded,
@@ -31,6 +29,7 @@ from belief_set import (
     revise,
 )
 from belief_set.agm import extend_state
+from msgspec.structs import replace as replace_struct
 
 from propstore.provenance import ProvenanceStatus
 from propstore.support_revision.decision_trace import (
@@ -291,7 +290,8 @@ def _iterated_bundle(
                 bundle,
                 episode.input_atom_id,
                 tuple(
-                    target for target in episode.target_atom_ids
+                    target
+                    for target in episode.target_atom_ids
                     if target in known_atom_ids
                 ),
                 base_atom_ids=base_atom_ids,
@@ -637,7 +637,7 @@ def _plain_hash(payload: Any) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
-def _json_rank(rank: int | float) -> int | float | str:
+def _json_rank(rank: float) -> int | float | str:
     rank_value = float(rank)
     if math.isinf(rank_value):
         return "inf"

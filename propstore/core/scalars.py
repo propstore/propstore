@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 from typing import TypeAlias
 
-
 ScalarValue: TypeAlias = str | bool | int | float
 
 _MIN_SIGNED_INT64 = -(2**63)

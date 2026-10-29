@@ -25,14 +25,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from sqlalchemy import text
-from sqlalchemy.exc import IntegrityError
-
 from quire.sqlalchemy_store import (
     create_sqlalchemy_store,
     readonly_session,
     writable_session,
 )
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 
 from propstore.derived_schema import build_world_sidecar_schema
 
@@ -61,15 +60,14 @@ def test_default_enforcement_would_reject(tmp_path: Path) -> None:
     store = tmp_path / "world.sqlite"
     create_sqlalchemy_store(store, schema)
 
-    with pytest.raises(IntegrityError):
-        with writable_session(store, schema) as session:
-            session.add_family("defeasible_rule", _valid_rule_values("rule:1"))
-            # superior_rule_id points at a rule that does not exist.
-            session.add_family(
-                "rule_superiority",
-                _superiority_values("sup:1", "rule:missing", "rule:1"),
-            )
-            session.commit()
+    with pytest.raises(IntegrityError), writable_session(store, schema) as session:
+        session.add_family("defeasible_rule", _valid_rule_values("rule:1"))
+        # superior_rule_id points at a rule that does not exist.
+        session.add_family(
+            "rule_superiority",
+            _superiority_values("sup:1", "rule:missing", "rule:1"),
+        )
+        session.commit()
 
 
 def test_advisory_write_quarantines_dangling_ref(tmp_path: Path) -> None:

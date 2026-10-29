@@ -183,12 +183,14 @@ def test_runtime_error_from_algorithm_equivalence_propagates():
         ActiveClaim(claim_id="c2", body="x = 2"),
     ]
 
-    with patch(
-        "propstore.world.value_resolver.ast_compare",
-        side_effect=RuntimeError("boom"),
+    with (
+        patch(
+            "propstore.world.value_resolver.ast_compare",
+            side_effect=RuntimeError("boom"),
+        ),
+        pytest.raises(RuntimeError, match="boom"),
     ):
-        with pytest.raises(RuntimeError, match="boom"):
-            resolver._all_algorithms_equivalent(algo_claims, known_values={})
+        resolver._all_algorithms_equivalent(algo_claims, known_values={})
 
 
 def test_ast_compare_none_equivalence_is_benign_inconclusive():

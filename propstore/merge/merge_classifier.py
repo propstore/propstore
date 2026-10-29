@@ -28,13 +28,13 @@ from dataclasses import dataclass, replace
 from enum import Enum
 from itertools import product
 
+from argumentation.frameworks.partial_af import PartialArgumentationFramework
 from condition_ir import Z3TranslationError
 
 from propstore.conflict_detector import ConflictClass, detect_conflicts
 from propstore.conflict_detector.models import ConflictClaim
 from propstore.merge.merge_claims import MergeClaim
 from propstore.merge.witness import ProvenanceWitness
-from argumentation.frameworks.partial_af import PartialArgumentationFramework
 
 
 class _DiffKind(Enum):

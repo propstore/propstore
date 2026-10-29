@@ -18,7 +18,6 @@ from propstore.core.reasoning import (
 )
 from propstore.core.results import AnalyzerResult, ClaimProjection, ExtensionResult
 
-
 # ── reasoning ────────────────────────────────────────────────────────
 
 

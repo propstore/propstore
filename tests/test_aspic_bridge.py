@@ -16,10 +16,10 @@ from argumentation.structured.aspic.aspic import (
     Literal,
     conc,
 )
-from argumentation.structured.aspic.datalog_grounding import GroundRuleOrigin  # noqa: F401
+from argumentation.structured.aspic.datalog_grounding import (  # noqa: F401
+    GroundRuleOrigin,
+)
 
-from propstore.stances import StanceType
-from propstore.aspic_bridge.translate import StanceInput
 from propstore.aspic_bridge import (
     build_bridge_csaf,
     build_preference_config,
@@ -29,13 +29,15 @@ from propstore.aspic_bridge import (
     query_claim,
     stances_to_contrariness,
 )
+from propstore.aspic_bridge.translate import StanceInput
 from propstore.core.active_claims import ActiveClaim
-from propstore.families.justifications import Justification
 from propstore.core.literal_keys import claim_key
+from propstore.families.justifications import Justification
 from propstore.grounding.bundle import GroundedRulesBundle
+from propstore.stances import StanceType
 
 
-def _claim(claim_id: str, **extra) -> ActiveClaim:  # noqa: ANN003 - typed field kwargs
+def _claim(claim_id: str, **extra) -> ActiveClaim:
     return ActiveClaim(claim_id=claim_id, concept_id="k", statement=claim_id, **extra)
 
 

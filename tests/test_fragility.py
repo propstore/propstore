@@ -24,6 +24,14 @@ import gunray
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
+from provenance_semiring import (
+    NogoodWitness,
+    ProvenanceNogood,
+    ProvenancePolynomial,
+    SourceVariableId,
+    SupportEvidence,
+    SupportQuality,
+)
 
 from propstore.core.graph_types import ParameterizationEdge
 from propstore.families.rules import Atom, BodyLiteral, DefeasibleRule, Term
@@ -38,13 +46,13 @@ from propstore.fragility import (
     MissingMeasurementTarget,
     RankedIntervention,
     RankingPolicy,
-    combine_fragility,
     collect_assumption_interventions,
     collect_bridge_undercut_interventions,
     collect_conflict_interventions,
     collect_ground_fact_interventions,
     collect_grounded_rule_interventions,
     collect_missing_measurement_interventions,
+    combine_fragility,
     detect_interactions,
     rank_fragility,
     score_conflict,
@@ -52,12 +60,12 @@ from propstore.fragility import (
     weighted_epistemic_score,
 )
 from propstore.fragility_contributors import _in_extension
-from propstore.grounding.grounder import ground
 from propstore.grounding.bundle import (
     GroundedRulesBundle,
     GroundingStatus,
     build_empty_sections,
 )
+from propstore.grounding.grounder import ground
 from propstore.grounding.predicates import PredicateRegistry
 from propstore.provenance import Provenance, ProvenanceStatus
 from propstore.world.types import (
@@ -65,14 +73,6 @@ from propstore.world.types import (
     ATMSConceptStabilityReport,
     QueryableAssumption,
     ValueStatus,
-)
-from provenance_semiring import (
-    NogoodWitness,
-    ProvenanceNogood,
-    ProvenancePolynomial,
-    SourceVariableId,
-    SupportEvidence,
-    SupportQuality,
 )
 
 
@@ -369,7 +369,8 @@ class TestUtilityScores:
             seen.append((graph, base_scores, support_weights))
 
             class Result:
-                strengths = {"A": 1.0, "B": 0.25 if len(seen) == 1 else 0.75}
+                def __init__(self) -> None:
+                    self.strengths = {"A": 1.0, "B": 0.25 if len(seen) == 1 else 0.75}
 
             return Result()
 

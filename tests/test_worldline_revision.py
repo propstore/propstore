@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from msgspec.structs import replace
-
 from msgspec.structs import replace as replace_struct
 
 from propstore.support_revision.history import EpistemicSnapshot
@@ -11,9 +10,9 @@ from propstore.support_revision.iterated import (
 )
 from propstore.support_revision.state import RevisionScope
 from tests.support_revision.formal_realization_helpers import revise_via_formal_decision
+from tests.support_revision.revision_assertion_helpers import make_assertion_atom
 from tests.test_revision_iterated import _history_sensitive_base
 from tests.test_revision_operators import _base_with_shared_support
-from tests.support_revision.revision_assertion_helpers import make_assertion_atom
 
 
 def _revision_query(
@@ -205,8 +204,8 @@ class _RevisionWorld:
 def test_run_worldline_captures_one_shot_revision_payload(monkeypatch) -> None:
     from propstore.support_revision.explain import build_revision_explanation
     from propstore.worldline.definition import WorldlineDefinition
-    from propstore.worldline.runner import run_worldline
     from propstore.worldline.result_types import WorldlineTargetValue
+    from propstore.worldline.runner import run_worldline
 
     base, entrenchment, ids = _base_with_shared_support()
     synthetic = make_assertion_atom("synthetic", value=9.0)
@@ -265,8 +264,8 @@ def test_run_worldline_captures_one_shot_revision_payload(monkeypatch) -> None:
 def test_run_worldline_captures_iterated_revision_state_payload(monkeypatch) -> None:
     from propstore.support_revision.explain import build_revision_explanation
     from propstore.worldline.definition import WorldlineDefinition
-    from propstore.worldline.runner import run_worldline
     from propstore.worldline.result_types import WorldlineTargetValue
+    from propstore.worldline.runner import run_worldline
 
     base, entrenchment, _, ids = _history_sensitive_base()
     new = make_assertion_atom("new", value=9.0)
@@ -335,8 +334,8 @@ def test_run_worldline_captures_iterated_revision_state_payload(monkeypatch) -> 
 
 def test_run_worldline_revision_merge_point_refusal_is_explicit(monkeypatch) -> None:
     from propstore.worldline.definition import WorldlineDefinition
-    from propstore.worldline.runner import run_worldline
     from propstore.worldline.result_types import WorldlineTargetValue
+    from propstore.worldline.runner import run_worldline
 
     base, entrenchment, _, _ = _history_sensitive_base()
     merge_state = make_epistemic_state(

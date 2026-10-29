@@ -4,7 +4,6 @@ import ast
 import re
 from pathlib import Path
 
-
 OWNER_ROOTS = (
     Path("propstore/app"),
     Path("propstore/source"),

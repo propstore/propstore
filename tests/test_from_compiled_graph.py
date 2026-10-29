@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import pytest
 from causal_models import CausalValueStatus, InterventionWorld
+
 from propstore.core.graph_types import CompiledWorldGraph, ParameterizationEdge
 from propstore.world import from_compiled_graph
 

@@ -38,7 +38,11 @@ from quire.derived_store import (
     read_dependency_pins,
 )
 from quire.sqlalchemy_schema import SqlAlchemySchema
-from quire.sqlalchemy_store import create_sqlalchemy_store, writable_session
+from quire.sqlalchemy_store import (
+    DerivedSession,
+    create_sqlalchemy_store,
+    writable_session,
+)
 
 from propstore.build_diagnostics import build_exception_diagnostic
 from propstore.derived_build_plan import (
@@ -322,7 +326,7 @@ def materialize_world_sidecar(
 
 
 def _project_documents(
-    session: object,
+    session: DerivedSession,
     schema: SqlAlchemySchema,
     family_name: str,
     documents: tuple[object, ...],
@@ -343,7 +347,7 @@ def _project_documents(
 
     field_names = [field.name for field in schema.schema_object(family_name).fields]
     identity_field = schema.identity_field(family_name)
-    add_family = getattr(session, "add_family")
+    add_family = session.add_family
     seen_identities: set[object] = set()
     for document in documents:
         values = {
@@ -359,7 +363,10 @@ def _project_documents(
 
 
 def _project_authored_families(
-    session: object, schema: SqlAlchemySchema, repo: Repository, commit: str | None
+    session: DerivedSession,
+    schema: SqlAlchemySchema,
+    repo: Repository,
+    commit: str | None,
 ) -> None:
     """Generic charter projection of every master-resident authored family.
 

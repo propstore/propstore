@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from doxa import Opinion
 import pytest
+from doxa import Opinion
 
 from propstore.core.lemon import OntologyReference
 from propstore.families.alignment import AlignmentArgument

@@ -12,10 +12,9 @@ non-commitment law: coreference clusters CHANGE with the render policy
 from __future__ import annotations
 
 import pytest
+from argumentation.core.dung import ArgumentationFramework
 from hypothesis import given, settings
 from hypothesis import strategies as st
-
-from argumentation.core.dung import ArgumentationFramework
 
 from propstore.core.lemon import (
     AllenRelation,
@@ -57,7 +56,6 @@ from propstore.core.lemon import (
     validate_slot_bindings,
 )
 from propstore.provenance import Provenance, ProvenanceStatus, ProvenanceWitness
-
 
 _uri_text = st.text(
     alphabet=st.sampled_from(

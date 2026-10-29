@@ -9,7 +9,6 @@ from hypothesis import strategies as st
 from propstore.repository import Repository, RepositoryConfigDocument
 from propstore.uri import ni_uri_for_bytes, tag_uri
 
-
 _TOKEN_CHARS = st.characters(
     whitelist_categories=("Ll", "Lu", "Nd"),
     whitelist_characters=("_", "-", "."),

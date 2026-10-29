@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -15,6 +17,8 @@ from propstore.worldline.result_types import (
     WorldlineVariableRef,
 )
 from propstore.worldline.trace import ResolutionTrace
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -386,6 +390,7 @@ def _resolve_chain_target(
             **chain_bindings,
         )
     except Exception as exc:
+        _LOGGER.exception("Worldline chain query failed for %s", concept_id)
         reason = f"chain query failed: {exc}"
         trace.record_step(
             concept=target_name,

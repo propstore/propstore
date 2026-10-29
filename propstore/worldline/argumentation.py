@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from typing import Any, TypeGuard
 
 import rfc8785
+
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.id_types import ClaimId, to_claim_id
 from propstore.core.labels import Label, SupportQuality
@@ -22,7 +23,6 @@ from propstore.world.types import (
 )
 from propstore.worldline.interfaces import WorldlineBoundView, WorldlineStore
 from propstore.worldline.result_types import WorldlineArgumentationState
-
 
 _STANCE_RELATION_TYPES = frozenset(
     {
@@ -198,9 +198,9 @@ def _capture_aspic(
     policy: RenderPolicy,
     normalized_semantics: Any,
 ) -> WorldlineArgumentationState | None:
-    from propstore.world.types import ReasoningBackend
     from propstore.aspic_bridge import build_aspic_projection
     from propstore.structured_projection import compute_structured_justified_arguments
+    from propstore.world.types import ReasoningBackend
 
     support_metadata: dict[str, tuple[Label | None, SupportQuality]] = {}
     if isinstance(bound, ClaimSupportView):

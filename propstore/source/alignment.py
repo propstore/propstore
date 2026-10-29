@@ -9,26 +9,26 @@ only: matching names do not merge or attack independently authored concepts.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 import hashlib
+from collections.abc import Sequence
 from itertools import product
 from pathlib import Path
 
+import msgspec
 from argumentation.frameworks.partial_af import (
     PartialArgumentationFramework,
     credulously_accepted_arguments,
     skeptically_accepted_arguments,
 )
 from doxa import Opinion
-import msgspec
 
 from propstore.core.lemon import LexicalEntry
 from propstore.families.alignment import (
+    CONCEPT_ALIGNMENT_BRANCH,
     AlignmentArgument,
     AlignmentDecision,
     AlignmentFramework,
     AlignmentQueries,
-    CONCEPT_ALIGNMENT_BRANCH,
     ConceptAlignmentArtifact,
     ConceptAlignmentRef,
 )
@@ -39,7 +39,6 @@ from propstore.repository import Repository
 from propstore.source.common import normalize_source_slug
 from propstore.source.stages import AlignRepositorySnapshotsRequest
 from propstore.uri import concept_tag_uri
-
 
 _OPERATORS = ("sum", "max", "leximax")
 _VACUOUS_UNCERTAINTY = 0.99
@@ -206,15 +205,10 @@ def align_repository_snapshots(
                 raise TypeError(f"Imported concept {handle.ref!s} is not a Concept")
             concept = concept_value
             argument_digest = hashlib.sha256(
-                "\0".join(
-                    (
-                        repository_origin,
-                        source_commit,
-                        import_branch,
-                        import_commit,
-                        concept.concept_id,
-                    )
-                ).encode("utf-8")
+                (
+                    f"{repository_origin}\0{source_commit}\0{import_branch}\0"
+                    f"{import_commit}\0{concept.concept_id}"
+                ).encode()
             ).hexdigest()
             arguments.append(
                 AlignmentArgument(

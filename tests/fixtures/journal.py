@@ -18,7 +18,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from propstore.core.active_claims import ActiveClaim
-from propstore.families.claims import Claim
 from propstore.core.assertions.refs import (
     ConditionRef,
     ContextReference,
@@ -30,8 +29,8 @@ from propstore.core.relations import (
     RoleBinding,
     RoleBindingSet,
 )
+from propstore.families.claims import Claim
 from propstore.support_revision.dispatch import dispatch
-from propstore.support_revision.operator_inputs import OperatorInput, ReviseInput
 from propstore.support_revision.history import (
     EpistemicSnapshot,
     JournalOperator,
@@ -39,13 +38,13 @@ from propstore.support_revision.history import (
     TransitionJournalEntry,
     TransitionOperation,
 )
+from propstore.support_revision.operator_inputs import OperatorInput, ReviseInput
 from propstore.support_revision.state import (
     AssertionAtom,
     BeliefBase,
     EpistemicState,
     RevisionScope,
 )
-
 
 _DEFAULT_POLICY: Mapping[str, str] = {
     "revision_policy_version": "synthetic-revision-v1",

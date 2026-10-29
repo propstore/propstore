@@ -11,6 +11,7 @@ stay recorded in docs/rewrite/deferred-tests.md.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Self
 
 import pytest
 
@@ -98,7 +99,7 @@ def test_commit_planned_canonical_artifacts_empty_is_noop() -> None:
         def __call__(self, *, message: str) -> _Transact:
             return self
 
-        def __enter__(self) -> _Transact:
+        def __enter__(self) -> Self:
             self.entered += 1
             return self
 

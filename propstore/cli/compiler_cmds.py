@@ -11,6 +11,8 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 
+import click
+
 from propstore.app.aliases import export_concept_aliases
 from propstore.app.world import WorldSidecarMissingError, open_app_world_model
 from propstore.cli.helpers import (
@@ -25,8 +27,6 @@ from propstore.compiler.errors import CompilerWorkflowError
 from propstore.compiler.workflows import build_repository, validate_repository
 from propstore.grounding.bundle import GroundingStatus
 from propstore.semantic_passes.types import PassDiagnostic
-
-import click
 
 _PHI_GROUP_GLOSSES = {
     "PHI_NODE": "concept slot with multiple competing claim branches in the same context",

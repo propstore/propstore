@@ -14,7 +14,6 @@ from propstore.core.scalars import ScalarValue
 from propstore.families.claims import ClaimType
 from propstore.world.overlay import OverlayWorld
 from propstore.world.types import SyntheticClaim, ValueStatus
-
 from tests.atms_feed import ClaimSpec, ParamSpec, build_bound
 
 

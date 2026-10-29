@@ -5,6 +5,7 @@ from typing import Any, NoReturn
 
 from quire.documents import convert_document_value
 
+from propstore.core.anytime import EnumerationExceeded
 from propstore.support_revision.belief_set_adapter import (
     DEFAULT_MAX_ALPHABET_SIZE,
     decide_contract,
@@ -12,15 +13,11 @@ from propstore.support_revision.belief_set_adapter import (
     decide_ic_merge_profile,
     decide_revise,
 )
+from propstore.support_revision.decision_trace import ICMergeTrace
 from propstore.support_revision.entrenchment import EntrenchmentReport
 from propstore.support_revision.history import JournalOperator
-from propstore.support_revision.iterated import advance_epistemic_state, iterated_revise
-from propstore.support_revision.realization import (
-    realize_formal_decision,
-    realize_ic_merge_decision,
-)
-from propstore.support_revision.decision_trace import ICMergeTrace
 from propstore.support_revision.integrity_constraints import IntegrityConstraintSpec
+from propstore.support_revision.iterated import advance_epistemic_state, iterated_revise
 from propstore.support_revision.operator_inputs import (
     ContractInput,
     ExpandInput,
@@ -28,6 +25,10 @@ from propstore.support_revision.operator_inputs import (
     IteratedReviseInput,
     OperatorInput,
     ReviseInput,
+)
+from propstore.support_revision.realization import (
+    realize_formal_decision,
+    realize_ic_merge_decision,
 )
 from propstore.support_revision.state import (
     EpistemicState,
@@ -130,7 +131,7 @@ def dispatch(
                 extra_atoms=(atom,),
                 accepted_reason="expanded",
             )
-        except Exception as exc:
+        except EnumerationExceeded as exc:
             _raise_realization_failure(
                 state,
                 operation=op.value,
@@ -170,7 +171,7 @@ def dispatch(
                 support_entrenchment=entrenchment,
                 max_candidates=operator_input.max_candidates,
             )
-        except Exception as exc:
+        except EnumerationExceeded as exc:
             _raise_realization_failure(
                 state,
                 operation=op.value,
@@ -207,7 +208,7 @@ def dispatch(
             support_entrenchment=entrenchment,
             max_candidates=operator_input.max_candidates,
         )
-    except Exception as exc:
+    except EnumerationExceeded as exc:
         _raise_realization_failure(
             state,
             operation=op.value,

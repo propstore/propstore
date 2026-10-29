@@ -22,7 +22,6 @@ from propstore.core.lemon import (
     lexical_form_identity_key,
 )
 
-
 _text = st.text(
     alphabet=st.characters(blacklist_categories=("Cs",), blacklist_characters="\x00"),
     min_size=1,

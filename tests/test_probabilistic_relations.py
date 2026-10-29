@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from doxa import Opinion
 
+from propstore.families.relations import Stance
 from propstore.probabilistic_relations import (
     ProbabilisticRelation,
     RelationProvenance,
@@ -11,7 +12,6 @@ from propstore.probabilistic_relations import (
     relation_map,
 )
 from propstore.stances import StanceType
-from propstore.families.relations import Stance
 
 
 def _stance(source: str = "c1", target: str = "c2") -> Stance:

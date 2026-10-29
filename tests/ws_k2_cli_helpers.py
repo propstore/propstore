@@ -11,8 +11,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from click.testing import CliRunner
-from click.testing import Result
+from click.testing import CliRunner, Result
 
 from propstore.cli import cli
 from propstore.families.predicates import Predicate

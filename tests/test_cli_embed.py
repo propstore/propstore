@@ -17,9 +17,9 @@ from click.testing import CliRunner, Result
 
 pytest.importorskip("sqlite_vec")
 
-from tests.app_render_helpers import build_demo_repo  # noqa: E402
-from propstore.cli import cli  # noqa: E402
-from propstore.repository import Repository  # noqa: E402
+from propstore.cli import cli
+from propstore.repository import Repository
+from tests.app_render_helpers import build_demo_repo
 
 
 def _fake_litellm() -> MagicMock:

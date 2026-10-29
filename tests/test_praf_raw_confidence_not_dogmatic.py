@@ -8,8 +8,8 @@ opinion.
 
 from __future__ import annotations
 
-from propstore.praf import NoCalibration, p_relation_from_stance
 from propstore.families.relations import Stance
+from propstore.praf import NoCalibration, p_relation_from_stance
 
 
 def test_raw_confidence_one_is_not_dogmatic_evidence() -> None:

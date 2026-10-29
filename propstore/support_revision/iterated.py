@@ -109,7 +109,8 @@ def advance_epistemic_state(
         assumptions=tuple(assumptions.values()),
         support_sets=(
             {
-                key: value for key, value in retained.support_sets.items()
+                key: value
+                for key, value in retained.support_sets.items()
                 if key not in touched_ids
             }
             | source_base.support_sets
@@ -117,7 +118,8 @@ def advance_epistemic_state(
         ),
         essential_support=(
             {
-                key: value for key, value in retained.essential_support.items()
+                key: value
+                for key, value in retained.essential_support.items()
                 if key not in touched_ids
             }
             | source_base.essential_support

@@ -25,7 +25,6 @@ from provenance_semiring import (
 
 from propstore.aspic_bridge import build_bridge_csaf
 from propstore.core.active_claims import ActiveClaim
-from propstore.families.justifications import Justification
 from propstore.defeasibility import (
     ClaimApplicability,
     ContextualClaimUse,
@@ -34,6 +33,7 @@ from propstore.defeasibility import (
     apply_exception_defeats_to_csaf,
     evaluate_contextual_claim,
 )
+from propstore.families.justifications import Justification
 from propstore.grounding.bundle import GroundedRulesBundle
 
 

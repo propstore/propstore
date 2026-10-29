@@ -261,9 +261,11 @@ def plan_repository_import(
         )
     )
     normalized = pipeline.output
-    if not isinstance(normalized, SourceImportNormalizedWrites):
+    if normalized is None:
         errors = ", ".join(error.render() for error in pipeline.errors)
         raise ValueError(f"Repository import normalization failed: {errors}")
+    if not isinstance(normalized, SourceImportNormalizedWrites):
+        raise TypeError("source import pipeline returned an unexpected output type")
     writes = normalized.writes
     warnings: list[str] = list(normalized.warnings)
 

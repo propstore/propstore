@@ -143,11 +143,7 @@ def normalize_to_si(value: float, unit: str | None, form: DimensionalForm) -> fl
         if conv.type == "affine":
             return value * conv.multiplier + conv.offset
     try:
-        return (
-            ureg.Quantity(value, _pint_unit(unit))
-            .to(_pint_unit(target))
-            .magnitude
-        )
+        return ureg.Quantity(value, _pint_unit(unit)).to(_pint_unit(target)).magnitude
     except (pint.UndefinedUnitError, pint.DimensionalityError) as exc:
         raise ValueError(
             f"Cannot convert '{unit}' to '{form.unit_symbol}' for form '{form.name}': {exc}"
@@ -185,9 +181,7 @@ def from_si(si_value: float, unit: str | None, form: DimensionalForm) -> float:
             return (si_value - conv.offset) / conv.multiplier
     try:
         return (
-            ureg.Quantity(si_value, _pint_unit(source))
-            .to(_pint_unit(unit))
-            .magnitude
+            ureg.Quantity(si_value, _pint_unit(source)).to(_pint_unit(unit)).magnitude
         )
     except (pint.UndefinedUnitError, pint.DimensionalityError) as exc:
         raise ValueError(
@@ -205,7 +199,14 @@ def can_convert_unit_to(unit: str, target_unit: str | None) -> bool:
         return True
     # Pint's parser also raises TokenError for an unfinished group and
     # AssertionError for a binary operator without its right operand.
-    except (pint.UndefinedUnitError, pint.DimensionalityError, TypeError, ValueError, TokenError, AssertionError):
+    except (
+        pint.UndefinedUnitError,
+        pint.DimensionalityError,
+        TypeError,
+        ValueError,
+        TokenError,
+        AssertionError,
+    ):
         return False
 
 
@@ -220,15 +221,21 @@ def unit_compatible_with_form(unit: str, form: DimensionalForm) -> bool:
     for extra in form.extra_units:
         if not can_convert_unit_to(extra.symbol, extra.symbol):
             register_extra_unit_with_pint(extra.symbol, extra.dimensions)
-        elif not can_convert_unit_to(extra.symbol, _pint_expression_for_dimensions(extra.dimensions)):
-            raise ValueError(f"extra unit {extra.symbol!r} has incompatible declared dimensions")
+        elif not can_convert_unit_to(
+            extra.symbol, _pint_expression_for_dimensions(extra.dimensions)
+        ):
+            raise ValueError(
+                f"extra unit {extra.symbol!r} has incompatible declared dimensions"
+            )
     if target is None or not can_convert_unit_to(target, target):
         raise ValueError(f"canonical unit {target!r} is not recognized")
     dimensions = {} if form.is_dimensionless else form.dimensions
     if dimensions is not None and not can_convert_unit_to(
         target, _pint_expression_for_dimensions(dimensions)
     ):
-        raise ValueError(f"canonical unit {target!r} disagrees with dimensions {dimensions!r}")
+        raise ValueError(
+            f"canonical unit {target!r} disagrees with dimensions {dimensions!r}"
+        )
     if unit == target:
         return True
     conversion = form.delta_conversions.get(unit) or form.conversions.get(unit)
@@ -241,9 +248,13 @@ def unit_compatible_with_form(unit: str, form: DimensionalForm) -> bool:
                 usable = usable and isfinite(conversion.offset)
         elif conversion.type == "logarithmic":
             usable = (
-                isfinite(conversion.base) and conversion.base > 0 and conversion.base != 1
-                and isfinite(conversion.divisor) and conversion.divisor != 0
-                and isfinite(conversion.reference) and conversion.reference > 0
+                isfinite(conversion.base)
+                and conversion.base > 0
+                and conversion.base != 1
+                and isfinite(conversion.divisor)
+                and conversion.divisor != 0
+                and isfinite(conversion.reference)
+                and conversion.reference > 0
             )
         else:
             usable = False

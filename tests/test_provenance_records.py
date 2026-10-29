@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-import propstore.provenance as provenance
+from propstore import provenance
 
 
 def test_projection_frame_record_is_exported() -> None:

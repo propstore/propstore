@@ -21,7 +21,6 @@ import json
 from typing import TypeGuard
 
 import msgspec
-
 from quire.canonical import canonical_json_sha256
 
 from propstore.families.micropublications import Micropublication

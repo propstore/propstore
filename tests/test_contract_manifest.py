@@ -42,9 +42,7 @@ def test_every_artifact_family_has_contract_version() -> None:
 
 def test_every_semantic_foreign_key_has_contract_version() -> None:
     missing = [
-        spec.name
-        for spec in semantic_foreign_keys()
-        if spec.contract_version is None
+        spec.name for spec in semantic_foreign_keys() if spec.contract_version is None
     ]
 
     assert missing == []

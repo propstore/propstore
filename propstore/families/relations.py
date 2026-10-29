@@ -27,8 +27,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Protocol
 
-from doxa import Opinion
 import msgspec
+from doxa import Opinion
 from quire.artifacts import BranchPlacement, FlatYamlPlacement
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.charters import charter_catalog
@@ -58,7 +58,9 @@ def _transport_identity(document: Stance) -> Stance:
         stance_id=derive_stance_artifact_id(
             source_claim_id=document.source_claim_id,
             target_claim_id=document.target_claim_id,
-            stance_type=None if document.stance_type is None else document.stance_type.value,
+            stance_type=None
+            if document.stance_type is None
+            else document.stance_type.value,
         ),
     )
 

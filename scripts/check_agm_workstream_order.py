@@ -4,7 +4,6 @@ import re
 import sys
 from pathlib import Path
 
-
 WORKSTREAM = Path(
     "reviews/2026-05-05-agm-proposal/workstreams/WS-AGM-propstore-belief-set-cutover.md"
 )
@@ -19,7 +18,7 @@ def main(argv: list[str]) -> int:
         for line in text.splitlines()
         if (match := PHASE_RE.match(line))
     ]
-    expected = list(range(0, 14))
+    expected = list(range(14))
     if phases != expected:
         print(f"AGM workstream phases are not linear 0..13: {phases}", file=sys.stderr)
         return 1

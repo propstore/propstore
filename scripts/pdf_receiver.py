@@ -1,8 +1,8 @@
 """Tiny HTTP server that receives a PDF POST and saves it."""
 
 import http.server
-import sys
 import os
+import sys
 
 OUTPUT_PATH = sys.argv[1] if len(sys.argv) > 1 else "paper.pdf"
 

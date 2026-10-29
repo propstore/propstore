@@ -86,11 +86,9 @@ from .common import (
     source_paper_slug,
     utc_now,
 )
-from .reference_indexes import (
-    primary_claim_index as build_primary_claim_index,
-    resolve_source_or_primary_claim_id,
-    source_claim_index as build_source_claim_index,
-)
+from .reference_indexes import primary_claim_index as build_primary_claim_index
+from .reference_indexes import resolve_source_or_primary_claim_id
+from .reference_indexes import source_claim_index as build_source_claim_index
 from .registry import (
     load_primary_branch_concepts,
     primary_branch_concept_id_by_name,
@@ -488,7 +486,11 @@ def _revalidate_promoted_claims(
         run_concept_pipeline,
     )
     from propstore.families.forms import FormDefinition
-    from propstore.families.forms_passes import FormCheckedRegistry, LoadedForm, run_form_pipeline
+    from propstore.families.forms_passes import (
+        FormCheckedRegistry,
+        LoadedForm,
+        run_form_pipeline,
+    )
 
     promoted: dict[str, Claim] = {}
     unresolved: set[str] = set()
@@ -514,19 +516,23 @@ def _revalidate_promoted_claims(
         [LoadedConcept(concept=concept) for concept in concepts],
         context=ConceptPipelineContext(form_registry=form_registry),
     )
-    if not isinstance(concept_result.output, ConceptCheckedRegistry):
+    if concept_result.output is None:
         message = "; ".join(
             diagnostic.message for diagnostic in concept_result.diagnostics
         )
         raise ValueError(f"concept validation failed during promotion: {message}")
+    if not isinstance(concept_result.output, ConceptCheckedRegistry):
+        raise TypeError("concept pipeline returned an unexpected output type")
     if not promoted:
         return {}
-    form_result = run_form_pipeline([
-        LoadedForm(form=form) for form in form_registry.values()
-    ])
-    if not isinstance(form_result.output, FormCheckedRegistry):
+    form_result = run_form_pipeline(
+        [LoadedForm(form=form) for form in form_registry.values()]
+    )
+    if form_result.output is None:
         detail = "; ".join(diagnostic.message for diagnostic in form_result.diagnostics)
         raise ValueError(f"form validation failed during promotion: {detail}")
+    if not isinstance(form_result.output, FormCheckedRegistry):
+        raise TypeError("form pipeline returned an unexpected output type")
     compilation_context = build_compilation_context(
         concept_result.output,
         form_registry=form_result.output,
@@ -705,14 +711,13 @@ def _commit_promote_time_trust_calibration(
         derived_from=tuple(firing.rule_id for firing in calibration.derived_from),
     )
     if updated_trust == source_doc.trust:
-        return None
+        return
     updated_source = msgspec.structs.replace(source_doc, trust=updated_trust)
     repo.families.source_documents.save(
         SourceRef(source_name),
         updated_source,
         message=f"Calibrate source trust for {source_paper_slug(source_name)}",
     )
-    return None
 
 
 def promote_source_branch(

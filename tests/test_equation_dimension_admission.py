@@ -2,16 +2,30 @@
 
 from pathlib import Path
 
-from condition_ir import KindType
 import pytest
+from condition_ir import KindType
 
-from propstore.compiler.workflows import build_repository, compile_repository_checked_bundle, validate_repository
-from propstore.core.lemon import LexicalEntry, LexicalForm, LexicalSense, OntologyReference
+from propstore.compiler.workflows import (
+    build_repository,
+    compile_repository_checked_bundle,
+    validate_repository,
+)
+from propstore.core.lemon import (
+    LexicalEntry,
+    LexicalForm,
+    LexicalSense,
+    OntologyReference,
+)
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
+from propstore.provenance import (
+    Provenance,
+    ProvenanceStatus,
+    read_provenance_note,
+    write_provenance_note,
+)
 from propstore.repository import Repository
-from propstore.provenance import Provenance, ProvenanceStatus, read_provenance_note, write_provenance_note
 
 
 def _physics_repo(tmp_path: Path) -> Repository:
@@ -24,17 +38,26 @@ def _physics_repo(tmp_path: Path) -> Repository:
         ("ratio", {}),
     ):
         repo.families.form.save(
-            name, FormDefinition(name=name, kind=KindType.QUANTITY, dimensions=dimensions, is_dimensionless=not dimensions),
+            name,
+            FormDefinition(
+                name=name,
+                kind=KindType.QUANTITY,
+                dimensions=dimensions,
+                is_dimensionless=not dimensions,
+            ),
             message="Declare dimensions",
         )
         repo.families.concept.save(
             name,
             Concept(
-                concept_id=name, canonical_name=name,
+                concept_id=name,
+                canonical_name=name,
                 lexical_entry=LexicalEntry(
                     identifier=f"entry:{name}",
                     canonical_form=LexicalForm(written_rep=name, language="en"),
-                    senses=(LexicalSense(reference=OntologyReference(uri=f"urn:{name}")),),
+                    senses=(
+                        LexicalSense(reference=OntologyReference(uri=f"urn:{name}")),
+                    ),
                     physical_dimension_form=name,
                 ),
             ),
@@ -45,8 +68,10 @@ def _physics_repo(tmp_path: Path) -> Repository:
 
 def _equation(claim_id: str, expression: str, output: str | None = "force") -> Claim:
     return Claim(
-        claim_id=claim_id, claim_type=ClaimType.EQUATION,
-        expression=expression, output_concept=output,
+        claim_id=claim_id,
+        claim_type=ClaimType.EQUATION,
+        expression=expression,
+        output_concept=output,
         variables=(
             ClaimVariable(concept="force", symbol="F", role="dependent"),
             ClaimVariable(concept="mass", symbol="m", role="independent"),
@@ -60,8 +85,10 @@ def _equation(claim_id: str, expression: str, output: str | None = "force") -> C
 def test_dimensionally_inconsistent_equation_is_quarantined(tmp_path: Path) -> None:
     repo = _physics_repo(tmp_path)
     claim = Claim(
-        claim_id="wrong-force", claim_type=ClaimType.EQUATION,
-        expression="F = m * t", output_concept="force",
+        claim_id="wrong-force",
+        claim_type=ClaimType.EQUATION,
+        expression="F = m * t",
+        output_concept="force",
         variables=(
             ClaimVariable(concept="force", symbol="F", role="dependent"),
             ClaimVariable(concept="mass", symbol="m", role="independent"),
@@ -124,7 +151,10 @@ def test_dimensionally_inconsistent_equation_is_quarantined(tmp_path: Path) -> N
     ],
 )
 def test_authored_equation_operations_are_checked(
-    tmp_path: Path, expression: str, output: str | None, code: str | None,
+    tmp_path: Path,
+    expression: str,
+    output: str | None,
+    code: str | None,
 ) -> None:
     repo = _physics_repo(tmp_path)
     claim = _equation("formula", expression, output)
@@ -133,7 +163,9 @@ def test_authored_equation_operations_are_checked(
     assert checked is not None
     entry = checked.claim_bundle.claims[0]
     assert entry.blocked is (code is not None)
-    assert [problem.code for problem in entry.diagnostics] == ([] if code is None else [code])
+    assert [problem.code for problem in entry.diagnostics] == (
+        [] if code is None else [code]
+    )
     if code == "claim.contract":
         assert "unsupported authored syntax" in entry.diagnostics[0].message
     assert repo.families.claim.load(claim.claim_id) == claim
@@ -143,12 +175,20 @@ def test_authored_equation_operations_are_checked(
     ("form", "code"),
     [
         (None, "claim.dimension.form.missing"),
-        (FormDefinition(name="opaque", kind=KindType.QUANTITY), "claim.dimension.signature.missing"),
-        (FormDefinition(name="opaque", kind=KindType.TIMEPOINT, dimensions={"T": 1}), "claim.dimension.kind.invalid"),
+        (
+            FormDefinition(name="opaque", kind=KindType.QUANTITY),
+            "claim.dimension.signature.missing",
+        ),
+        (
+            FormDefinition(name="opaque", kind=KindType.TIMEPOINT, dimensions={"T": 1}),
+            "claim.dimension.kind.invalid",
+        ),
     ],
 )
 def test_unavailable_input_evidence_is_distinct_from_mismatch(
-    tmp_path: Path, form: FormDefinition | None, code: str,
+    tmp_path: Path,
+    form: FormDefinition | None,
+    code: str,
 ) -> None:
     repo = _physics_repo(tmp_path)
     if form is not None:
@@ -156,19 +196,26 @@ def test_unavailable_input_evidence_is_distinct_from_mismatch(
     repo.families.concept.save(
         "opaque",
         Concept(
-            concept_id="opaque", canonical_name="opaque",
+            concept_id="opaque",
+            canonical_name="opaque",
             lexical_entry=LexicalEntry(
                 identifier="entry:opaque",
                 canonical_form=LexicalForm(written_rep="opaque", language="en"),
                 senses=(LexicalSense(reference=OntologyReference(uri="urn:opaque")),),
                 physical_dimension_form="opaque" if form is not None else None,
             ),
-        ), message="Declare input concept",
+        ),
+        message="Declare input concept",
     )
     claim = Claim(
-        claim_id="unavailable", claim_type=ClaimType.EQUATION,
-        expression="F = x", output_concept="force",
-        variables=(ClaimVariable(concept="force", symbol="F"), ClaimVariable(concept="opaque", symbol="x")),
+        claim_id="unavailable",
+        claim_type=ClaimType.EQUATION,
+        expression="F = x",
+        output_concept="force",
+        variables=(
+            ClaimVariable(concept="force", symbol="F"),
+            ClaimVariable(concept="opaque", symbol="x"),
+        ),
     )
     repo.families.claim.save(claim.claim_id, claim, message="Author equation")
     checked = compile_repository_checked_bundle(repo, commit=None)
@@ -176,16 +223,24 @@ def test_unavailable_input_evidence_is_distinct_from_mismatch(
     diagnostic = checked.claim_bundle.blocked_claims[0].diagnostics[0]
     assert diagnostic.code == code
     assert "evidence unavailable" in diagnostic.message
-    assert f"concept 'opaque', form {('opaque' if form is not None else None)!r}" in diagnostic.message
+    assert (
+        f"concept 'opaque', form {('opaque' if form is not None else None)!r}"
+        in diagnostic.message
+    )
 
 
-def test_checked_dimensionless_default_needs_no_explicit_signature(tmp_path: Path) -> None:
+def test_checked_dimensionless_default_needs_no_explicit_signature(
+    tmp_path: Path,
+) -> None:
     repo = _physics_repo(tmp_path)
     repo.families.form.save(
-        "ratio", FormDefinition(name="ratio", kind=KindType.QUANTITY, is_dimensionless=True),
+        "ratio",
+        FormDefinition(name="ratio", kind=KindType.QUANTITY, is_dimensionless=True),
         message="Use declared dimensionless form",
     )
-    repo.families.claim.save("ratio", _equation("ratio", "r = sin(r)", "ratio"), message="Author equation")
+    repo.families.claim.save(
+        "ratio", _equation("ratio", "r = sin(r)", "ratio"), message="Author equation"
+    )
     checked = compile_repository_checked_bundle(repo, commit=None)
     assert checked is not None
     assert checked.claim_bundle.blocked_claims == ()
@@ -193,7 +248,10 @@ def test_checked_dimensionless_default_needs_no_explicit_signature(tmp_path: Pat
 
 def test_unchecked_forms_cannot_fabricate_a_dimensional_verdict() -> None:
     from propstore.compiler.context import build_compilation_context
-    from propstore.families.concepts_passes import ConceptCheckedRegistry, run_concept_pipeline
+    from propstore.families.concepts_passes import (
+        ConceptCheckedRegistry,
+        run_concept_pipeline,
+    )
 
     result = run_concept_pipeline([])
     assert isinstance(result.output, ConceptCheckedRegistry)
@@ -204,8 +262,11 @@ def test_unchecked_forms_cannot_fabricate_a_dimensional_verdict() -> None:
 def test_full_equation_must_match_the_concept_it_computes(tmp_path: Path) -> None:
     repo = _physics_repo(tmp_path)
     claim = Claim(
-        claim_id="wrong-output", claim_type=ClaimType.EQUATION,
-        expression="m = m", output_concept="force", concepts=("force", "mass"),
+        claim_id="wrong-output",
+        claim_type=ClaimType.EQUATION,
+        expression="m = m",
+        output_concept="force",
+        concepts=("force", "mass"),
         variables=(ClaimVariable(concept="mass", symbol="m", role="dependent"),),
     )
     repo.families.claim.save(claim.claim_id, claim, message="Author parameterization")
@@ -221,7 +282,13 @@ def test_context_repository_loader_rejects_invalid_forms(tmp_path: Path) -> None
 
     repo = _physics_repo(tmp_path)
     repo.families.form.save(
-        "bad", FormDefinition(name="bad", kind=KindType.QUANTITY, is_dimensionless=True, dimensions={"M": 1}),
+        "bad",
+        FormDefinition(
+            name="bad",
+            kind=KindType.QUANTITY,
+            is_dimensionless=True,
+            dimensions={"M": 1},
+        ),
         message="Retain invalid form",
     )
     with pytest.raises(ValueError, match="form validation failed"):
@@ -233,8 +300,12 @@ def test_validate_build_preserve_rival_claims_and_provenance(tmp_path: Path) -> 
     invalid = _equation("invalid", "F = m * t")
     valid = _equation("valid", "F = m * a")
     for claim in (invalid, valid):
-        authored_commit = repo.families.claim.save(claim.claim_id, claim, message="Author equation")
-    provenance = Provenance(status=ProvenanceStatus.STATED, graph_name="urn:test:equations")
+        authored_commit = repo.families.claim.save(
+            claim.claim_id, claim, message="Author equation"
+        )
+    provenance = Provenance(
+        status=ProvenanceStatus.STATED, graph_name="urn:test:equations"
+    )
     git = repo.require_git()
     write_provenance_note(git.raw_repo, authored_commit, provenance)
     before_refs = git.raw_repo.refs.as_dict()
@@ -245,7 +316,9 @@ def test_validate_build_preserve_rival_claims_and_provenance(tmp_path: Path) -> 
     assert validation.claim_count == built.claim_count == 2
     assert not validation.ok
     assert built.blocked_claim_count == 1
-    assert any(problem.code == "claim.dimension.mismatch" for problem in validation.errors)
+    assert any(
+        problem.code == "claim.dimension.mismatch" for problem in validation.errors
+    )
     assert repo.families.claim.load("invalid") == invalid
     assert repo.families.claim.load("valid") == valid
     assert read_provenance_note(git.raw_repo, authored_commit) == provenance

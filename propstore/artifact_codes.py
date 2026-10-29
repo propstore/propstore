@@ -23,7 +23,6 @@ from collections.abc import Sequence
 from typing import TypeGuard
 
 import msgspec
-
 from quire.canonical import canonical_json_sha256
 
 from propstore.families.identity.claims import (

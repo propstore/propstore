@@ -111,15 +111,23 @@ def test_comprehension_binding_does_not_leak_into_enclosing_scope() -> None:
         "def compute(x):\n    from math import sqrt as root\n    return root(x)\n",
         "import math\ndef compute(x):\n    return math.sqrt(x)\n",
         "def compute(x):\n    return math.sqrt(x)\nimport math\n",
-        "def compute(x):\n    def inner():\n        return offset\n"
-        "    offset = x\n    return inner()\n",
-        "def compute(x):\n    try:\n        return int(x)\n"
-        "    except ValueError as exc:\n        return str(exc)\n",
-        "def compute(x):\n    return divmod(x, 2), slice(x), object(), "
-        "issubclass(int, object), OSError()\n",
-        "def helper(x):\n    return x\nclass Container:\n    pass\n"
-        "def compute(x):\n    local = lambda y: y\n"
-        "    return helper(local(x)), Container()\n",
+        (
+            "def compute(x):\n    def inner():\n        return offset\n"
+            "    offset = x\n    return inner()\n"
+        ),
+        (
+            "def compute(x):\n    try:\n        return int(x)\n"
+            "    except ValueError as exc:\n        return str(exc)\n"
+        ),
+        (
+            "def compute(x):\n    return divmod(x, 2), slice(x), object(), "
+            "issubclass(int, object), OSError()\n"
+        ),
+        (
+            "def helper(x):\n    return x\nclass Container:\n    pass\n"
+            "def compute(x):\n    local = lambda y: y\n"
+            "    return helper(local(x)), Container()\n"
+        ),
     ],
 )
 def test_local_bindings_and_builtins_need_no_concept_declaration(
@@ -154,8 +162,10 @@ def test_local_bindings_and_builtins_need_no_concept_declaration(
         ("def", "parse error"),
         ("def compute(x):\n    return x + missing\n", "unbound names: missing"),
         (
-            "def compute(x):\n    class C:\n        import math\n"
-            "    return math.sqrt(x)\n",
+            (
+                "def compute(x):\n    class C:\n        import math\n"
+                "    return math.sqrt(x)\n"
+            ),
             "unbound names: math",
         ),
         (
@@ -231,12 +241,12 @@ def test_repository_quarantines_invalid_algorithm_and_retains_both_claims(
         "invalid",
         "valid",
     ]
-    assert [
-        entry.claim.claim_id for entry in checked.claim_bundle.blocked_claims
-    ] == ["invalid"]
-    assert [
-        entry.claim.claim_id for entry in checked.claim_bundle.checked_claims
-    ] == ["valid"]
+    assert [entry.claim.claim_id for entry in checked.claim_bundle.blocked_claims] == [
+        "invalid"
+    ]
+    assert [entry.claim.claim_id for entry in checked.claim_bundle.checked_claims] == [
+        "valid"
+    ]
     diagnostic = checked.claim_bundle.blocked_claims[0].diagnostics[0]
     assert diagnostic.code == "claim.contract"
     assert diagnostic.artifact_id == "invalid"

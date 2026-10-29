@@ -13,7 +13,6 @@ from __future__ import annotations
 from typing import Annotated
 
 import msgspec
-
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.references import ForeignKeySpec
 
@@ -21,7 +20,9 @@ from propstore.families import SEMANTIC_FOREIGN_KEY_CONTRACT_VERSION
 
 
 def _transport_identity(document: Justification) -> Justification:
-    from propstore.families.identity.justifications import derive_justification_artifact_id
+    from propstore.families.identity.justifications import (
+        derive_justification_artifact_id,
+    )
 
     return msgspec.structs.replace(
         document,

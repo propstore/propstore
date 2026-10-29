@@ -27,10 +27,10 @@ import logging
 import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Protocol
 
-import ast_equiv
-from ast_equiv import AlgorithmParseError, ComparisonResult
+import msgspec
+from ast_equiv import AlgorithmParseError
+from ast_equiv import compare as ast_compare
 
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.graph_types import ParameterizationEdge
@@ -50,29 +50,7 @@ from propstore.world.types import (
     ValueStatus,
 )
 
-
-class _AstCompare(Protocol):
-    """Fully-typed surface for ``ast_equiv.compare``.
-
-    ``ast_equiv`` annotates the two ``bindings`` arguments as a bare ``dict``,
-    leaving the imported function partially unknown. We own the call site, not
-    the pinned package git rev, so the canonical function is narrowed here to a
-    fully-typed Protocol (the dispatch's single documented Protocol-narrowing —
-    no mirror type, no ``cast``, no ignore). Tests patch the ``ast_compare``
-    module attribute to inject comparison behavior.
-    """
-
-    def __call__(
-        self,
-        body_a: str,
-        bindings_a: dict[str, str],
-        body_b: str,
-        bindings_b: dict[str, str],
-        known_values: dict[str, float] | None = None,
-    ) -> ComparisonResult: ...
-
-
-ast_compare: _AstCompare = getattr(ast_equiv, "compare")
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -552,13 +530,12 @@ class ActiveClaimResolver:
         override_value = override_values[override_key]
         if override_value is None:
             return None
-        if isinstance(override_value, bool) or not isinstance(
-            override_value, int | float
-        ):
+        try:
+            return msgspec.convert(override_value, float)
+        except msgspec.ValidationError as exc:
             raise ValueError(
                 f"Invalid override value for {override_key!r}: {override_value!r}"
-            )
-        return float(override_value)
+            ) from exc
 
     def _algorithm_matches_direct_value(
         self,
@@ -595,7 +572,7 @@ class ActiveClaimResolver:
                 },
             )
         except (ValueError, SyntaxError, AlgorithmParseError, RecursionError) as exc:
-            logging.warning(
+            _LOGGER.warning(
                 "ast_compare failed for algorithm-vs-direct comparison %s: %s",
                 claim.claim_id,
                 exc,
@@ -641,7 +618,7 @@ class ActiveClaimResolver:
                     AlgorithmParseError,
                     RecursionError,
                 ) as exc:
-                    logging.warning(
+                    _LOGGER.warning(
                         "ast_compare failed in algorithm equivalence check: %s", exc
                     )
                     return _PARSE_FAILED

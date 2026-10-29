@@ -1,9 +1,10 @@
 """Extract all concept names from claims.yaml files and build frequency table."""
 
-import yaml
 import json
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+
+import yaml
 
 papers_dir = Path("C:/Users/Q/code/propstore/papers")
 concept_papers = defaultdict(set)  # concept_name -> set of papers
@@ -14,7 +15,7 @@ for claims_file in sorted(papers_dir.glob("*/claims.yaml")):
     paper_name = claims_file.parent.name
     try:
         data = yaml.safe_load(claims_file.read_text(encoding="utf-8"))
-    except Exception as e:
+    except (OSError, UnicodeDecodeError, yaml.YAMLError) as e:
         print(f"ERROR reading {claims_file}: {e}")
         continue
 

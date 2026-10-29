@@ -130,8 +130,8 @@ def commit_merge(
 __all__ = [
     "MergeCommitReport",
     "MergeCommitRequest",
-    "MergeInspectRequest",
     "MergeInspectReport",
+    "MergeInspectRequest",
     "commit_merge",
     "inspect_merge",
 ]

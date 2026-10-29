@@ -78,10 +78,8 @@ def test_ws_j_rfc8785_dumps_rejects_integers_outside_rfc8785_domain(
 def test_ws_j_worldline_revision_hash_surfaces_do_not_use_default_str() -> None:
     """J-H2: worldline and support-revision hash surfaces must not hide unknowns."""
 
-    import propstore.support_revision.history as history
-    import propstore.support_revision.projection as projection
-    import propstore.worldline.argumentation as argumentation
-    import propstore.worldline.hashing as hashing
+    from propstore.support_revision import history, projection
+    from propstore.worldline import argumentation, hashing
 
     for module in (history, projection, argumentation, hashing):
         source = Path(module.__file__).read_text(encoding="utf-8")

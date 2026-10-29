@@ -22,9 +22,9 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import msgspec
+from condition_ir import CelExpr
 from quire.documents import DocumentStruct
 
-from condition_ir import CelExpr
 from propstore.core.id_types import (
     AssumptionId,
     ContextId,
@@ -40,7 +40,6 @@ if TYPE_CHECKING:
         ParameterizationEdge,
         RelationEdge,
     )
-    from propstore.families.justifications import Justification
     from propstore.core.store_results import (
         ClaimSimilarityHit,
         ConceptSearchHit,
@@ -50,6 +49,7 @@ if TYPE_CHECKING:
     from propstore.families.claims import Claim
     from propstore.families.concepts import Concept
     from propstore.families.forms import FormDefinition
+    from propstore.families.justifications import Justification
     from propstore.families.micropublications import Micropublication
     from propstore.families.relations import Stance
 

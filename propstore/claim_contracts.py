@@ -27,8 +27,8 @@ from tokenize import TokenError
 from typing import TYPE_CHECKING
 
 from ast_equiv import AlgorithmParseError, extract_free_variables, parse_algorithm
-from condition_ir import ConceptInfo, KindType
 from bridgman import DimensionalError, canonicalize_dims, verify_expr
+from condition_ir import ConceptInfo, KindType
 from human_to_sympy import generate_sympy_rhs_with_error, parse_symbolic
 
 from propstore.core.scalars import ScalarValue
@@ -356,7 +356,8 @@ def _is_present(value: object) -> bool:
 
 
 def _check_equation_dimensions(
-    claim: Claim, context: CompilationContext | None,
+    claim: Claim,
+    context: CompilationContext | None,
 ) -> tuple[ClaimValidationDiagnostic, ...]:
     """Resolve claim-owned bindings; the substrate owns all dimensional algebra."""
     problems: list[ClaimValidationDiagnostic] = []
@@ -366,26 +367,41 @@ def _check_equation_dimensions(
         problems.append(ClaimValidationDiagnostic("expression", detail, code))
 
     if context is None:
-        problem("claim.dimension.context.missing", "dimensional evidence unavailable: no checked compilation context")
+        problem(
+            "claim.dimension.context.missing",
+            "dimensional evidence unavailable: no checked compilation context",
+        )
         return tuple(problems)
 
     def dimensions(concept_id: str | None, label: str) -> dict[str, int] | None:
         concept = context.concepts_by_id.get(concept_id or "")
         if concept is None:
-            problem("claim.dimension.concept.missing", f"dimensional evidence unavailable: {label}, concept {concept_id!r} is missing")
+            problem(
+                "claim.dimension.concept.missing",
+                f"dimensional evidence unavailable: {label}, concept {concept_id!r} is missing",
+            )
             return None
         entry = concept.lexical_entry
         form_name = None if entry is None else entry.physical_dimension_form
         form = context.form_registry.registry.get(form_name or "")
         resolved = f"{label}, concept {concept_id!r}, form {form_name!r}"
         if form is None:
-            problem("claim.dimension.form.missing", f"dimensional evidence unavailable: {resolved} is missing")
+            problem(
+                "claim.dimension.form.missing",
+                f"dimensional evidence unavailable: {resolved} is missing",
+            )
             return None
         if form.kind is not KindType.QUANTITY:
-            problem("claim.dimension.kind.invalid", f"dimensional evidence unavailable: {resolved} has non-quantity kind {form.kind.value!r}")
+            problem(
+                "claim.dimension.kind.invalid",
+                f"dimensional evidence unavailable: {resolved} has non-quantity kind {form.kind.value!r}",
+            )
             return None
         if form.dimensions is None and not form.is_dimensionless:
-            problem("claim.dimension.signature.missing", f"dimensional evidence unavailable: {resolved} has no dimension signature")
+            problem(
+                "claim.dimension.signature.missing",
+                f"dimensional evidence unavailable: {resolved} has no dimension signature",
+            )
             return None
         dims = canonicalize_dims(form.dimensions or {})
         evidence.append(f"{resolved}: dimensions {dims}")
@@ -399,26 +415,42 @@ def _check_equation_dimensions(
             claim.expression or "",
             symbol_names=symbol_names,
         )
-    except (AttributeError, TypeError, ValueError, SyntaxError, TokenError, RecursionError) as exc:
-        problem("claim.dimension.expression.invalid", f"dimensional expression could not be checked: {exc}")
+    except (
+        AttributeError,
+        TypeError,
+        ValueError,
+        SyntaxError,
+        TokenError,
+        RecursionError,
+    ) as exc:
+        problem(
+            "claim.dimension.expression.invalid",
+            f"dimensional expression could not be checked: {exc}",
+        )
         return tuple(problems)
 
     dim_map: dict[str, dict[str, int]] = {}
     for symbol in sorted(parsed.free_symbols, key=str):
         symbol_name = str(symbol)
-        bindings = [variable for variable in claim.variables if variable.symbol == symbol_name]
+        bindings = [
+            variable for variable in claim.variables if variable.symbol == symbol_name
+        ]
         if len(bindings) != 1:
-            problem("claim.dimension.binding.unavailable", f"dimensional evidence unavailable: symbol {symbol_name!r} requires one concept binding; found {len(bindings)}")
+            problem(
+                "claim.dimension.binding.unavailable",
+                f"dimensional evidence unavailable: symbol {symbol_name!r} requires one concept binding; found {len(bindings)}",
+            )
             continue
         binding = bindings[0]
-        dims = dimensions(binding.concept, f"symbol {symbol_name!r}, role {binding.role!r}")
+        dims = dimensions(
+            binding.concept, f"symbol {symbol_name!r}, role {binding.role!r}"
+        )
         if dims is not None:
             dim_map[symbol_name] = dims
 
     if parsed.is_Equality:
         if claim.output_concept is not None and not any(
-            variable.concept == claim.output_concept
-            and variable.symbol in dim_map
+            variable.concept == claim.output_concept and variable.symbol in dim_map
             for variable in claim.variables
         ):
             problem(
@@ -438,8 +470,18 @@ def _check_equation_dimensions(
                     symbol_names=symbol_names,
                     output_symbol=output_name,
                 )
-            except (AttributeError, TypeError, ValueError, SyntaxError, TokenError, RecursionError) as exc:
-                problem("claim.dimension.expression.invalid", f"dimensional expression could not be checked: {exc}")
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                SyntaxError,
+                TokenError,
+                RecursionError,
+            ) as exc:
+                problem(
+                    "claim.dimension.expression.invalid",
+                    f"dimensional expression could not be checked: {exc}",
+                )
                 return tuple(problems)
     if problems:
         return tuple(problems)
@@ -448,31 +490,48 @@ def _check_equation_dimensions(
     try:
         verified = verify_expr(parsed, dim_map)
     except (DimensionalError, KeyError, TypeError, ValueError, RecursionError) as exc:
-        problem("claim.dimension.algebra.invalid", f"dimensional algebra failed: {exc}; {details}")
+        problem(
+            "claim.dimension.algebra.invalid",
+            f"dimensional algebra failed: {exc}; {details}",
+        )
     else:
         if not verified:
-            problem("claim.dimension.mismatch", f"dimensionally inconsistent equation {claim.expression!r}; {details}")
+            problem(
+                "claim.dimension.mismatch",
+                f"dimensionally inconsistent equation {claim.expression!r}; {details}",
+            )
     return tuple(problems)
 
 
 def _check_parameter_unit(
-    claim: Claim, context: CompilationContext | None,
+    claim: Claim,
+    context: CompilationContext | None,
 ) -> tuple[ClaimValidationDiagnostic, ...]:
     """Resolve checked output evidence; the unit owner checks compatibility."""
+
     def problem(code: str, message: str) -> tuple[ClaimValidationDiagnostic, ...]:
         return (ClaimValidationDiagnostic("unit", message, code),)
 
     if context is None:
-        return problem("claim.unit.context.missing", "unit evidence unavailable: no checked compilation context")
+        return problem(
+            "claim.unit.context.missing",
+            "unit evidence unavailable: no checked compilation context",
+        )
     concept = context.concepts_by_id.get(claim.output_concept or "")
     if concept is None:
-        return problem("claim.unit.concept.missing", f"unit evidence unavailable: output concept {claim.output_concept!r} is missing")
+        return problem(
+            "claim.unit.concept.missing",
+            f"unit evidence unavailable: output concept {claim.output_concept!r} is missing",
+        )
     entry = concept.lexical_entry
     form_name = None if entry is None else entry.physical_dimension_form
     form = context.form_registry.registry.get(form_name or "")
     evidence = f"concept {claim.output_concept!r}, form {form_name!r}"
     if form is None:
-        return problem("claim.unit.form.missing", f"unit evidence unavailable: {evidence} is missing")
+        return problem(
+            "claim.unit.form.missing",
+            f"unit evidence unavailable: {evidence} is missing",
+        )
     if form.kind is not KindType.QUANTITY:
         # Category/boolean/structural/timepoint values have no quantity-unit policy.
         return ()
@@ -482,15 +541,25 @@ def _check_parameter_unit(
     if unit is None and form.is_dimensionless:
         unit = policy.dimensionless_default_unit
     if not unit:
-        return problem("claim.unit.required", f"unit {claim.unit!r} is required for {evidence}")
+        return problem(
+            "claim.unit.required", f"unit {claim.unit!r} is required for {evidence}"
+        )
     if not form.unit_symbol and not form.is_dimensionless:
-        return problem("claim.unit.form.unit.missing", f"unit evidence unavailable: {evidence} has no canonical unit for authored unit {claim.unit!r}")
+        return problem(
+            "claim.unit.form.unit.missing",
+            f"unit evidence unavailable: {evidence} has no canonical unit for authored unit {claim.unit!r}",
+        )
     try:
         compatible = unit_compatible_with_form(unit, form)
     except ValueError as exc:
-        return problem("claim.unit.form.invalid", f"unit evidence unavailable: {evidence}: {exc}")
+        return problem(
+            "claim.unit.form.invalid", f"unit evidence unavailable: {evidence}: {exc}"
+        )
     if not compatible:
-        return problem("claim.unit.incompatible", f"unit {claim.unit!r} is not compatible with {evidence}, canonical unit {form.unit_symbol!r}, dimensions {form.dimensions!r}")
+        return problem(
+            "claim.unit.incompatible",
+            f"unit {claim.unit!r} is not compatible with {evidence}, canonical unit {form.unit_symbol!r}, dimensions {form.dimensions!r}",
+        )
     for field in ("value", "lower_bound", "upper_bound"):
         value = getattr(claim, field)
         if isinstance(value, int | float) and not isinstance(value, bool):
@@ -499,7 +568,10 @@ def _check_parameter_unit(
                 if not isfinite(converted):
                     raise ValueError("conversion returned a non-finite value")
             except (ArithmeticError, ValueError) as exc:
-                return problem("claim.unit.conversion.invalid", f"unit conversion unavailable: {evidence}, {field}={value!r}, unit {claim.unit!r}: {exc}")
+                return problem(
+                    "claim.unit.conversion.invalid",
+                    f"unit conversion unavailable: {evidence}, {field}={value!r}, unit {claim.unit!r}: {exc}",
+                )
     return ()
 
 

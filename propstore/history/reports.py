@@ -15,8 +15,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TypeGuard
 
-from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY, PropstoreFamily
 from propstore.families.merge_manifests import MergeManifest
+from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY, PropstoreFamily
 from propstore.repository import Repository
 
 _MERGE_MANIFEST_ROOT = PROPSTORE_FAMILY_REGISTRY.by_key(

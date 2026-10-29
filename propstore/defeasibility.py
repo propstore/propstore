@@ -61,6 +61,7 @@ from provenance_semiring import (
     live,
     why_provenance,
 )
+
 from propstore.core.scalars import ScalarValue
 
 
@@ -617,9 +618,9 @@ __all__ = [
     "arguments_concluding",
     "build_exception_defeat",
     "evaluate_contextual_claim",
-    "inject_dung_defeats",
     "exception_defeat_is_live",
     "exception_is_applied",
     "exception_live_support",
+    "inject_dung_defeats",
     "lift_exception",
 ]

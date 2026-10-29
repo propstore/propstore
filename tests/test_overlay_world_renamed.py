@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-
 _OLD = "Hypothetical" + "World"
 _NEW = "Overlay" + "World"
 _DISCLAIMER = "overlay semantics — not a Pearl intervention"

@@ -61,7 +61,7 @@ def test_claim_value_storage_is_charter_derived_messagepack() -> None:
     (2**63, -(2**63) - 1, float("nan"), float("inf"), float("-inf")),
 )
 def test_claim_scalar_rejects_values_outside_storage_contract(
-    value: int | float,
+    value: float,
 ) -> None:
     with pytest.raises(ValueError):
         Claim(claim_id="invalid", value=value)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from belief_set import expand as formal_expand
 import msgspec
+from belief_set import expand as formal_expand
 
 from propstore.support_revision.belief_set_adapter import (
     decide_expand,

@@ -64,16 +64,14 @@ def test_value_not_applicable_for_equation(tmp_path: Path) -> None:
 
 def test_unknown_claim_raises(tmp_path: Path) -> None:
     repo = build_demo_repo(tmp_path)
-    with WorldQuery(repo) as world:
-        with pytest.raises(ClaimViewUnknownClaimError):
-            build_claim_view(world, "does-not-exist", policy=_default_policy())
+    with WorldQuery(repo) as world, pytest.raises(ClaimViewUnknownClaimError):
+        build_claim_view(world, "does-not-exist", policy=_default_policy())
 
 
 def test_blocked_claim_raises_under_default_policy(tmp_path: Path) -> None:
     repo = build_demo_repo(tmp_path)
-    with WorldQuery(repo) as world:
-        with pytest.raises(ClaimViewBlockedError):
-            build_claim_view(world, "p_blocked", policy=_default_policy())
+    with WorldQuery(repo) as world, pytest.raises(ClaimViewBlockedError):
+        build_claim_view(world, "p_blocked", policy=_default_policy())
 
 
 def test_blocked_claim_visible_when_included(tmp_path: Path) -> None:

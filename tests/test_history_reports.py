@@ -20,7 +20,7 @@ from propstore.history import (
     classify_log_operation,
 )
 from propstore.repository import Repository
-from tests.merge_commit_helpers import author_obs_claim, author_concept, init_repo
+from tests.merge_commit_helpers import author_concept, author_obs_claim, init_repo
 
 
 def test_diff_and_show_reports_project_snapshot_history(tmp_path: Path) -> None:

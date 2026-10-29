@@ -17,29 +17,55 @@ from propstore.claim_contracts import (
     iter_claim_type_contracts,
     validate_claim,
 )
-from propstore.families.claims import Claim, ClaimType
-from propstore.families.forms import FormDefinition
 from propstore.compiler.context import CompilationContext, build_compilation_context
-from propstore.core.lemon import LexicalEntry, LexicalForm, LexicalSense, OntologyReference
+from propstore.core.lemon import (
+    LexicalEntry,
+    LexicalForm,
+    LexicalSense,
+    OntologyReference,
+)
+from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept
-from propstore.families.concepts_passes import ConceptCheckedRegistry, ConceptPipelineContext, LoadedConcept, run_concept_pipeline
-from propstore.families.forms_passes import FormCheckedRegistry, LoadedForm, run_form_pipeline
+from propstore.families.concepts_passes import (
+    ConceptCheckedRegistry,
+    ConceptPipelineContext,
+    LoadedConcept,
+    run_concept_pipeline,
+)
+from propstore.families.forms import FormDefinition
+from propstore.families.forms_passes import (
+    FormCheckedRegistry,
+    LoadedForm,
+    run_form_pipeline,
+)
 
 
 def _context(form: FormDefinition) -> CompilationContext:
     forms = run_form_pipeline([LoadedForm(form=form)])
     assert isinstance(forms.output, FormCheckedRegistry)
-    concepts = run_concept_pipeline([
-        LoadedConcept(concept=Concept(
-            concept_id=form.name, canonical_name=form.name,
-            lexical_entry=LexicalEntry(
-                identifier=f"entry:{form.name}",
-                canonical_form=LexicalForm(written_rep=form.name, language="en"),
-                senses=(LexicalSense(reference=OntologyReference(uri=f"urn:{form.name}")),),
-                physical_dimension_form=form.name,
+    concepts = run_concept_pipeline(
+        [
+            LoadedConcept(
+                concept=Concept(
+                    concept_id=form.name,
+                    canonical_name=form.name,
+                    lexical_entry=LexicalEntry(
+                        identifier=f"entry:{form.name}",
+                        canonical_form=LexicalForm(
+                            written_rep=form.name, language="en"
+                        ),
+                        senses=(
+                            LexicalSense(
+                                reference=OntologyReference(uri=f"urn:{form.name}")
+                            ),
+                        ),
+                        physical_dimension_form=form.name,
+                    ),
+                )
             ),
-        )),
-    ], context=ConceptPipelineContext(form_registry=forms.output.registry))
+        ],
+        context=ConceptPipelineContext(form_registry=forms.output.registry),
+    )
     assert isinstance(concepts.output, ConceptCheckedRegistry)
     return build_compilation_context(concepts.output, form_registry=forms.output)
 

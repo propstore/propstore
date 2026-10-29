@@ -10,7 +10,6 @@ from pathlib import Path
 from rope.base.change import ChangeContents, ChangeSet
 from rope.base.project import Project
 
-
 IGNORED_RESOURCES = [
     ".git",
     ".git/*",

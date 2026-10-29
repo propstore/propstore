@@ -9,9 +9,8 @@ from __future__ import annotations
 
 import msgspec
 import pytest
-from sqlalchemy import select
-
 from quire.sqlalchemy_store import readonly_session
+from sqlalchemy import select
 
 from propstore.families.concepts import Concept, ConceptStatus
 from propstore.render import RenderPolicy, render_concepts

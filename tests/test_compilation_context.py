@@ -31,7 +31,11 @@ from propstore.families.concepts_passes import (
     run_concept_pipeline,
 )
 from propstore.families.forms import FormDefinition
-from propstore.families.forms_passes import FormCheckedRegistry, LoadedForm, run_form_pipeline
+from propstore.families.forms_passes import (
+    FormCheckedRegistry,
+    LoadedForm,
+    run_form_pipeline,
+)
 from propstore.repository import Repository
 
 

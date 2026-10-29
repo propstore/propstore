@@ -5,6 +5,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+
 from propstore.core.id_types import to_claim_id
 from propstore.core.results import AnalyzerResult, ClaimProjection, ExtensionResult
 from propstore.grounding.bundle import GroundedRulesBundle

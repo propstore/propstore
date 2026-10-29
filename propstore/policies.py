@@ -20,6 +20,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
+from assignment_selection import MergeOperator
 from quire.canonical import canonical_json_bytes
 
 from propstore.core.assertions.refs import (
@@ -28,15 +29,13 @@ from propstore.core.assertions.refs import (
     ProvenanceGraphRef,
 )
 from propstore.core.assertions.situated import SituatedAssertion
-from propstore.core.relations import RelationConceptRef, RoleBinding, RoleBindingSet
-from assignment_selection import MergeOperator
-
 from propstore.core.reasoning import (
     ArgumentationSemantics,
     ReasoningBackend,
     normalize_argumentation_semantics,
     normalize_reasoning_backend,
 )
+from propstore.core.relations import RelationConceptRef, RoleBinding, RoleBindingSet
 from propstore.core.render_policy import RenderPolicy, normalize_merge_operator
 
 _PROFILE_VERSION = "propstore.policy_profile.v1"

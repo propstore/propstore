@@ -7,9 +7,9 @@ builders only.
 
 from __future__ import annotations
 
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
-import pytest
 from quire.documents import (
     DocumentSchemaError,
     convert_document_value,
@@ -20,8 +20,8 @@ from quire.documents import (
 def test_observatory_harness_exports_stable_traceable_reports() -> None:
     from propstore.observatory import (
         EvaluationScenario,
-        SemanticTraceRecord,
         ObservatoryReport,
+        SemanticTraceRecord,
         evaluate_scenarios,
     )
 

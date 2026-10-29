@@ -100,7 +100,9 @@ _COREFERENCE_PLACEMENT: FlatYamlPlacement[object, CoreferenceMergeArgumentRef] =
 )
 
 
-def _transport_identity(document: CoreferenceMergeArgumentDoc) -> CoreferenceMergeArgumentDoc:
+def _transport_identity(
+    document: CoreferenceMergeArgumentDoc,
+) -> CoreferenceMergeArgumentDoc:
     return msgspec.structs.replace(
         document, argument_id=derive_coreference_argument_id(document.supports)
     )
