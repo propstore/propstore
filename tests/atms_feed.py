@@ -11,7 +11,6 @@ referenced CEL identifiers.
 
 from __future__ import annotations
 
-import json
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -22,8 +21,6 @@ from condition_ir import (
     KindType,
     check_condition_ir,
     checked_condition_set,
-    checked_condition_set_from_json,
-    checked_condition_set_to_json,
     with_standard_synthetic_bindings,
 )
 
@@ -78,21 +75,6 @@ def registry_for_sources(sources: Sequence[str]) -> dict[str, ConceptInfo]:
             )
             for name, kind in names.items()
         }
-    )
-
-
-def _conditions_ir(
-    conditions: Sequence[str], registry: dict[str, ConceptInfo]
-) -> str | None:
-    if not conditions:
-        return None
-    return json.dumps(
-        checked_condition_set_to_json(
-            checked_condition_set(
-                check_condition_ir(source, registry) for source in conditions
-            )
-        ),
-        sort_keys=True,
     )
 
 
@@ -335,8 +317,9 @@ def build_bound(
             checked_conditions=(
                 None
                 if not param.conditions
-                else checked_condition_set_from_json(
-                    json.loads(_conditions_ir(param.conditions, registry) or "{}")
+                else checked_condition_set(
+                    check_condition_ir(condition, compilation_context.condition_registry)
+                    for condition in param.conditions
                 )
             ),
         )
