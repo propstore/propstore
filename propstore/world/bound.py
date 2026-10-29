@@ -53,6 +53,7 @@ from propstore.core.labels import (
     merge_labels,
 )
 from propstore.core.scalars import ScalarValue
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
@@ -125,6 +126,7 @@ class _ConflictInputs:
     forms: dict[str, FormDefinition]
     parameterizations: dict[str, tuple[ParameterizationEdge, ...]]
     cel_registry: dict[str, ConceptInfo]
+    provenance: ClaimProvenanceIndex
 
 
 def conflict_inputs_for_store(store: WorldStore) -> _ConflictInputs:
@@ -143,6 +145,7 @@ def conflict_inputs_for_store(store: WorldStore) -> _ConflictInputs:
             concept_id: tuple(edges) for concept_id, edges in parameterizations.items()
         },
         cel_registry=dict(store.condition_solver().registry),
+        provenance=store.claim_provenance(),
     )
 
 
@@ -168,6 +171,7 @@ def recomputed_conflicts(
         inputs.concepts,
         inputs.cel_registry,
         lifting_system=lifting_system,
+        provenance=inputs.provenance,
         forms=inputs.forms,
         parameterizations=inputs.parameterizations,
     )

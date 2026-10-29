@@ -36,6 +36,7 @@ from propstore.core.graph_build import build_compiled_world_graph
 from propstore.core.graph_types import CompiledWorldGraph
 from propstore.core.id_types import ConceptId, to_concept_id
 from propstore.core.scalars import ScalarValue
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
@@ -180,6 +181,9 @@ class _GraphOverlayStore:
 
     def all_micropublications(self) -> Sequence[Micropublication]:
         return self._base.all_micropublications()
+
+    def claim_provenance(self) -> ClaimProvenanceIndex:
+        return self._base.claim_provenance()
 
     def concept_ids_for_group(self, group_id: int) -> set[str]:
         return self._base.concept_ids_for_group(group_id)

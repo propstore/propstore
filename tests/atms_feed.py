@@ -37,6 +37,7 @@ from propstore.core.labels import (
     compile_environment_assumptions,
 )
 from propstore.core.scalars import ScalarValue
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
@@ -237,6 +238,9 @@ class InMemoryWorldStore:
 
     def all_micropublications(self) -> Sequence[Micropublication]:
         return self.micropublications
+
+    def claim_provenance(self) -> ClaimProvenanceIndex:
+        return ClaimProvenanceIndex.from_micropublications(self.micropublications)
 
     def explain(self, claim_id: str) -> Sequence[Stance]:
         return [

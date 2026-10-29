@@ -33,6 +33,7 @@ from quire.family_transport import FamilyInstanceMap, FamilyReferenceImage
 from quire.git_store import AmbiguousMergeBaseError
 from quire.tree_merge import TreeMergeConflict, iter_merged_tree_entries
 
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim
 from propstore.families.merge_manifests import (
     MergeManifest,
@@ -40,6 +41,7 @@ from propstore.families.merge_manifests import (
     MergeManifestCandidate,
     MergeManifestWitness,
 )
+from propstore.families.micropublications import Micropublication
 from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY
 from propstore.merge.merge_claims import MergeClaim
 from propstore.merge.merge_classifier import (
@@ -92,17 +94,25 @@ def _read_branch_merge_claims(
 ) -> list[MergeClaim]:
     """Read every authored claim at ``commit_sha`` as a branch-tagged merge claim.
 
-    The rewrite ``Claim`` is provenance-free, so the merge-relevant source label is
-    the branch the version came from; it is carried as the merge claim's ``paper``
-    (the comparison source the conflict detector needs), never folded into identity.
+    Raw canonical micropublication membership remains independent of claim
+    admission and carries actual evidence documents alongside claim semantics.
     """
 
+    provenance = ClaimProvenanceIndex.from_micropublications(
+        handle.document
+        for handle in repo.families.micropublication.iter_handles(commit=commit_sha)
+        if isinstance(handle.document, Micropublication)
+    )
     merge_claims: list[MergeClaim] = []
     for handle in repo.families.claim.iter_handles(commit=commit_sha):
         document = handle.document
         if not isinstance(document, Claim):
             continue
-        merge_claim = MergeClaim.from_claim(document, paper=branch)
+        merge_claim = MergeClaim.from_claim(
+            document,
+            provenance=provenance.for_claim(document.claim_id),
+            paper=branch,
+        )
         if merge_claim is not None:
             merge_claims.append(merge_claim)
     return merge_claims

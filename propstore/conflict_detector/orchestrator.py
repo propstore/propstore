@@ -1,7 +1,6 @@
 """Top-level conflict detection orchestration.
 
-Builds a condition-ir registry augmented with synthetic runtime bindings (so the
-solver treats different source papers as disjoint enum values), then fans out to
+Builds a condition-ir registry augmented with runtime bindings, then fans out to
 the parameter, measurement, equation, and algorithm detectors. Every detected
 relationship becomes a :class:`ConflictRecord` with provenance; nothing is
 dropped or aborted.
@@ -33,6 +32,7 @@ from condition_ir import (
 )
 
 from propstore.core.graph_types import ParameterizationEdge
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
 
@@ -51,7 +51,6 @@ if TYPE_CHECKING:
 # The synthetic runtime binding vocabulary is propstore-owned: these names are
 # part of the runtime environment contract, not of CEL parsing/type-checking.
 STANDARD_SYNTHETIC_BINDING_NAMES: tuple[str, ...] = (
-    "source",
     "domain",
     "source_kind",
     "origin_type",
@@ -60,10 +59,6 @@ STANDARD_SYNTHETIC_BINDING_NAMES: tuple[str, ...] = (
     "mode",
     "variant",
 )
-
-
-class SyntheticConceptCollision(ValueError):
-    """Raised when a synthetic CEL concept would shadow an authored concept."""
 
 
 def _empty_decisions() -> dict[tuple[str, str, str, tuple[str, ...]], bool]:
@@ -83,6 +78,7 @@ def detect_conflicts(
     cel_registry: Mapping[str, ConceptInfo],
     lifting_system: LiftingSystem | None = None,
     *,
+    provenance: ClaimProvenanceIndex,
     forms: Mapping[str, FormDefinition] | None = None,
     parameterizations: Mapping[str, Sequence[ParameterizationEdge]] | None = None,
 ) -> list[ConflictRecord]:
@@ -95,20 +91,8 @@ def detect_conflicts(
 
     records: list[ConflictRecord] = []
 
-    source_names = sorted(
-        {claim.source_paper for claim in claims if claim.source_paper}
-    )
-    synthetic_concepts: list[ConceptInfo] = [
-        synthetic_category_concept(
-            concept_id="ps:concept:__source__",
-            canonical_name="source",
-            values=source_names,
-            extensible=False,
-        )
-    ]
+    synthetic_concepts: list[ConceptInfo] = []
     for synthetic_name in STANDARD_SYNTHETIC_BINDING_NAMES:
-        if synthetic_name == "source":
-            continue
         if synthetic_name in cel_registry:
             continue
         synthetic_concepts.append(
@@ -119,7 +103,6 @@ def detect_conflicts(
                 extensible=True,
             )
         )
-    _raise_on_synthetic_collisions(cel_registry, synthetic_concepts)
     registry = with_synthetic_concepts(cel_registry, synthetic_concepts)
     condition_solver = ConditionSolver(registry)
 
@@ -173,22 +156,7 @@ def detect_conflicts(
             forms=forms,
         )
     )
-    return records
-
-
-def _raise_on_synthetic_collisions(
-    cel_registry: Mapping[str, ConceptInfo],
-    synthetic_concepts: Sequence[ConceptInfo],
-) -> None:
-    for concept in synthetic_concepts:
-        existing = cel_registry.get(concept.canonical_name)
-        if existing is None:
-            continue
-        if existing.id != concept.id:
-            raise SyntheticConceptCollision(
-                f"synthetic CEL concept '{concept.canonical_name}' would shadow "
-                f"{existing.id}"
-            )
+    return [record.with_provenance(provenance) for record in records]
 
 
 def _expand_lifted_conflict_claims(

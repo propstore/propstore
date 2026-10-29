@@ -21,7 +21,7 @@ records a blocking :class:`BuildDiagnostic` so render policy can hide it.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -41,6 +41,7 @@ from propstore.conflict_detector.models import (
 )
 from propstore.context_lifting import LiftingSystem
 from propstore.core.graph_types import ParameterizationEdge
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim
 from propstore.families.concepts import Concept
 from propstore.families.conflicts import ConflictProjection
@@ -114,40 +115,9 @@ class SidecarBuildPlan:
         )
 
 
-def _claim_sources(
-    micropubs: Iterable[Micropublication],
-) -> dict[str, str | None]:
-    """Per-claim source identity derived from micropublication bundles.
-
-    The ``Claim`` charter is provenance-free, so the paper asserting a claim
-    lives on the :class:`Micropublication` bundling it (``source``). A claim
-    bundled under exactly one distinct source carries that source into the
-    detector, where :meth:`ConflictClaim.with_source_condition` folds it into a
-    ``source == …`` condition so the solver treats papers as disjoint regimes.
-    A claim asserted by multiple sources gets none — conditions conjoin, and a
-    multi-source claim genuinely is not source-gated. An unbundled claim
-    honestly has no source (never fabricated).
-    """
-
-    sources: dict[str, set[str]] = {}
-    for micropub in micropubs:
-        if micropub.source is None:
-            continue
-        for claim_ref in micropub.claims:
-            sources.setdefault(claim_ref, set()).add(micropub.source)
-    return {
-        claim_id: next(iter(papers)) if len(papers) == 1 else None
-        for claim_id, papers in sources.items()
-    }
-
-
-def _conflict_claims(
-    claims: tuple[Claim, ...], claim_sources: Mapping[str, str | None]
-) -> list[ConflictClaim]:
+def _conflict_claims(claims: tuple[Claim, ...]) -> list[ConflictClaim]:
     return [
-        ConflictClaim.from_claim(
-            claim, source_paper=claim_sources.get(claim.claim_id)
-        ).with_source_condition()
+        ConflictClaim.from_claim(claim)
         for claim in claims
         if claim.claim_id
     ]
@@ -182,7 +152,7 @@ def _compile_conflicts(
     micropubs: tuple[Micropublication, ...],
 ) -> tuple[ConflictProjection, ...]:
     admitted = checked.admitted_claims
-    conflict_claims = _conflict_claims(admitted, _claim_sources(micropubs))
+    conflict_claims = _conflict_claims(admitted)
     if not conflict_claims:
         return ()
     lifting_system = LiftingSystem(
@@ -194,6 +164,7 @@ def _compile_conflicts(
         {str(concept.concept_id): concept for concept in checked.concepts},
         checked.compilation_context.condition_registry,
         lifting_system=lifting_system,
+        provenance=ClaimProvenanceIndex.from_micropublications(micropubs),
         forms=dict(checked.form_registry),
         parameterizations=_parameterizations_by_output(admitted),
     )
