@@ -9,7 +9,7 @@ from propstore.core.assertions.refs import (
 from propstore.core.assertions.situated import SituatedAssertion
 from propstore.core.labels import Label
 from propstore.core.relations import RelationConceptRef, RoleBinding, RoleBindingSet
-from propstore.support_revision.state import AssertionAtom
+from propstore.support_revision.state import AssertionAtom, SourceSupportWitness
 
 
 def make_assertion_atom(
@@ -41,9 +41,15 @@ def make_assertion_atom(
         provenance_ref=ProvenanceGraphRef("urn:propstore:test:provenance"),
     )
     claim = ActiveClaim(claim_id=f"claim_{name}", source_paper=source_paper)
+    evidence = Label.empty() if label is None else label
     return AssertionAtom(
         atom_id=str(assertion.assertion_id),
         assertion=assertion,
-        source_claims=(claim,),
-        label=label,
+        source_support=(
+            SourceSupportWitness(
+                claim=claim,
+                label=evidence,
+                current_label=evidence,
+            ),
+        ),
     )

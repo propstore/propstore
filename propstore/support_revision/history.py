@@ -729,7 +729,7 @@ def _assertion_provenance(state_payload: Mapping[str, Any]) -> dict[str, Any]:
         if atom.get("type") != "assertion":
             continue
         provenance[str(atom.get("atom_id"))] = json_ready(
-            atom.get("source_claims") or ()
+            atom.get("source_support") or ()
         )
     return provenance
 
@@ -737,6 +737,7 @@ def _assertion_provenance(state_payload: Mapping[str, Any]) -> dict[str, Any]:
 def _dependencies(state_payload: Mapping[str, Any]) -> dict[str, Any]:
     base = _as_mapping(state_payload.get("base"))
     dependencies: dict[str, Any] = {}
+    dependencies["base.assumptions"] = json_ready(base.get("assumptions") or ())
     for field_name in ("support_sets", "essential_support"):
         field_data = _as_mapping(base.get(field_name))
         for atom_id, value in field_data.items():
@@ -811,7 +812,7 @@ def _set_atom_provenance(
             atoms.append(atom)
             continue
         updated_atom = dict(atom)
-        updated_atom["source_claims"] = [] if value is None else value
+        updated_atom["source_support"] = [] if value is None else value
         atoms.append(updated_atom)
     base["atoms"] = atoms
     state_payload["base"] = base
@@ -823,6 +824,11 @@ def _apply_dependency_delta(
     if "." not in delta.key:
         raise ValueError(f"dependency delta key must identify atom field: {delta.key}")
     atom_id, field_name = delta.key.rsplit(".", 1)
+    if atom_id == "base" and field_name == "assumptions":
+        base = dict(_as_mapping(state_payload.get("base")))
+        base["assumptions"] = [] if delta.new_value is None else delta.new_value
+        state_payload["base"] = base
+        return
     if field_name not in {"support_sets", "essential_support"}:
         raise ValueError(f"unsupported dependency field: {field_name}")
     base = dict(_as_mapping(state_payload.get("base")))

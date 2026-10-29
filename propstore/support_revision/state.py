@@ -19,7 +19,7 @@ from propstore.core.id_types import (
     to_assumption_ids,
     to_context_id,
 )
-from propstore.core.labels import Label
+from propstore.core.labels import Label, SupportQuality
 from propstore.core.scalars import ScalarValue
 from propstore.reporting import json_ready
 from propstore.support_revision.decision_trace import DecisionTrace, RankingProvenance
@@ -34,6 +34,22 @@ def _is_mapping(value: object) -> TypeGuard[Mapping[str, Any]]:
     return isinstance(value, Mapping)
 
 
+class SourceSupportWitness(
+    msgspec.Struct, frozen=True, forbid_unknown_fields=True, omit_defaults=True
+):
+    """Original source evidence and its surviving support after incision."""
+
+    claim: ActiveClaim
+    label: Label | None
+    current_label: Label | None
+    quality: SupportQuality = SupportQuality.EXACT
+    essential_support: tuple[AssumptionId, ...] = ()
+
+    @property
+    def active(self) -> bool:
+        return self.current_label is not None and bool(self.current_label.environments)
+
+
 class AssertionAtom(
     msgspec.Struct,
     frozen=True,
@@ -43,21 +59,25 @@ class AssertionAtom(
 ):
     atom_id: str
     assertion: SituatedAssertion
-    source_claims: tuple[ActiveClaim, ...] = ()
-    label: Label | None = None
+    source_support: tuple[SourceSupportWitness, ...] = ()
 
     def __post_init__(self) -> None:
         expected_atom_id = str(self.assertion.assertion_id)
         if self.atom_id != expected_atom_id:
             raise ValueError("assertion atom id does not match situated assertion")
+        object.__setattr__(
+            self,
+            "source_support",
+            tuple(
+                sorted(
+                    self.source_support, key=lambda witness: str(witness.claim.claim_id)
+                )
+            ),
+        )
 
     @property
     def assertion_id(self) -> AssertionId:
         return to_assertion_id(self.assertion.assertion_id)
-
-    @property
-    def primary_source_claim(self) -> ActiveClaim | None:
-        return self.source_claims[0] if self.source_claims else None
 
 
 class AssumptionAtom(
