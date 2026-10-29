@@ -33,6 +33,7 @@ from condition_ir import (
     to_cel_expr,
 )
 
+from propstore.algorithm_bindings import algorithm_bindings
 from propstore.conflict_detector import ConflictRecord, detect_conflicts
 from propstore.conflict_detector.models import ConflictClaim
 from propstore.core.activation import is_claim_active
@@ -416,12 +417,7 @@ class BoundWorld(BeliefSpace):
         ]
 
     def extract_bindings(self, claim: ActiveClaim) -> dict[str, str]:
-        bindings: dict[str, str] = {}
-        for variable in self._claim_variables(claim):
-            name = variable.name or variable.symbol
-            if name and variable.concept:
-                bindings[name] = variable.concept
-        return bindings
+        return algorithm_bindings(claim.variables, claim.body or "")
 
     # -- value / derived / resolved ----------------------------------------
 

@@ -32,6 +32,7 @@ import msgspec
 from ast_equiv import AlgorithmParseError
 from ast_equiv import compare as ast_compare
 
+from propstore.algorithm_bindings import AlgorithmBindingError
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.graph_types import ParameterizationEdge
 from propstore.core.id_types import ConceptId, to_concept_id
@@ -546,7 +547,12 @@ class ActiveClaimResolver:
         if not body:
             return _BENIGN_INCONCLUSIVE
 
-        bindings = self._extract_bindings(claim)
+        try:
+            bindings = self._extract_bindings(claim)
+        except AlgorithmBindingError:
+            return _BENIGN_INCONCLUSIVE
+        except (AlgorithmParseError, RecursionError):
+            return _PARSE_FAILED
         if not bindings:
             return _BENIGN_INCONCLUSIVE
 
@@ -595,9 +601,9 @@ class ActiveClaimResolver:
                     # failure — mirror previous behavior of signalling
                     # non-equivalence to the caller.
                     return _AlgorithmComparison(equivalent=False)
-                bindings_a = self._extract_bindings(algo_claims[i])
-                bindings_b = self._extract_bindings(algo_claims[j])
                 try:
+                    bindings_a = self._extract_bindings(algo_claims[i])
+                    bindings_b = self._extract_bindings(algo_claims[j])
                     result = ast_compare(
                         body_a,
                         bindings_a,
@@ -612,6 +618,8 @@ class ActiveClaimResolver:
                             else None
                         ),
                     )
+                except AlgorithmBindingError:
+                    return _BENIGN_INCONCLUSIVE
                 except (
                     ValueError,
                     SyntaxError,

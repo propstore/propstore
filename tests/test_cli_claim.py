@@ -20,7 +20,7 @@ from pathlib import Path
 from click.testing import CliRunner, Result
 
 from propstore.cli import cli
-from propstore.families.claims import Claim, ClaimType
+from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.repository import Repository
@@ -124,6 +124,7 @@ def _algo_repo(tmp_path: Path) -> Repository:
             claim_type=ClaimType.ALGORITHM,
             output_concept="A",
             body="def f(x):\n    return x * 2 + 1\n",
+            variables=(ClaimVariable(concept="A", symbol="x"),),
         ),
         message="m",
     )
@@ -135,6 +136,7 @@ def _algo_repo(tmp_path: Path) -> Repository:
             claim_type=ClaimType.ALGORITHM,
             output_concept="A",
             body="def f(x):\n    return 2 * x + 1\n",
+            variables=(ClaimVariable(concept="A", symbol="x"),),
         ),
         message="m",
     )

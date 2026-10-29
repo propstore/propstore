@@ -15,6 +15,8 @@ from ast_equiv import AlgorithmParseError
 from ast_equiv import compare as ast_compare
 from condition_ir import ConceptInfo, ConditionSolver
 
+from propstore.algorithm_bindings import AlgorithmBindingError, algorithm_bindings
+
 from .collectors import collect_algorithm_claims
 from .condition_classifier import classify_conditions
 from .context import append_context_classified_record, claim_context
@@ -48,10 +50,12 @@ def detect_algorithm_conflicts(
                 if not body_a or not body_b:
                     continue
 
-                bindings_a = _bindings_for_algorithm_claim(claim_a)
-                bindings_b = _bindings_for_algorithm_claim(claim_b)
                 try:
+                    bindings_a = algorithm_bindings(claim_a.variables, body_a)
+                    bindings_b = algorithm_bindings(claim_b.variables, body_b)
                     result = ast_compare(body_a, bindings_a, body_b, bindings_b)
+                except AlgorithmBindingError:
+                    raise
                 except (
                     ValueError,
                     SyntaxError,
@@ -110,12 +114,3 @@ def detect_algorithm_conflicts(
                 )
 
     return records
-
-
-def _bindings_for_algorithm_claim(claim: ConflictClaim) -> dict[str, str]:
-    bindings: dict[str, str] = {}
-    for variable in claim.variables:
-        name = variable.name or variable.symbol
-        if name and variable.concept:
-            bindings[name] = variable.concept
-    return bindings

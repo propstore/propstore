@@ -214,7 +214,7 @@ def claim_neighborhood(
     "--known",
     "known",
     multiple=True,
-    help="A KEY=VALUE numeric binding passed to the partial-eval comparison tier.",
+    help="A canonical CONCEPT_ID=VALUE numeric binding for partial evaluation.",
 )
 @format_option
 @click.pass_obj
