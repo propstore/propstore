@@ -117,9 +117,12 @@ def test_finalize_report_rejects_removed_group_preview(tmp_path: Path) -> None:
     codec = SourceFinalizeReportDocument.__charter__.document_codec()
     payload = codec.payload(report)
     assert "parameterization_group_merges" not in payload
-    assert codec.decode(
-        codec.encode(report), SourceFinalizeReportDocument, source="finalize report"
-    ) == report
+    assert (
+        codec.decode(
+            codec.encode(report), SourceFinalizeReportDocument, source="finalize report"
+        )
+        == report
+    )
     payload["parameterization_group_merges"] = []
     with pytest.raises(DocumentSchemaError, match="parameterization_group_merges"):
         codec.convert(payload, SourceFinalizeReportDocument, source="stored report")
