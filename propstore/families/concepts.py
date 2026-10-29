@@ -37,8 +37,8 @@ from typing import Annotated
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.references import ForeignKeySpec
 
-from propstore.families import SEMANTIC_FOREIGN_KEY_CONTRACT_VERSION
 from propstore.core.lemon import LexicalEntry, OntologyReference
+from propstore.families import SEMANTIC_FOREIGN_KEY_CONTRACT_VERSION
 
 
 class ConceptStatus(str, Enum):

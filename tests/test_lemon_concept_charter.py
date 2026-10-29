@@ -10,10 +10,9 @@ content intact, while a flat pre-lemon shape is rejected at the document boundar
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import select
-
 from quire.documents import DocumentSchemaError
 from quire.sqlalchemy_store import readonly_session
+from sqlalchemy import select
 
 from propstore.core.lemon import (
     DescriptionKind,

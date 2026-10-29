@@ -87,8 +87,8 @@ from propstore.core.labels import (
     merge_labels,
 )
 from propstore.core.scalars import ScalarValue
-from propstore.families.micropublications import Micropublication
 from propstore.families.claims import Claim
+from propstore.families.micropublications import Micropublication
 from propstore.propagation import (
     ParameterizationEvaluationStatus,
     evaluate_parameterization,
@@ -1540,7 +1540,9 @@ class ATMSEngine:
                 continue
 
             if param.equation_claim_id is not None:
-                equation_node_id = self._claim_node_ids.get(str(param.equation_claim_id))
+                equation_node_id = self._claim_node_ids.get(
+                    str(param.equation_claim_id)
+                )
                 if equation_node_id is None:
                     continue
                 condition_antecedents = [(equation_node_id,)]

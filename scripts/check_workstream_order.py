@@ -6,7 +6,6 @@ import re
 import sys
 from pathlib import Path
 
-
 PHASE_ORDER_SECTION_RE = re.compile(
     r"^## Phase Order\s*$"
     r"(?P<body>.*?)"

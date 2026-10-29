@@ -32,16 +32,18 @@ from typing import Any, TypeVar
 
 from argumentation.probabilistic.probabilistic import (
     ProbabilisticAF,
+)
+from argumentation.probabilistic.probabilistic import (
     summarize_defeat_relations as _kernel_summarize_defeat_relations,
 )
 from doxa import Opinion
 from doxa.opinion import W
 
+from propstore.families.claims import Claim
+from propstore.families.relations import Stance
 from propstore.opinion_provenance import OpinionWithProvenance
 from propstore.probabilistic_relations import ProbabilisticRelation
 from propstore.provenance import Provenance, ProvenanceStatus
-from propstore.families.claims import Claim
-from propstore.families.relations import Stance
 
 _DOGMATIC_TOL = 1e-9
 _COH_MAX_ITERATIONS = 100

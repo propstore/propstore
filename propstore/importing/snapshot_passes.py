@@ -50,7 +50,6 @@ from propstore.source.stages import (
     SourceStage,
 )
 
-
 SemanticImportBatch = Callable[
     [
         "BoundFamilyRegistry[object, object]",

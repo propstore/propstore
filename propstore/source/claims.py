@@ -47,8 +47,8 @@ from propstore.families.identity.claims import (
 from propstore.families.identity.logical_ids import normalize_logical_value
 from propstore.families.registry import SourceRef
 from propstore.families.sources import (
-    ClaimSourceDocument,
     ClaimLogicalIdDocument,
+    ClaimSourceDocument,
     ExtractionProvenanceDocument,
     SourceClaimDocument,
     SourceClaimsDocument,

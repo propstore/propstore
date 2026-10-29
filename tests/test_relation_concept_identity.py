@@ -17,7 +17,6 @@ from propstore.core.relations import (
     RoleSignature,
 )
 
-
 EXPECTED_BOOTSTRAP_RELATIONS = frozenset(
     {
         "relation_concept",

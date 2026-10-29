@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-
 from causal_models import StructuralCausalModel
+
 from propstore.world import InterventionWorld, InterventionWorldUnavailable
 
 

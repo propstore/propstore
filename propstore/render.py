@@ -16,10 +16,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Protocol
 
-from sqlalchemy import select
-
 from quire.sqlalchemy_schema import SqlAlchemySchema
 from quire.sqlalchemy_store import readonly_session
+from sqlalchemy import select
 
 from propstore.core.lemon import LexicalEntry, OntologyReference
 from propstore.families.concepts import Concept, ConceptStatus

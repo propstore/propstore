@@ -17,6 +17,8 @@ from propstore.claim_graph import (
     build_argumentation_framework,
     compute_claim_graph_justified_claims,
 )
+from propstore.conflict_detector.models import ConflictClass, ConflictRecord
+from propstore.core.active_claims import ActiveClaim
 from propstore.core.analyzers import (
     SharedAnalyzerInput,
     analyze_claim_graph,
@@ -28,8 +30,6 @@ from propstore.core.graph_types import (
     ActiveWorldGraph,
     CompiledWorldGraph,
 )
-from propstore.conflict_detector.models import ConflictClass, ConflictRecord
-from propstore.core.active_claims import ActiveClaim
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.relations import Stance
 from propstore.grounding.bundle import GroundedRulesBundle

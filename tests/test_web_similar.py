@@ -17,14 +17,14 @@ from fastapi.testclient import TestClient
 
 pytest.importorskip("sqlite_vec")
 
-from tests.app_render_helpers import build_demo_repo  # noqa: E402
-from propstore.families.embeddings.declaration import (  # noqa: E402
+from propstore.families.embeddings.declaration import (
     embed_claims_at,
     embed_concepts_at,
 )
-from propstore.repository import Repository  # noqa: E402
-from propstore.web.app import create_app  # noqa: E402
-from propstore.world import WorldQuery  # noqa: E402
+from propstore.repository import Repository
+from propstore.web.app import create_app
+from propstore.world import WorldQuery
+from tests.app_render_helpers import build_demo_repo
 
 
 def _fake_litellm() -> MagicMock:

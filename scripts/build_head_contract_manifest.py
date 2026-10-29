@@ -25,7 +25,6 @@ import tarfile
 import tempfile
 from pathlib import Path
 
-
 _BUILD_SNIPPET = (
     "import sys; "
     "from propstore.contracts import build_propstore_contract_manifest; "

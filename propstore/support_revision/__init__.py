@@ -21,13 +21,13 @@ from propstore.support_revision.input_normalization import (
     normalize_revision_input,
     parse_revision_atom_payload,
 )
-from propstore.support_revision.projection import project_belief_base
 from propstore.support_revision.iterated import (
     advance_epistemic_state,
     epistemic_state_payload,
     iterated_revise,
     make_epistemic_state,
 )
+from propstore.support_revision.projection import project_belief_base
 from propstore.support_revision.realization import stabilize_belief_base
 from propstore.support_revision.state import (
     BeliefAtom,

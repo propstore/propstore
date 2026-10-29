@@ -102,7 +102,7 @@ for row in conn.execute("""
 # Embedding similarity: find closest cross-paper pairs
 print("\n--- Highest similarity cross-paper claim pairs ---")
 try:
-    from propstore.embed import find_similar, _load_vec_extension, get_registered_models
+    from propstore.embed import _load_vec_extension, find_similar, get_registered_models
 
     _load_vec_extension(conn)
     models = get_registered_models(conn)

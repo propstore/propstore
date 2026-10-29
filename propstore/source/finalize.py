@@ -57,7 +57,11 @@ from .common import (
 )
 from .reference_indexes import (
     primary_claim_index as build_primary_claim_index,
+)
+from .reference_indexes import (
     resolve_source_or_primary_claim_id,
+)
+from .reference_indexes import (
     source_claim_index as build_source_claim_index,
 )
 

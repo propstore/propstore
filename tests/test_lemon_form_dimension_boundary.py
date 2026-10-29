@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import bridgman
 import pytest
+from condition_ir import KindType
 
 import propstore.dimensions as dimensions
-from condition_ir import KindType
 from propstore.core.lemon import (
     LexicalEntry,
     LexicalForm,

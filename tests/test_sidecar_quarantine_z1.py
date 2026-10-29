@@ -25,14 +25,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from sqlalchemy import text
-from sqlalchemy.exc import IntegrityError
-
 from quire.sqlalchemy_store import (
     create_sqlalchemy_store,
     readonly_session,
     writable_session,
 )
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 
 from propstore.derived_schema import build_world_sidecar_schema
 

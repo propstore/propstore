@@ -14,9 +14,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from propstore.core.source_types import SourceKind, SourceOriginType
+from propstore.derived_build import materialize_world_sidecar
 from propstore.families.claims import ClaimType
 from propstore.families.contexts import Context
-from propstore.derived_build import materialize_world_sidecar
 from propstore.repository import Repository
 from propstore.source import (
     compile_all_source_promotion_blocked_projection_rows,

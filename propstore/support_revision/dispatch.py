@@ -12,15 +12,11 @@ from propstore.support_revision.belief_set_adapter import (
     decide_ic_merge_profile,
     decide_revise,
 )
+from propstore.support_revision.decision_trace import ICMergeTrace
 from propstore.support_revision.entrenchment import EntrenchmentReport
 from propstore.support_revision.history import JournalOperator
-from propstore.support_revision.iterated import advance_epistemic_state, iterated_revise
-from propstore.support_revision.realization import (
-    realize_formal_decision,
-    realize_ic_merge_decision,
-)
-from propstore.support_revision.decision_trace import ICMergeTrace
 from propstore.support_revision.integrity_constraints import IntegrityConstraintSpec
+from propstore.support_revision.iterated import advance_epistemic_state, iterated_revise
 from propstore.support_revision.operator_inputs import (
     ContractInput,
     ExpandInput,
@@ -28,6 +24,10 @@ from propstore.support_revision.operator_inputs import (
     IteratedReviseInput,
     OperatorInput,
     ReviseInput,
+)
+from propstore.support_revision.realization import (
+    realize_formal_decision,
+    realize_ic_merge_decision,
 )
 from propstore.support_revision.state import (
     EpistemicState,

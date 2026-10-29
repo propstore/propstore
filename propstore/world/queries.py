@@ -22,9 +22,9 @@ import json
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, TypeGuard
 
+from condition_ir import CheckedConditionSet, checked_condition_set_from_json
 from sqlalchemy import func, select
 
-from condition_ir import CheckedConditionSet, checked_condition_set_from_json
 from propstore.conflict_detector.models import (
     ConflictClass,
     ConflictRecord,

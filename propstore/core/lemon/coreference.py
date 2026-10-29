@@ -19,7 +19,6 @@ in :mod:`propstore.core.lemon.description_kinds`, which imports no engine.
 from __future__ import annotations
 
 import msgspec
-
 from argumentation.core.dung import (
     ArgumentationFramework,
     grounded_extension,
@@ -27,8 +26,8 @@ from argumentation.core.dung import (
 )
 
 from propstore.core.lemon.description_kinds import (
-    DescriptionKindMergeProtocol,
     CoreferenceMergeArgument,
+    DescriptionKindMergeProtocol,
 )
 
 

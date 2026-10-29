@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 
-
 LEDGER_ROW_RE = re.compile(r"^\| (?P<day>\d{4}-\d{2}-\d{2}) \| (?P<num>\d+) \|")
 DAY_RE = re.compile(r"^## (?P<day>\d{4}-\d{2}-\d{2})$")
 REQUEST_RE = re.compile(r"^- request (?P<num>\d+):")

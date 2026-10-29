@@ -49,7 +49,6 @@ from quire.sqlalchemy_store import readonly_session, validate_sqlalchemy_store
 from propstore.conflict_detector.models import ConflictRecord
 from propstore.core.activation import activate_compiled_world_graph
 from propstore.core.active_claims import ActiveClaim
-from propstore.core.scalars import ScalarValue
 from propstore.core.environment import Environment, WorldStore
 from propstore.core.graph_build import build_compiled_world_graph
 from propstore.core.graph_types import (
@@ -63,6 +62,7 @@ from propstore.core.labels import (
     compile_environment_assumptions,
     environment_assumption_ids,
 )
+from propstore.core.scalars import ScalarValue
 from propstore.core.store_results import (
     ClaimSimilarityHit,
     ConceptSearchHit,

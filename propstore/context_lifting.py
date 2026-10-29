@@ -50,6 +50,7 @@ from provenance_semiring import (
     SupportQuality,
 )
 
+from propstore.core.scalars import ScalarValue
 from propstore.defeasibility import (
     DecidabilityStatus,
     ExceptionDefeat,
@@ -57,7 +58,6 @@ from propstore.defeasibility import (
     JustifiableException,
     build_exception_defeat,
 )
-from propstore.core.scalars import ScalarValue
 from propstore.families.contexts import (
     Context,
     LiftingDecisionStatus,

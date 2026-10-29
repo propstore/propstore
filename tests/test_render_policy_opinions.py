@@ -26,7 +26,6 @@ from propstore.world.types import (
     apply_decision_criterion,
 )
 
-
 # ── Default decision criterion ──────────────────────────────────
 
 

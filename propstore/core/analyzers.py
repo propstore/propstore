@@ -21,6 +21,8 @@ from dataclasses import dataclass, replace
 
 from argumentation.core.bipolar import (
     BipolarArgumentationFramework,
+)
+from argumentation.core.bipolar import (
     cayrol_derived_defeats as _cayrol_derived_defeats_impl,
 )
 from argumentation.core.dung import ArgumentationFramework
@@ -33,6 +35,7 @@ from argumentation.structured.aspic.aspic import (
 )
 from argumentation.structured.aspic.aspic_encoding import ASPICQueryStatus
 
+from propstore.conflict_detector.models import ConflictRecord
 from propstore.core.environment import (
     CompiledGraphStore,
     Environment,
@@ -49,6 +52,8 @@ from propstore.core.reasoning import (
     validate_backend_semantics,
 )
 from propstore.core.results import AnalyzerResult, ClaimProjection, ExtensionResult
+from propstore.families.claims import Claim
+from propstore.families.relations import Stance
 from propstore.opinion_provenance import OpinionWithProvenance, opinion_or_vacuous
 from propstore.praf import (
     NoCalibration,
@@ -62,9 +67,6 @@ from propstore.probabilistic_relations import (
     ProbabilisticRelation,
     relation_from_stance,
 )
-from propstore.conflict_detector.models import ConflictRecord
-from propstore.families.claims import Claim
-from propstore.families.relations import Stance
 from propstore.stances import (
     ATTACK_TYPES,
     PREFERENCE_SENSITIVE_ATTACK_TYPES,

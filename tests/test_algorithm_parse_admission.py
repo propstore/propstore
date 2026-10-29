@@ -231,12 +231,12 @@ def test_repository_quarantines_invalid_algorithm_and_retains_both_claims(
         "invalid",
         "valid",
     ]
-    assert [
-        entry.claim.claim_id for entry in checked.claim_bundle.blocked_claims
-    ] == ["invalid"]
-    assert [
-        entry.claim.claim_id for entry in checked.claim_bundle.checked_claims
-    ] == ["valid"]
+    assert [entry.claim.claim_id for entry in checked.claim_bundle.blocked_claims] == [
+        "invalid"
+    ]
+    assert [entry.claim.claim_id for entry in checked.claim_bundle.checked_claims] == [
+        "valid"
+    ]
     diagnostic = checked.claim_bundle.blocked_claims[0].diagnostics[0]
     assert diagnostic.code == "claim.contract"
     assert diagnostic.artifact_id == "invalid"

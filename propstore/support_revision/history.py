@@ -7,10 +7,9 @@ from enum import Enum
 from typing import Any, TypeGuard, cast
 
 import msgspec
-
+from msgspec.structs import replace as replace_struct
 from quire.canonical import canonical_json_bytes
 from quire.documents import convert_document_value, to_document_builtins
-from msgspec.structs import replace as replace_struct
 
 from propstore.policies import PolicyProfile
 from propstore.reporting import json_ready
@@ -131,7 +130,8 @@ class EpistemicSnapshot(
 
     def __post_init__(self) -> None:
         if self.schema_version not in (
-            EPistemicSnapshotVersion, _PREVIOUS_SNAPSHOT_VERSION,
+            EPistemicSnapshotVersion,
+            _PREVIOUS_SNAPSHOT_VERSION,
         ):
             raise ValueError(
                 f"unsupported epistemic snapshot version: {self.schema_version}"
@@ -162,7 +162,7 @@ class EpistemicSnapshot(
                 to_document_builtins(state),
                 EpistemicState,
                 source="epistemic snapshot state",
-            )
+            ),
         )
 
     @classmethod
@@ -198,7 +198,9 @@ class EpistemicSnapshot(
                 if index == 0 and entry.state_in.content_hash == self.content_hash:
                     return entry.state_in.migrate()
                 if entry.state_out.content_hash == self.content_hash:
-                    prefix = replace_struct(journal, entries=journal.entries[: index + 1])
+                    prefix = replace_struct(
+                        journal, entries=journal.entries[: index + 1]
+                    )
                     return prefix.migrate().entries[-1].state_out
         raise RevisionContinuationUnavailable(
             "snapshot is readable but continuation requires its complete original "
@@ -278,7 +280,8 @@ class TransitionJournalEntry(
 
     def __post_init__(self) -> None:
         if self.schema_version not in (
-            TransitionJournalVersion, _PREVIOUS_JOURNAL_VERSION,
+            TransitionJournalVersion,
+            _PREVIOUS_JOURNAL_VERSION,
         ):
             raise ValueError(
                 f"unsupported transition journal version: {self.schema_version}"
@@ -420,7 +423,8 @@ class TransitionJournal(
 
     def __post_init__(self) -> None:
         if self.schema_version not in (
-            TransitionJournalVersion, _PREVIOUS_JOURNAL_VERSION,
+            TransitionJournalVersion,
+            _PREVIOUS_JOURNAL_VERSION,
         ):
             raise ValueError(
                 f"unsupported transition journal version: {self.schema_version}"

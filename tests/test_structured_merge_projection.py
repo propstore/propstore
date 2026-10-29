@@ -10,12 +10,12 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from propstore.stances import StanceType
 from propstore.aspic_bridge.translate import StanceInput
 from propstore.merge.structured_merge import (
     build_branch_structured_summary,
     build_structured_merge_candidates,
 )
+from propstore.stances import StanceType
 from tests.merge_helpers import obs_claim
 
 

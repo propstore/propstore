@@ -18,13 +18,13 @@ import pytest
 
 pytest.importorskip("sqlite_vec")
 
-from propstore.derived_build import materialize_world_sidecar  # noqa: E402
-from propstore.families.claims import Claim, ClaimType  # noqa: E402
-from propstore.families.concepts import Concept  # noqa: E402
-from propstore.families.contexts import Context  # noqa: E402
-from propstore.families.embeddings import declaration as emb  # noqa: E402
-from propstore.repository import Repository  # noqa: E402
-from propstore.world import WorldQuery  # noqa: E402
+from propstore.derived_build import materialize_world_sidecar
+from propstore.families.claims import Claim, ClaimType
+from propstore.families.concepts import Concept
+from propstore.families.contexts import Context
+from propstore.families.embeddings import declaration as emb
+from propstore.repository import Repository
+from propstore.world import WorldQuery
 
 # Per-model 2-D vectors keyed by the embedded text (each claim's statement is its
 # id). Distance from cl1 = origin is just |x|. model-a orders cl2..cl7 by index;

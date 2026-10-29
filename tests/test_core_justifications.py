@@ -6,21 +6,21 @@ from argumentation.core.dung import grounded_extension
 from condition_ir import KindType
 
 from propstore.aspic_bridge.projection import build_aspic_projection
+from propstore.core.graph_types import GraphDelta
+from propstore.core.source_types import SourceKind, SourceOriginType
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept
-from propstore.families.justifications import Justification
 from propstore.families.contexts import Context
 from propstore.families.forms import FormDefinition
-from propstore.core.source_types import SourceKind, SourceOriginType
-from propstore.core.graph_types import GraphDelta
+from propstore.families.justifications import Justification
 from propstore.repository import Repository
+from propstore.source.claims import commit_source_claim_proposal
 from propstore.source.common import init_source_branch
 from propstore.source.concepts import commit_source_concept_proposal
-from propstore.source.claims import commit_source_claim_proposal
-from propstore.source.relations import commit_source_justification_proposal
 from propstore.source.finalize import finalize_source_branch
 from propstore.source.promote import promote_source_branch
-from propstore.world import WorldQuery, OverlayWorld
+from propstore.source.relations import commit_source_justification_proposal
+from propstore.world import OverlayWorld, WorldQuery
 
 
 def _accepted(world: WorldQuery, remove: tuple[str, ...] = ()) -> set[str]:

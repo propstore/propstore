@@ -28,6 +28,6 @@ def predicate() -> None:
 
 
 # Import the command modules last so they can attach to the ``predicate`` group.
-from propstore.cli.predicate import display, mutation  # noqa: E402
+from propstore.cli.predicate import display, mutation
 
 __all__ = ["display", "mutation", "predicate"]

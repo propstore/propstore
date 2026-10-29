@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from msgspec.structs import replace
-
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
+from msgspec.structs import replace
 
 from propstore.support_revision.state import (
     FormalRevisionDecisionReport,
@@ -12,11 +11,10 @@ from propstore.support_revision.state import (
     SupportRevisionRealization,
 )
 from propstore.worldline.query import WorldlineRevisionQuery
-from propstore.worldline.revision_types import RevisionAtomRef
 from propstore.worldline.revision_capture import capture_journal
+from propstore.worldline.revision_types import RevisionAtomRef
 from tests.fixtures.journal import direct_dispatch, make_assertion_atom, make_state
 from tests.test_capture_journal import _JournalBound
-
 
 _POLICY = {
     "revision_policy_version": "revision.v1",

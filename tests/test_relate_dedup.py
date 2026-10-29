@@ -9,7 +9,6 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-
 # ---------------------------------------------------------------------------
 # The dedup function under test (extracted for testability)
 # ---------------------------------------------------------------------------

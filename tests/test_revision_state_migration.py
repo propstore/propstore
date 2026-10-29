@@ -21,18 +21,25 @@ from propstore.support_revision.history import (
     diff_epistemic_snapshots,
 )
 from propstore.support_revision.iterated import iterated_revise
-from propstore.support_revision.state import AssumptionAtom, RevisionContinuationUnavailable
+from propstore.support_revision.state import (
+    AssumptionAtom,
+    RevisionContinuationUnavailable,
+)
 from propstore.worldline.definition import WorldlineDefinition
 
 
 def _fixture():
     return json.loads(
-        Path("tests/fixtures/revision_state_v2_journal_v5.json").read_text(encoding="utf-8")
+        Path("tests/fixtures/revision_state_v2_journal_v5.json").read_text(
+            encoding="utf-8"
+        )
     )
 
 
 def _journal(data) -> TransitionJournal:
-    return convert_document_value(data["journal"], TransitionJournal, source="frozen v5 journal")
+    return convert_document_value(
+        data["journal"], TransitionJournal, source="frozen v5 journal"
+    )
 
 
 def test_prechange_snapshot_journal_and_worldline_remain_readable() -> None:
@@ -52,7 +59,9 @@ def test_prechange_snapshot_journal_and_worldline_remain_readable() -> None:
     )
     assert worldline.journal == journal
     assert worldline.results is not None and worldline.results.revision is not None
-    assert worldline.results.revision.state == EpistemicSnapshot.from_mapping(data["final_snapshot"])
+    assert worldline.results.revision.state == EpistemicSnapshot.from_mapping(
+        data["final_snapshot"]
+    )
 
 
 def test_complete_original_journal_migrates_with_new_outcomes_and_hashes() -> None:
@@ -60,18 +69,31 @@ def test_complete_original_journal_migrates_with_new_outcomes_and_hashes() -> No
     original = _journal(data)
     migrated = original.migrate()
     assert migrated.schema_version == "propstore.transition_journal.v6"
-    assert all(entry.schema_version == migrated.schema_version for entry in migrated.entries)
+    assert all(
+        entry.schema_version == migrated.schema_version for entry in migrated.entries
+    )
     assert migrated.check_chain_integrity().ok
     assert migrated.replay().ok
     final = migrated.entries[-1].state_out
     assert final.schema_version == "propstore.epistemic_snapshot.v3"
-    assert set(final.state.accepted_atom_ids) == {"assumption:a", "assumption:c", "assumption:d"}
-    assert set(original.entries[-1].state_out.state.accepted_atom_ids) == {"assumption:c", "assumption:d"}
-    restored_a = next(atom for atom in final.state.base.atoms if atom.atom_id == "assumption:a")
+    assert set(final.state.accepted_atom_ids) == {
+        "assumption:a",
+        "assumption:c",
+        "assumption:d",
+    }
+    assert set(original.entries[-1].state_out.state.accepted_atom_ids) == {
+        "assumption:c",
+        "assumption:d",
+    }
+    restored_a = next(
+        atom for atom in final.state.base.atoms if atom.atom_id == "assumption:a"
+    )
     assert isinstance(restored_a, AssumptionAtom)
     assert restored_a.assumption.source == "original-source-a"
     assert final.content_hash != data["final_snapshot"]["content_hash"]
-    assert final == EpistemicSnapshot.from_mapping(data["final_snapshot"]).migrate(journal=original)
+    assert final == EpistemicSnapshot.from_mapping(data["final_snapshot"]).migrate(
+        journal=original
+    )
     restored = convert_document_value(
         to_document_builtins(migrated), TransitionJournal, source="migrated journal"
     )
@@ -90,8 +112,11 @@ def test_original_empty_history_seed_can_migrate_or_continue() -> None:
     assert migrated.state.initial_atom_ids == ("assumption:a", "assumption:b")
     incoming = _journal(data).entries[0].operator_input.formula
     _, continued = iterated_revise(
-        original.state, incoming, conflicts={incoming.atom_id: ("assumption:a",)},
-        operator="lexicographic", max_candidates=8,
+        original.state,
+        incoming,
+        conflicts={incoming.atom_id: ("assumption:a",)},
+        operator="lexicographic",
+        max_candidates=8,
     )
     assert continued.inventory is not None
     assert continued.initial_atom_ids == migrated.state.initial_atom_ids
@@ -124,7 +149,9 @@ def test_legacy_hash_validation_is_not_bypassed() -> None:
 
 
 @pytest.mark.parametrize("name", ("initial_snapshot", "final_snapshot"))
-def test_legacy_identity_diff_preserves_version_hash_and_missing_evidence(name: str) -> None:
+def test_legacy_identity_diff_preserves_version_hash_and_missing_evidence(
+    name: str,
+) -> None:
     source = EpistemicSnapshot.from_mapping(_fixture()[name])
     diff = diff_epistemic_snapshots(source, source)
     assert diff.deltas == ()
@@ -136,16 +163,22 @@ def test_legacy_identity_diff_preserves_version_hash_and_missing_evidence(name: 
 
 
 @pytest.mark.parametrize("name", ("initial_snapshot", "final_snapshot"))
-def test_legacy_nonempty_compatible_diff_preserves_version_and_target_hash(name: str) -> None:
+def test_legacy_nonempty_compatible_diff_preserves_version_and_target_hash(
+    name: str,
+) -> None:
     source = EpistemicSnapshot.from_mapping(_fixture()[name])
     # Ranking is an existing semantic-diff surface. Change the atom order in a
     # typed v2 target without supplying any lost continuation evidence.
     atom_ids = tuple(reversed(source.state.ranked_atom_ids))
-    target = replace(source, content_hash="", state=replace(
-        source.state,
-        ranked_atom_ids=atom_ids,
-        ranking={atom_id: index for index, atom_id in enumerate(atom_ids)},
-    ))
+    target = replace(
+        source,
+        content_hash="",
+        state=replace(
+            source.state,
+            ranked_atom_ids=atom_ids,
+            ranking={atom_id: index for index, atom_id in enumerate(atom_ids)},
+        ),
+    )
     diff = diff_epistemic_snapshots(source, target)
     assert diff.deltas and all(delta.surface == "ranking" for delta in diff.deltas)
     assert target.content_hash != source.content_hash

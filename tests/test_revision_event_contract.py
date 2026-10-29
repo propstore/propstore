@@ -3,22 +3,21 @@ from __future__ import annotations
 import pytest
 from quire.documents import convert_document_value, to_document_builtins
 
-from propstore.support_revision.operator_inputs import (
-    ContractInput,
-)
+from propstore.support_revision.dispatch import dispatch
 from propstore.support_revision.entrenchment import EntrenchmentReport
 from propstore.support_revision.history import EpistemicSnapshot, JournalOperator
 from propstore.support_revision.iterated import (
     advance_epistemic_state,
     make_epistemic_state,
 )
+from propstore.support_revision.operator_inputs import (
+    ContractInput,
+)
 from propstore.support_revision.state import EpistemicState, RevisionRealizationFailure
-from propstore.support_revision.dispatch import dispatch
 from tests.support_revision.formal_realization_helpers import (
     contract_via_formal_decision,
 )
 from tests.test_revision_operators import _base_with_shared_support
-
 
 _POLICY = {
     "revision_policy_version": "revision.v1",

@@ -3,13 +3,19 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-
 from propstore.policies import PolicyProfile
 from propstore.support_revision.belief_set_adapter import (
     DEFAULT_ITERATED_OPERATOR,
     DEFAULT_MAX_ALPHABET_SIZE,
 )
 from propstore.support_revision.dispatch import dispatch
+from propstore.support_revision.history import (
+    JournalOperator,
+    TransitionJournal,
+    TransitionJournalEntry,
+    TransitionOperation,
+)
+from propstore.support_revision.input_normalization import normalize_revision_input
 from propstore.support_revision.operator_inputs import (
     ContractInput,
     ExpandInput,
@@ -18,13 +24,6 @@ from propstore.support_revision.operator_inputs import (
     OperatorInput,
     ReviseInput,
 )
-from propstore.support_revision.history import (
-    JournalOperator,
-    TransitionJournal,
-    TransitionJournalEntry,
-    TransitionOperation,
-)
-from propstore.support_revision.input_normalization import normalize_revision_input
 from propstore.support_revision.state import BeliefAtom, EpistemicState, RevisionEvent
 from propstore.worldline.revision_types import (
     RevisionAtomRef,

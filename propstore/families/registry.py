@@ -39,9 +39,19 @@ from propstore.families.justifications import Justification
 from propstore.families.merge_manifests import MergeManifest
 from propstore.families.micropublications import Micropublication
 from propstore.families.predicates import Predicate, PredicateProposal
+
+# Re-exported so the proposal subsystem and tests can use
+# ``propstore.families.registry`` as the one import site for proposal refs.
+from propstore.families.predicates import PredicateProposalRef as PredicateProposalRef
 from propstore.families.relations import Stance, StanceProposal
 from propstore.families.rules import DefeasibleRule, RuleProposal, RuleSuperiority
+from propstore.families.rules import RuleProposalRef as RuleProposalRef
 from propstore.families.sameas import SameAs
+
+# Re-exported here so the source subsystem can use ``propstore.families.registry``
+# as the one import site for source-branch refs and placement (matching the
+# canonical-source/claim/etc. refs that also live with the registry).
+from propstore.families.sources import SOURCE_BRANCH as SOURCE_BRANCH
 from propstore.families.sources import (
     SourceClaimsDocument,
     SourceConceptsDocument,
@@ -51,23 +61,13 @@ from propstore.families.sources import (
     SourceMicropublicationsDocument,
     SourceStancesDocument,
 )
+from propstore.families.sources import SourceRef as SourceRef
 from propstore.families.temporal import (
     DescriptionTemporalAnchorDoc,
     HappensBeforeEdgeDoc,
     TemporalFrameDoc,
 )
 from propstore.worldline.definition import WorldlineDefinition
-
-# Re-exported here so the source subsystem can use ``propstore.families.registry``
-# as the one import site for source-branch refs and placement (matching the
-# canonical-source/claim/etc. refs that also live with the registry).
-from propstore.families.sources import SOURCE_BRANCH as SOURCE_BRANCH
-from propstore.families.sources import SourceRef as SourceRef
-
-# Re-exported so the proposal subsystem and tests can use
-# ``propstore.families.registry`` as the one import site for proposal refs.
-from propstore.families.predicates import PredicateProposalRef as PredicateProposalRef
-from propstore.families.rules import RuleProposalRef as RuleProposalRef
 
 # Re-exported so the worldline owner/CLI subsystem can use
 # ``propstore.families.registry`` as the one import site for the worldline ref.

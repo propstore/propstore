@@ -19,12 +19,12 @@ from pathlib import Path
 
 from click.testing import CliRunner, Result
 
-from tests.app_render_helpers import build_demo_repo
 from propstore.cli import cli
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.repository import Repository
+from tests.app_render_helpers import build_demo_repo
 
 
 def _invoke(repo: Repository, args: list[str]) -> Result:

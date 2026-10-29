@@ -18,7 +18,6 @@ from functools import cached_property
 from pathlib import Path
 
 import msgspec
-
 from quire.derived_store import DerivedStoreManager
 from quire.documents import DocumentStruct, decode_document_bytes
 from quire.families import BoundFamilyRegistry

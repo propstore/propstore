@@ -29,8 +29,8 @@ from propstore.conflict_detector import (
     ConflictClass,
     ConflictRecord,
     detect_conflicts,
+    orchestrator,
 )
-from propstore.conflict_detector import orchestrator
 from propstore.conflict_detector.algorithms import detect_algorithm_conflicts
 from propstore.conflict_detector.condition_classifier import classify_conditions
 from propstore.conflict_detector.equations import detect_equation_conflicts
@@ -50,7 +50,6 @@ from propstore.dimensions import UnitConversion
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
-
 
 # ── models / charter view ────────────────────────────────────────────
 

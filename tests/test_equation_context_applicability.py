@@ -14,8 +14,8 @@ from condition_ir import (
     checked_condition_set_to_json,
 )
 
-from propstore.conflict_detector.models import ConflictClass
 from propstore.aspic_bridge.projection import build_aspic_projection
+from propstore.conflict_detector.models import ConflictClass
 from propstore.core.environment import Environment
 from propstore.core.graph_types import CompiledWorldGraph
 from propstore.core.id_types import to_claim_id

@@ -18,7 +18,6 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-
 from propstore.compiler.workflows import build_repository
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept

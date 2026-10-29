@@ -61,6 +61,7 @@ from provenance_semiring import (
     live,
     why_provenance,
 )
+
 from propstore.core.scalars import ScalarValue
 
 

@@ -1,9 +1,10 @@
 """Extract all concept names from claims.yaml files and build frequency table."""
 
-import yaml
 import json
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+
+import yaml
 
 papers_dir = Path("C:/Users/Q/code/propstore/papers")
 concept_papers = defaultdict(set)  # concept_name -> set of papers

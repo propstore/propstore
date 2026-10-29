@@ -5,12 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from quire.git_store import GitStore
 
+from propstore.families.claims import Claim
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
-from propstore.families.claims import Claim
 from propstore.families.micropublications import (
     Micropublication,
     MicropublicationEvidence,

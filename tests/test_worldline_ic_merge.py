@@ -3,20 +3,19 @@ from __future__ import annotations
 import pytest
 from quire.documents import DocumentSchemaError, convert_document_value
 
+from propstore.support_revision.dispatch import dispatch
+from propstore.support_revision.history import JournalOperator
 from propstore.support_revision.integrity_constraints import (
     TopConstraint,
 )
+from propstore.support_revision.iterated import iterated_revise, make_epistemic_state
 from propstore.support_revision.operator_inputs import (
     ICMergeInput,
     IteratedReviseInput,
 )
-from propstore.support_revision.dispatch import dispatch
-from propstore.support_revision.history import JournalOperator
-from propstore.support_revision.iterated import iterated_revise, make_epistemic_state
 from propstore.support_revision.state import RevisionMergeRequiredFailure, RevisionScope
 from tests.support_revision.revision_assertion_helpers import make_assertion_atom
 from tests.test_revision_iterated import _history_sensitive_base
-
 
 _POLICY = {
     "revision_policy_version": "revision.v1",

@@ -63,7 +63,6 @@ from propstore.propagation import (
 from propstore.provenance import ProvenanceStatus
 from propstore.reporting import JsonReportMixin, json_ready
 
-
 # --- id_types -------------------------------------------------------------
 
 

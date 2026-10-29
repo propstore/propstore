@@ -29,7 +29,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated
 
 import msgspec
-
 from quire.artifacts import BranchPlacement, FixedFilePlacement
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.refs import single_field_ref_type

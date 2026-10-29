@@ -23,7 +23,7 @@ def source() -> None:
 # Import the split command modules last so each can attach its subcommands to the
 # ``source`` group; re-exported via ``__all__`` so the side-effect imports read as
 # the package's public command surface rather than unused imports.
-from propstore.cli.source import authoring, batch, lifecycle, proposal  # noqa: E402
+from propstore.cli.source import authoring, batch, lifecycle, proposal
 
 __all__ = [
     "authoring",

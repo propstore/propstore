@@ -38,9 +38,9 @@ from human_to_sympy import (
     evaluate_numeric,
 )
 
-from propstore.families.claims import Exactness
 from propstore.core.graph_types import ParameterizationEdge
 from propstore.dimensions import normalize_to_si
+from propstore.families.claims import Exactness
 from propstore.families.concepts import Concept
 from propstore.parameterization import build_parameterization_groups
 from propstore.value_comparison import (
@@ -52,11 +52,11 @@ from propstore.value_comparison import (
 
 from .collectors import collect_parameter_claims
 from .context import claim_context, classify_pair_context
-from .models import ConflictClass, ConflictClaim, ConflictRecord
+from .models import ConflictClaim, ConflictClass, ConflictRecord
 
 if TYPE_CHECKING:
-    from propstore.families.forms import FormDefinition
     from propstore.context_lifting import LiftingSystem
+    from propstore.families.forms import FormDefinition
 
 
 # Typed detector inputs: the canonical ``Concept`` charter documents keyed by

@@ -42,7 +42,6 @@ from propstore.core.base_rates import BaseRateUnresolved
 from propstore.core.id_types import AssertionId
 from propstore.provenance import Provenance
 
-
 # ---------------------------------------------------------------------------
 # Corpus CDF Calibration
 # ---------------------------------------------------------------------------

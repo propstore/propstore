@@ -30,7 +30,6 @@ import msgspec
 
 from propstore.core.id_types import ConceptId, to_concept_id
 
-
 BOOTSTRAP_RELATION_IDS: frozenset[str] = frozenset(
     {
         "relation_concept",

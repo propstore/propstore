@@ -14,7 +14,6 @@ from doxa import BetaEvidence, Opinion
 from propstore.opinion_provenance import OpinionWithProvenance, opinion_or_vacuous
 from propstore.provenance import Provenance, ProvenanceStatus
 
-
 # --- doxa.Opinion as propstore relies on it (Jøsang 2001) ---
 
 

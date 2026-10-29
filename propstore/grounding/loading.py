@@ -12,9 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from sqlalchemy import select
-
 from quire.sqlalchemy_store import DerivedSession
+from sqlalchemy import select
 
 from propstore.families.claims import Claim
 from propstore.families.concepts import Concept

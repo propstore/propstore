@@ -34,19 +34,19 @@ from quire.git_store import AmbiguousMergeBaseError
 from quire.tree_merge import TreeMergeConflict, iter_merged_tree_entries
 
 from propstore.families.claims import Claim
-from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY
 from propstore.families.merge_manifests import (
     MergeManifest,
     MergeManifestArgument,
     MergeManifestCandidate,
     MergeManifestWitness,
 )
+from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY
+from propstore.merge.merge_claims import MergeClaim
 from propstore.merge.merge_classifier import (
     IntegrityConstraint,
     RepositoryMergeFramework,
     build_merge_framework,
 )
-from propstore.merge.merge_claims import MergeClaim
 
 if TYPE_CHECKING:
     from quire.artifacts import ArtifactHandle
@@ -142,14 +142,18 @@ def build_repository_merge_framework(
     branch_names = (branch_a, branch_b, *additional_branches)
     commits: dict[str, str] = {}
     for name in branch_names:
-        commit_sha = git.branch_sha(name) if branch_commits is None else branch_commits[name]
+        commit_sha = (
+            git.branch_sha(name) if branch_commits is None else branch_commits[name]
+        )
         if commit_sha is None:
             raise ValueError(f"Branch {name!r} does not exist")
         commits[name] = commit_sha
     claim_sets: dict[str, Sequence[MergeClaim]] = {}
     for name in branch_names:
         claim_sets[name] = _read_branch_merge_claims(repo, name, commits[name])
-    base_claims = _read_base_merge_claims(repo, git, branch_a, commits[branch_a], commits[branch_b])
+    base_claims = _read_base_merge_claims(
+        repo, git, branch_a, commits[branch_a], commits[branch_b]
+    )
     return build_merge_framework(
         claim_sets,
         branch_a,
@@ -216,14 +220,19 @@ def _transport_family_occurrences(
         if family.name == "claim" or family.identity_field is None:
             continue
         bound = repo.families.by_name(family.name)
-        occurrences: list[tuple[ArtifactHandle[object, object, CharterDoc], CharterDoc]] = []
+        occurrences: list[
+            tuple[ArtifactHandle[object, object, CharterDoc], CharterDoc]
+        ] = []
         for branch, instance in instances.items():
             handles = tuple(
-                handle for handle in bound.iter_handles(commit=instance.source_commit)
+                handle
+                for handle in bound.iter_handles(commit=instance.source_commit)
                 if parent_entries[branch][handle.address.require_path()]
                 == selected_entries.get(handle.address.require_path())
             )
-            documents = instance.transport_family(family, tuple(h.document for h in handles))
+            documents = instance.transport_family(
+                family, tuple(h.document for h in handles)
+            )
             occurrences.extend(zip(handles, documents, strict=True))
         outputs: dict[str, str] = {}
         prepared_records: dict[str, CharterDoc] = {}
@@ -234,7 +243,8 @@ def _transport_family_occurrences(
             else:
                 prepared = bound.prepare(
                     family.ref_from_document(document),
-                    document, branch=target_branch,
+                    document,
+                    branch=target_branch,
                 )
                 path = prepared.address.require_path()
                 blob = git.store_blob(prepared.content)
@@ -252,7 +262,9 @@ def _transport_family_occurrences(
 
 
 def _derive_manifest_id(
-    branch_a: str, branch_b: str, arguments: tuple[MergeManifestArgument, ...],
+    branch_a: str,
+    branch_b: str,
+    arguments: tuple[MergeManifestArgument, ...],
     reference_images: tuple[FamilyReferenceImage, ...],
 ) -> str:
     key = json.dumps(
@@ -270,7 +282,9 @@ def _derive_manifest_id(
 
 
 def _build_manifest(
-    merge: RepositoryMergeFramework, branch_a: str, branch_b: str,
+    merge: RepositoryMergeFramework,
+    branch_a: str,
+    branch_b: str,
     reference_images: tuple[FamilyReferenceImage, ...],
 ) -> MergeManifest:
     arguments = tuple(
@@ -300,7 +314,9 @@ def _build_manifest(
         for group in merge.semantic_candidates
     )
     return MergeManifest(
-        manifest_id=_derive_manifest_id(branch_a, branch_b, arguments, reference_images),
+        manifest_id=_derive_manifest_id(
+            branch_a, branch_b, arguments, reference_images
+        ),
         branch_a=branch_a,
         branch_b=branch_b,
         arguments=arguments,
@@ -372,24 +388,39 @@ class MergeCommitPlan:
             branch: dict(git.iter_flat_tree_entries(commit))
             for branch, commit in ((branch_a, left_sha), (branch_b, right_sha))
         }
-        base_entries = dict(git.iter_flat_tree_entries(self.base_sha)) if self.base_sha else {}
+        base_entries = (
+            dict(git.iter_flat_tree_entries(self.base_sha)) if self.base_sha else {}
+        )
         base_ordinary, left_ordinary, right_ordinary = (
             {path: blob for path, blob in entries.items() if not _is_claim_path(path)}
-            for entries in (base_entries, parent_entries[branch_a], parent_entries[branch_b])
+            for entries in (
+                base_entries,
+                parent_entries[branch_a],
+                parent_entries[branch_b],
+            )
         )
         try:
-            merged_entries = dict(iter_merged_tree_entries(base_ordinary, left_ordinary, right_ordinary))
+            merged_entries = dict(
+                iter_merged_tree_entries(base_ordinary, left_ordinary, right_ordinary)
+            )
         except TreeMergeConflict as conflict:
             raise NonClaimMergeConflict(
-                conflict.path, _family_for_path(conflict.path),
-                conflict.left_sha, conflict.right_sha,
+                conflict.path,
+                _family_for_path(conflict.path),
+                conflict.left_sha,
+                conflict.right_sha,
             ) from conflict
         instances = {
-            branch: FamilyInstanceMap(commit, {
-                family.name: repo.families.by_name(family.name).reference_index(commit=commit)
-                for family in PROPSTORE_FAMILY_REGISTRY.families
-                if family.identity_field is not None
-            })
+            branch: FamilyInstanceMap(
+                commit,
+                {
+                    family.name: repo.families.by_name(family.name).reference_index(
+                        commit=commit
+                    )
+                    for family in PROPSTORE_FAMILY_REGISTRY.families
+                    if family.identity_field is not None
+                },
+            )
             for branch, commit in ((branch_a, left_sha), (branch_b, right_sha))
         }
         claims = _materialize_merge_arguments(
@@ -398,10 +429,16 @@ class MergeCommitPlan:
         _transport_family_occurrences(
             repo, git, claims, instances, merged_entries, target_branch, parent_entries
         )
-        reference_images = tuple(sorted(
-            {image for instance in instances.values() for image in instance.iter_images()},
-            key=lambda image: (image.source_commit, image.family, image.source_id),
-        ))
+        reference_images = tuple(
+            sorted(
+                {
+                    image
+                    for instance in instances.values()
+                    for image in instance.iter_images()
+                },
+                key=lambda image: (image.source_commit, image.family, image.source_id),
+            )
+        )
         manifest = _build_manifest(merge, branch_a, branch_b, reference_images)
         prepared_manifest = repo.families.merge_manifest.prepare(
             manifest.manifest_id, manifest, branch=target_branch
@@ -444,8 +481,11 @@ def plan_merge_commit(
         raise ValueError(f"Branch {branch_b!r} does not exist")
 
     target_sha = (
-        left_sha if target_branch == branch_a else
-        right_sha if target_branch == branch_b else git.branch_sha(target_branch)
+        left_sha
+        if target_branch == branch_a
+        else right_sha
+        if target_branch == branch_b
+        else git.branch_sha(target_branch)
     )
     if (
         target_sha is not None
@@ -458,7 +498,12 @@ def plan_merge_commit(
     if len(base_shas) > 1:
         raise AmbiguousMergeBaseError(left_sha, right_sha, base_shas)
     return MergeCommitPlan(
-        branch_a, branch_b, left_sha, right_sha, target_branch, target_sha,
+        branch_a,
+        branch_b,
+        left_sha,
+        right_sha,
+        target_branch,
+        target_sha,
         base_shas[0] if base_shas else None,
     )
 

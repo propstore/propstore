@@ -4,7 +4,6 @@ import re
 import sys
 from pathlib import Path
 
-
 WORKSTREAM = Path(
     "reviews/2026-05-05-agm-proposal/workstreams/WS-AGM-propstore-belief-set-cutover.md"
 )

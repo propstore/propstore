@@ -34,9 +34,9 @@ from typing import Any
 import msgspec
 from doxa import Opinion
 
-from propstore.heuristic.relatable import RelatableClaim
 from propstore.core.base_rates import BaseRateUnresolved
 from propstore.heuristic.calibrate import CategoryPriorRegistry, categorical_to_opinion
+from propstore.heuristic.relatable import RelatableClaim
 from propstore.provenance import Provenance, ProvenanceStatus
 from propstore.stances import VALID_STANCE_TYPES, StanceType
 

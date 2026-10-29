@@ -231,8 +231,14 @@ def test_built_wheel_tracks_installed_compilers_with_a_fixed_bundled_lock(
     project_root = Path(__file__).resolve().parents[1]
     subprocess.run(
         [
-            "uv", "build", "--wheel", "--python", sys.executable,
-            "--out-dir", str(tmp_path / "dist"), str(project_root),
+            "uv",
+            "build",
+            "--wheel",
+            "--python",
+            sys.executable,
+            "--out-dir",
+            str(tmp_path / "dist"),
+            str(project_root),
         ],
         check=True,
         capture_output=True,
@@ -241,13 +247,14 @@ def test_built_wheel_tracks_installed_compilers_with_a_fixed_bundled_lock(
     (wheel,) = (tmp_path / "dist").glob("*.whl")
     installed = tmp_path / "installed"
     with ZipFile(wheel) as archive:
-        assert archive.read("propstore/_compiler_dependencies.lock") == (
-            project_root / "uv.lock"
-        ).read_bytes()
+        assert (
+            archive.read("propstore/_compiler_dependencies.lock")
+            == (project_root / "uv.lock").read_bytes()
+        )
         archive.extractall(installed)
     # This is deliberately not Propstore's lockfile. The wheel must ignore it.
     (installed / "uv.lock").write_text("not valid TOML", encoding="utf-8")
-    probe = r'''
+    probe = r"""
 import json
 import sys
 from pathlib import Path
@@ -306,10 +313,15 @@ for name in ("sympy", "z3-solver", "quire"):
                 assert "installed compiler identity incomplete: quire" in str(error)
             else:
                 raise AssertionError("incomplete compiler identity reused a sidecar")
-'''
+"""
     subprocess.run(
-        [sys.executable, "-c", probe, str(tmp_path / "knowledge"),
-         str(tmp_path / "compiler-metadata")],
+        [
+            sys.executable,
+            "-c",
+            probe,
+            str(tmp_path / "knowledge"),
+            str(tmp_path / "compiler-metadata"),
+        ],
         cwd=installed,
         env={**os.environ, "PYTHONPATH": str(installed)},
         check=True,

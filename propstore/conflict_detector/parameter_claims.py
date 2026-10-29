@@ -11,6 +11,7 @@ intact — never swallowed.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING
 
 from condition_ir import (
     CelExpr,
@@ -30,9 +31,7 @@ from propstore.value_comparison import value_str, values_compatible
 from .collectors import collect_parameter_claims
 from .condition_classifier import classify_conditions
 from .context import append_context_classified_record, claim_context
-from .models import ConflictClass, ConflictClaim, ConflictRecord
-
-from typing import TYPE_CHECKING
+from .models import ConflictClaim, ConflictClass, ConflictRecord
 
 if TYPE_CHECKING:
     from propstore.context_lifting import LiftingSystem

@@ -19,6 +19,7 @@ import json
 import statistics
 from collections.abc import Mapping, Sequence
 
+from argumentation.core.dung import ArgumentationFramework
 from argumentation.structured.aspic.aspic import (
     CSAF,
     Argument,
@@ -29,7 +30,6 @@ from argumentation.structured.aspic.aspic import (
     sub,
     top_rule,
 )
-from argumentation.core.dung import ArgumentationFramework
 
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.environment import WorldStore

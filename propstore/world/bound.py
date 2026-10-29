@@ -56,6 +56,16 @@ from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
 from propstore.families.relations import Stance
+from propstore.support_revision.belief_set_adapter import (
+    DEFAULT_ITERATED_OPERATOR,
+    DEFAULT_MAX_ALPHABET_SIZE,
+    decide_contract,
+    decide_expand,
+    decide_revise,
+)
+from propstore.support_revision.input_normalization import normalize_revision_input
+from propstore.support_revision.realization import realize_formal_decision
+from propstore.support_revision.state import AssertionAtom, AssumptionAtom
 from propstore.world.types import (
     ATMSConceptInterventionPlan,
     ATMSConceptRelevanceReport,
@@ -80,16 +90,6 @@ from propstore.world.types import (
     ValueStatus,
     coerce_queryable_assumptions,
 )
-from propstore.support_revision.belief_set_adapter import (
-    DEFAULT_ITERATED_OPERATOR,
-    DEFAULT_MAX_ALPHABET_SIZE,
-    decide_contract,
-    decide_expand,
-    decide_revise,
-)
-from propstore.support_revision.input_normalization import normalize_revision_input
-from propstore.support_revision.realization import realize_formal_decision
-from propstore.support_revision.state import AssertionAtom, AssumptionAtom
 from propstore.world.value_resolver import ActiveClaimResolver, collect_known_values
 
 if TYPE_CHECKING:

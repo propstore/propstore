@@ -8,7 +8,6 @@ from collections.abc import Iterable
 import msgspec
 from quire.canonical import canonical_json_bytes
 
-
 _TRACE_VERSION = "propstore.semantic_trace.v2"
 _SCENARIO_VERSION = "propstore.evaluation_scenario.v2"
 _RESULT_VERSION = "propstore.evaluation_result.v2"

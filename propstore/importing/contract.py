@@ -21,8 +21,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from propstore.core.source_types import SourceKind, SourceOriginType
 from propstore.core.scalars import ScalarValue, validate_scalar_value
+from propstore.core.source_types import SourceKind, SourceOriginType
 from propstore.families.claims import ClaimType
 from propstore.provenance import ProvenanceStatus
 from propstore.stances import StanceType, coerce_stance_type

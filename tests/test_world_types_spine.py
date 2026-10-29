@@ -12,16 +12,16 @@ mirror of the merge value types; ``ClaimView`` landed by the journal-step bridge
 from __future__ import annotations
 
 import pytest
-
 from assignment_selection import MergeOperator as PackageMergeOperator
+
 from propstore.families.concepts import ConceptStatus
 from propstore.world.types import (
     DecisionValueSource,
     IntegrityConstraint,
     IntegrityConstraintKind,
     MergeOperator,
-    ReasoningBackend,
     QueryableAssumption,
+    ReasoningBackend,
     RenderPolicy,
     ResolutionStrategy,
     ResolvedResult,
@@ -33,7 +33,6 @@ from propstore.world.types import (
     normalize_merge_operator,
     normalize_queryable_cel,
 )
-
 
 # --- substrate-boundary / zen invariants ------------------------------------
 

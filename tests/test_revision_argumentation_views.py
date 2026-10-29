@@ -1,20 +1,19 @@
 from __future__ import annotations
 
 from msgspec.structs import replace
-
 from msgspec.structs import replace as replace_struct
 
-from propstore.support_revision.integrity_constraints import (
-    LiteralsConstraint,
-)
-from propstore.support_revision.operator_inputs import (
-    ICMergeInput,
-)
 from propstore.core.environment import AssumptionRef
 from propstore.support_revision.dispatch import dispatch
 from propstore.support_revision.entrenchment import EntrenchmentReport
 from propstore.support_revision.history import JournalOperator
+from propstore.support_revision.integrity_constraints import (
+    LiteralsConstraint,
+)
 from propstore.support_revision.iterated import make_epistemic_state
+from propstore.support_revision.operator_inputs import (
+    ICMergeInput,
+)
 from propstore.support_revision.state import (
     AssumptionAtom,
     BeliefBase,

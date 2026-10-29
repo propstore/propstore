@@ -11,7 +11,9 @@ from tests.merge_commit_helpers import author_concept, author_param_claim, init_
 
 @pytest.mark.parametrize("boundary", ["read", "publish"])
 @pytest.mark.parametrize("source", ["master", "peer"])
-def test_merge_rejects_source_advanced_during_planning(tmp_path, monkeypatch, boundary, source):
+def test_merge_rejects_source_advanced_during_planning(
+    tmp_path, monkeypatch, boundary, source
+):
     repo = init_repo(tmp_path / "knowledge")
     author_concept(repo, "x")
     author_param_claim(repo, "c", "x", 250.0)
@@ -21,7 +23,12 @@ def test_merge_rejects_source_advanced_during_planning(tmp_path, monkeypatch, bo
     author_param_claim(repo, "c", "x", 150.0, branch="peer")
     expected = git.branch_sha(source)
     advanced = None
-    original = getattr(merge_commit, "_read_branch_merge_claims" if boundary == "read" else "_transport_family_occurrences")
+    original = getattr(
+        merge_commit,
+        "_read_branch_merge_claims"
+        if boundary == "read"
+        else "_transport_family_occurrences",
+    )
 
     def interleave(*args, **kwargs):
         nonlocal advanced
@@ -30,7 +37,13 @@ def test_merge_rejects_source_advanced_during_planning(tmp_path, monkeypatch, bo
             advanced = author_param_claim(repo, "late", "x", 123.0, branch=source)
         return result
 
-    monkeypatch.setattr(merge_commit, "_read_branch_merge_claims" if boundary == "read" else "_transport_family_occurrences", interleave)
+    monkeypatch.setattr(
+        merge_commit,
+        "_read_branch_merge_claims"
+        if boundary == "read"
+        else "_transport_family_occurrences",
+        interleave,
+    )
     with pytest.raises(HeadMismatchError) as caught:
         merge_commit.create_merge_commit(repo, "master", "peer", target_branch="result")
     assert caught.value.branch == source
@@ -41,7 +54,9 @@ def test_merge_rejects_source_advanced_during_planning(tmp_path, monkeypatch, bo
 
 
 @pytest.mark.parametrize("existing_target", [False, True])
-def test_merge_preserves_target_changed_after_planning(tmp_path: Path, monkeypatch, existing_target):
+def test_merge_preserves_target_changed_after_planning(
+    tmp_path: Path, monkeypatch, existing_target
+):
     repo = init_repo(tmp_path / "knowledge")
     author_concept(repo, "x")
     author_param_claim(repo, "c", "x", 250.0)
@@ -97,7 +112,10 @@ def test_framework_reads_claims_and_base_from_captured_commits(tmp_path, monkeyp
         repo, "master", "peer", branch_commits={"master": left, "peer": right}
     )
     assert reads == [("master", left), ("peer", right), ("master", base)]
-    assert {argument.claim.claim.value for argument in framework.arguments} == {300.0, 150.0}
+    assert {argument.claim.claim.value for argument in framework.arguments} == {
+        300.0,
+        150.0,
+    }
     assert {argument.artifact_id for argument in framework.arguments} == {"c"}
 
 
@@ -110,10 +128,14 @@ def test_merge_with_unchanged_leases_keeps_exact_parents_and_rivals(tmp_path, ta
     git.create_branch("peer", source_commit=base)
     left = author_param_claim(repo, "c", "x", 300.0)
     right = author_param_claim(repo, "c", "x", 150.0, branch="peer")
-    merged = merge_commit.create_merge_commit(repo, "master", "peer", target_branch=target)
+    merged = merge_commit.create_merge_commit(
+        repo, "master", "peer", target_branch=target
+    )
     assert git.branch_sha(target) == merged
     assert list(git.iter_commit_parent_shas(merged)) == [left, right]
-    assert {h.document.value for h in repo.families.claim.iter_handles(commit=merged)} == {300.0, 150.0}
+    assert {
+        h.document.value for h in repo.families.claim.iter_handles(commit=merged)
+    } == {300.0, 150.0}
     for branch, commit in (("master", left), ("peer", right)):
         if branch != target:
             assert git.branch_sha(branch) == commit

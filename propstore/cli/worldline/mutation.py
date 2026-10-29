@@ -6,6 +6,8 @@ import click
 
 from propstore.app.worldlines import (
     WorldlineNotFoundError,
+)
+from propstore.app.worldlines import (
     delete_worldline as run_delete_worldline,
 )
 from propstore.cli.helpers import CliContext, fail, require_repo

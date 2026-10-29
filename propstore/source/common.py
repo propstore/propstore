@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import msgspec
-
 from quire.git_store import HeadMismatchError
 
 from propstore.core.source_types import SourceKind, SourceOriginType

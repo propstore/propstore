@@ -26,6 +26,6 @@ def rule() -> None:
 
 
 # Import the command module last so it can attach to the ``rule`` group.
-from propstore.cli.rule import display  # noqa: E402
+from propstore.cli.rule import display
 
 __all__ = ["display", "rule"]

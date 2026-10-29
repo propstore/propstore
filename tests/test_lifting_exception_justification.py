@@ -24,8 +24,8 @@ from propstore.context_lifting import (
     LiftingSystem,
 )
 from propstore.core.active_claims import ActiveClaim
-from propstore.families.justifications import Justification
 from propstore.families.contexts import LiftingDecisionStatus
+from propstore.families.justifications import Justification
 from propstore.grounding.bundle import GroundedRulesBundle
 
 

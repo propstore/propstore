@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from belief_set import AlphabetBudgetExceeded
 
 from propstore.support_revision.belief_set_adapter import project_formal_bundle

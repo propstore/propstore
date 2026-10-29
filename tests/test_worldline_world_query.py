@@ -25,8 +25,8 @@ from propstore.stances import StanceType
 from propstore.world import RenderPolicy, WorldQuery
 from propstore.world.types import ResolutionStrategy, ValueStatus
 from propstore.worldline.definition import WorldlineDefinition, WorldlineInputs
-from propstore.worldline.runner import run_worldline
 from propstore.worldline.interfaces import WorldlineStore
+from propstore.worldline.runner import run_worldline
 
 
 def _conflict_repo(tmp_path: Path) -> Repository:

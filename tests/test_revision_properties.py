@@ -17,7 +17,6 @@ from tests.support_revision.formal_realization_helpers import (
 )
 from tests.support_revision.revision_assertion_helpers import make_assertion_atom
 
-
 _ident = st.text(
     alphabet=st.characters(min_codepoint=ord("a"), max_codepoint=ord("z")),
     min_size=1,

@@ -22,14 +22,18 @@ from unittest.mock import patch
 
 import pytest
 from condition_ir import KindType, to_cel_exprs
-
 from human_to_sympy import parse_cached
+
 from propstore.conflict_detector import (
     ConflictClass,
     detect_conflicts,
     detect_transitive_conflicts,
 )
 from propstore.conflict_detector.models import ConflictClaim
+from propstore.conflict_detector.parameterization_conflicts import (
+    detect_parameterization_conflicts,
+)
+from propstore.context_lifting import LiftingSystem
 from propstore.core.graph_types import ParameterizationEdge
 from propstore.core.id_types import to_concept_id, to_concept_ids
 from propstore.core.lemon import (
@@ -38,12 +42,8 @@ from propstore.core.lemon import (
     LexicalSense,
     OntologyReference,
 )
-from propstore.families.claims import ClaimType, Exactness
-from propstore.conflict_detector.parameterization_conflicts import (
-    detect_parameterization_conflicts,
-)
-from propstore.context_lifting import LiftingSystem
 from propstore.dimensions import UnitConversion
+from propstore.families.claims import ClaimType, Exactness
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.families.forms import FormDefinition

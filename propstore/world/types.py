@@ -76,7 +76,6 @@ from propstore.core.reasoning import (
     supported_argumentation_semantics,
     validate_backend_semantics,
 )
-from propstore.core.scalars import ScalarValue
 from propstore.core.render_policy import (
     IntegrityConstraint,
     IntegrityConstraintKind,
@@ -84,6 +83,7 @@ from propstore.core.render_policy import (
     ResolutionStrategy,
     normalize_merge_operator,
 )
+from propstore.core.scalars import ScalarValue
 from propstore.core.store_results import (
     ClaimSimilarityHit,
     ConceptSearchHit,

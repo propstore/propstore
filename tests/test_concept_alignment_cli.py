@@ -25,7 +25,6 @@ from propstore.importing.repository_import import (
 from propstore.provenance import ProvenanceStatus, read_provenance_note
 from propstore.repository import Repository
 
-
 _SHARED_URI = "https://example.org/shared#inertia"
 
 

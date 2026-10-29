@@ -14,8 +14,8 @@ policy.
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass
 from collections.abc import Sequence
+from dataclasses import dataclass
 
 from propstore.app.claim_views import claim_display_id, claim_type_text
 from propstore.app.rendering import RenderPolicySummary, summarize_render_policy

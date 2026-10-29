@@ -3,20 +3,19 @@
 from __future__ import annotations
 
 import pytest
-from msgspec.structs import replace
-
 from hypothesis import given, settings
 from hypothesis import strategies as st
+from msgspec.structs import replace
 from msgspec.structs import replace as replace_struct
 
-from propstore.support_revision.operator_inputs import (
-    IteratedReviseInput,
-)
 from propstore.core.active_claims import ActiveClaim
 from propstore.families.claims import ClaimType
 from propstore.support_revision.entrenchment import EntrenchmentReport
 from propstore.support_revision.explanation_types import EntrenchmentReason
 from propstore.support_revision.iterated import iterated_revise, make_epistemic_state
+from propstore.support_revision.operator_inputs import (
+    IteratedReviseInput,
+)
 from propstore.support_revision.state import BeliefBase, EpistemicState
 from tests.support_revision.revision_assertion_helpers import make_assertion_atom
 from tests.test_revision_iterated import _history_sensitive_base
@@ -97,9 +96,9 @@ def test_semantic_diff_applies_assertion_warrant_ranking_provenance_and_dependen
     None
 ):
     from propstore.support_revision.history import (
+        EpistemicSnapshot,
         apply_epistemic_diff,
         diff_epistemic_snapshots,
-        EpistemicSnapshot,
     )
 
     base, entrenchment, _, ids = _history_sensitive_base()
@@ -128,9 +127,9 @@ def test_semantic_diff_apply_roundtrips_generated_tiny_assertion_languages(
     target_accepts: bool,
 ) -> None:
     from propstore.support_revision.history import (
+        EpistemicSnapshot,
         apply_epistemic_diff,
         diff_epistemic_snapshots,
-        EpistemicSnapshot,
     )
 
     atom = make_assertion_atom("generated")

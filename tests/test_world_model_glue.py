@@ -11,13 +11,12 @@ from __future__ import annotations
 
 import pytest
 
+from propstore.core.environment import Environment
+from propstore.core.graph_types import ActiveWorldGraph, CompiledWorldGraph
 from propstore.core.scalars import ScalarValue
 from propstore.world import model
 from propstore.world.bound import BoundWorld
-from propstore.core.environment import Environment
-from propstore.core.graph_types import ActiveWorldGraph, CompiledWorldGraph
 from propstore.world.types import ChainResult, ResolutionStrategy, ValueStatus
-
 from tests.atms_feed import ClaimSpec, ParamSpec, build_bound
 
 

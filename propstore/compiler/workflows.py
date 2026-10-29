@@ -26,12 +26,12 @@ from condition_ir import ConceptInfo
 from quire.documents import DocumentSchemaError
 from quire.sqlalchemy_store import readonly_session
 
+from propstore.build_diagnostics import collect_authoring_lints, upgrade_lints_to_errors
 from propstore.cel_validation import structural_concepts_in_expression
 from propstore.compiler.context import (
     CompilationContext,
     build_compilation_context,
 )
-from propstore.build_diagnostics import collect_authoring_lints, upgrade_lints_to_errors
 from propstore.compiler.errors import CompilerWorkflowError
 from propstore.compiler.ir import ClaimCheckedBundle
 from propstore.derived_build import materialize_world_sidecar
@@ -48,7 +48,6 @@ from propstore.families.claims_passes import (
     run_claim_pipeline,
 )
 from propstore.families.concepts import Concept
-from propstore.families.conflicts import ConflictProjection
 from propstore.families.concepts_passes import (
     ConceptCheckedRegistry,
     ConceptPipelineContext,
@@ -56,6 +55,7 @@ from propstore.families.concepts_passes import (
     LoadedConcept,
     run_concept_pipeline,
 )
+from propstore.families.conflicts import ConflictProjection
 from propstore.families.contexts import Context, LiftingRule
 from propstore.families.contexts_passes import (
     ContextCheckedGraph,
@@ -155,11 +155,13 @@ class RepositoryBuildReport:
 
     @property
     def blocked_claim_count(self) -> int:
-        return len({
-            message.artifact_id
-            for message in self.messages
-            if message.is_error and message.family is PropstoreFamily.CLAIM
-        })
+        return len(
+            {
+                message.artifact_id
+                for message in self.messages
+                if message.is_error and message.family is PropstoreFamily.CLAIM
+            }
+        )
 
 
 # --------------------------------------------------------------------------- #

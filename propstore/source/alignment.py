@@ -9,26 +9,26 @@ only: matching names do not merge or attack independently authored concepts.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 import hashlib
+from collections.abc import Sequence
 from itertools import product
 from pathlib import Path
 
+import msgspec
 from argumentation.frameworks.partial_af import (
     PartialArgumentationFramework,
     credulously_accepted_arguments,
     skeptically_accepted_arguments,
 )
 from doxa import Opinion
-import msgspec
 
 from propstore.core.lemon import LexicalEntry
 from propstore.families.alignment import (
+    CONCEPT_ALIGNMENT_BRANCH,
     AlignmentArgument,
     AlignmentDecision,
     AlignmentFramework,
     AlignmentQueries,
-    CONCEPT_ALIGNMENT_BRANCH,
     ConceptAlignmentArtifact,
     ConceptAlignmentRef,
 )
@@ -39,7 +39,6 @@ from propstore.repository import Repository
 from propstore.source.common import normalize_source_slug
 from propstore.source.stages import AlignRepositorySnapshotsRequest
 from propstore.uri import concept_tag_uri
-
 
 _OPERATORS = ("sum", "max", "leximax")
 _VACUOUS_UNCERTAINTY = 0.99

@@ -25,6 +25,24 @@ from propstore.worldline.interfaces import (
     WorldlineStore,
 )
 from propstore.worldline.query import WorldlineResult
+from propstore.worldline.resolution import (
+    ResolutionContext,
+)
+from propstore.worldline.resolution import (
+    concept_name as _concept_name,
+)
+from propstore.worldline.resolution import (
+    display_claim_id as _display_claim_id,
+)
+from propstore.worldline.resolution import (
+    pre_resolve_conflicts as _pre_resolve_conflicts,
+)
+from propstore.worldline.resolution import (
+    resolve_concept_name as _resolve_concept_name,
+)
+from propstore.worldline.resolution import (
+    resolve_target as _resolve_target,
+)
 from propstore.worldline.result_types import (
     WorldlineArgumentationState,
     WorldlineCaptureError,
@@ -33,14 +51,6 @@ from propstore.worldline.result_types import (
     WorldlineSensitivityOutcome,
     WorldlineSensitivityReport,
     WorldlineTargetValue,
-)
-from propstore.worldline.resolution import (
-    ResolutionContext,
-    concept_name as _concept_name,
-    display_claim_id as _display_claim_id,
-    pre_resolve_conflicts as _pre_resolve_conflicts,
-    resolve_concept_name as _resolve_concept_name,
-    resolve_target as _resolve_target,
 )
 from propstore.worldline.revision_capture import capture_revision_state
 from propstore.worldline.revision_types import WorldlineRevisionState

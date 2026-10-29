@@ -26,13 +26,13 @@ from propstore.app.worldlines import (
     argumentation_semantics_values,
     reasoning_backend_values,
 )
-from propstore.reporting import JsonValue
 from propstore.core.scalars import ScalarValue
-from propstore.worldline.revision_types import RevisionAtomRef
+from propstore.reporting import JsonValue
 from propstore.support_revision.belief_set_adapter import (
     LEXICOGRAPHIC_OPERATOR,
     RESTRAINED_OPERATOR,
 )
+from propstore.worldline.revision_types import RevisionAtomRef
 
 JsonObject = dict[str, JsonValue]
 
@@ -259,7 +259,7 @@ def apply_revision_options(func: FC) -> FC:
 # Import the command modules last so they can attach their commands to the
 # ``worldline`` group; re-exported via ``__all__`` so the side-effect imports read
 # as the package's public command surface rather than unused imports.
-from propstore.cli.worldline import display, journal, materialize, mutation  # noqa: E402
+from propstore.cli.worldline import display, journal, materialize, mutation
 
 __all__ = [
     "JsonObject",

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from propstore.policies import (
     DEFAULT_ITERATED_OPERATOR,
     AdmissibilityProfile,

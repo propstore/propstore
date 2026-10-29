@@ -60,9 +60,9 @@ from propstore.aspic_bridge.translate import (
 )
 from propstore.context_lifting import LiftingDecision, LiftingDecisionStatus
 from propstore.core.active_claims import ActiveClaim
+from propstore.core.literal_keys import LiteralKey
 from propstore.defeasibility import arguments_concluding, inject_dung_defeats
 from propstore.families.justifications import Justification
-from propstore.core.literal_keys import LiteralKey
 from propstore.grounding.bundle import GroundedRulesBundle
 
 

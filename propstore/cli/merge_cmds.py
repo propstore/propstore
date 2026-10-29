@@ -10,7 +10,10 @@ from __future__ import annotations
 import click
 
 from propstore.app.merge import (
-    MergeCommitRequest, MergeInspectRequest, commit_merge, inspect_merge,
+    MergeCommitRequest,
+    MergeInspectRequest,
+    commit_merge,
+    inspect_merge,
 )
 from propstore.cli.helpers import CliContext, require_repo
 from propstore.cli.output import emit_yaml
@@ -30,10 +33,15 @@ def merge() -> None:
     default="grounded",
     show_default=True,
 )
-@click.option("--target-branch", default=None, help="Target branch for the proposed merge.")
+@click.option(
+    "--target-branch", default=None, help="Target branch for the proposed merge."
+)
 @click.pass_obj
 def inspect(
-    obj: CliContext, branch_a: str, branch_b: str, semantics: str,
+    obj: CliContext,
+    branch_a: str,
+    branch_b: str,
+    semantics: str,
     target_branch: str | None,
 ) -> None:
     """Inspect the formal merge framework between two branches."""

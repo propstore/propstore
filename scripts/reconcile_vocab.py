@@ -6,10 +6,11 @@ but use different naming conventions. We distinguish these from pairs where
 one concept is a specialization of another (those stay separate).
 """
 
-import yaml
 import json
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+
+import yaml
 
 papers_dir = Path("C:/Users/Q/code/propstore/papers")
 inventory_path = Path("C:/Users/Q/code/propstore/scripts/concept_inventory.json")

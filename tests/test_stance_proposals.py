@@ -16,8 +16,8 @@ import pytest
 from doxa import Opinion
 
 from propstore.families.claims import Claim
-from propstore.families.relations import StanceProposal, StanceProposalRef
 from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY
+from propstore.families.relations import StanceProposal, StanceProposalRef
 from propstore.proposal_promotion import UnknownProposalPath
 from propstore.proposals import (
     commit_stance_proposal,
