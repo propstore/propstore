@@ -556,7 +556,8 @@ records + `ExternalStatementAttitude`, the single `ProjectionFrameProvenanceReco
 spelling — the duplicate msgspec one was deleted), `provenance/prov_o.py` (PROV-O
 JSON-LD export), `provenance/trusty.py` (ni-URI re-export). `propstore/uri.py`
 gained the RFC 6920 ni-URI byte primitives (`compute_ni_uri` / `verify_ni_uri` /
-`ni_uri_for_bytes` / `ni_uri_for_file`) + `source_tag_uri` / `claim_tag_uri`.
+`ni_uri_for_bytes` / `ni_uri_for_file`) + `source_tag_uri`. Canonical claim
+identity belongs to `propstore.families.identity.claims`, not the tag-URI helpers.
 Tests ported (now green): `test_compose_provenance_causal_order` (the PLAN-level
 7a-causal deferral — closed), `test_provenance` (stamp), `test_provenance_records`,
 `test_prov_o_export`, `test_trusty_uri_verification`, `test_uri`,

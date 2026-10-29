@@ -1,11 +1,14 @@
 """Standards-based URI helpers for propstore entities and source bytes.
 
-propstore identifies concepts, sources, and claims with RFC 4151 ``tag:`` URIs
+propstore identifies concepts and sources with RFC 4151 ``tag:`` URIs
 minted under a :class:`~propstore.uri_authority.TaggingAuthority`. A tag URI is a
 stable, human-meaningful name that never depends on storage layout — the same
 concept name under the same authority always yields the same URI, which is what
 lets vocabulary reconciliation compare ontology references by identity (CLAUDE.md)
 rather than by string tokens.
+
+Canonical claim artifact identities are derived as ``ps:claim:<sha256>`` by
+:mod:`propstore.families.identity.claims`.
 
 For byte-exact content identity propstore mints RFC 6920 ``ni`` URIs
 (:func:`compute_ni_uri`), the SHA-256 hash carrier used by the provenance and
@@ -64,20 +67,6 @@ def source_tag_uri(
     """Return the canonical source tag URI for ``name`` under ``authority``."""
 
     return tag_uri(authority, "source", name)
-
-
-def claim_tag_uri(
-    source_name: str,
-    local_handle: str,
-    *,
-    authority: str | TaggingAuthority = DEFAULT_URI_AUTHORITY,
-) -> str:
-    """Return the canonical claim tag URI for a source-local claim handle."""
-
-    parsed_authority = parse_tagging_authority(authority)
-    source_token = normalize_uri_token(source_name)
-    handle_token = normalize_uri_token(local_handle)
-    return f"tag:{parsed_authority}:claim/{source_token}:{handle_token}"
 
 
 def compute_ni_uri(payload: bytes, *, algorithm: str = "sha-256") -> str:
