@@ -92,7 +92,7 @@ WORLDLINE_PLACEMENT: FlatYamlPlacement[object, WorldlineRef] = FlatYamlPlacement
 @charter(
     key="worldlines",
     name="worldlines",
-    contract_version="2026.07.13",
+    contract_version="2026.10.28",
     placement=WORLDLINE_PLACEMENT,
     identity_field="name",
 )
@@ -110,7 +110,6 @@ class WorldlineDefinition(CharterDoc):
 
     name: Annotated[str, charter_field(primary_key=True)] = ""
     id: str = ""
-    created: str = ""
     targets: Annotated[list[str], charter_field(json=True)] = msgspec.field(
         default_factory=list[str]
     )

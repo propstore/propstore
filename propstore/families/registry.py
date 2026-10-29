@@ -95,7 +95,7 @@ __all__ = [
     "semantic_init_roots",
 ]
 
-PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION = contract_version("2026.10.20.3")
+PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION = contract_version("2026.10.28")
 """Wire-contract version of the assembled registry (stamped into bootstrap)."""
 
 # The charter-bearing document classes, in authoring order. The registry's
