@@ -6,7 +6,6 @@ import pytest
 from condition_ir import KindType
 
 from propstore.claim_contracts import validate_claim
-from propstore.compiler.context import build_compilation_context_from_repo
 from propstore.compiler.workflows import (
     build_repository,
     compile_repository_checked_bundle,
@@ -88,14 +87,15 @@ def test_parameter_units_checked_by_real_compiler(
     repo = _repo(tmp_path)
     claim = _parameter("parameter", unit)
     repo.families.claim.save(claim.claim_id, claim, message="Author parameter")
-    context = build_compilation_context_from_repo(repo)
-    report = validate_claim(claim, context=context)
+    checked = compile_repository_checked_bundle(
+        repo, commit=str(repo.require_git().head_sha())
+    )
+    assert checked is not None
+    report = validate_claim(claim, context=checked.compilation_context)
     assert report.deferred_checks == ()
     assert [problem.code for problem in report.diagnostics] == (
         [] if code is None else [code]
     )
-    checked = compile_repository_checked_bundle(repo, commit=None)
-    assert checked is not None
     entry = checked.claim_bundle.claims[0]
     assert entry.blocked is (code is not None)
     assert [problem.code for problem in entry.diagnostics] == (
@@ -189,7 +189,11 @@ def test_missing_canonical_unit_is_unavailable_evidence(tmp_path: Path) -> None:
         ),
     )
     claim = _parameter("parameter", "N")
-    report = validate_claim(claim, context=build_compilation_context_from_repo(repo))
+    checked = compile_repository_checked_bundle(
+        repo, commit=str(repo.require_git().head_sha())
+    )
+    assert checked is not None
+    report = validate_claim(claim, context=checked.compilation_context)
     assert [problem.code for problem in report.diagnostics] == [
         "claim.unit.form.unit.missing"
     ]
@@ -263,8 +267,12 @@ def test_allowed_label_does_not_prove_dimensional_compatibility(tmp_path: Path) 
             allowed_units=("kg",),
         ),
     )
+    checked = compile_repository_checked_bundle(
+        repo, commit=str(repo.require_git().head_sha())
+    )
+    assert checked is not None
     report = validate_claim(
-        _parameter("wrong", "kg"), context=build_compilation_context_from_repo(repo)
+        _parameter("wrong", "kg"), context=checked.compilation_context
     )
     assert [problem.code for problem in report.diagnostics] == [
         "claim.unit.incompatible"
@@ -308,8 +316,12 @@ def test_inconsistent_canonical_unit_does_not_prove_compatibility(
             dimensions={"M": 1, "L": 1, "T": -2},
         ),
     )
+    checked = compile_repository_checked_bundle(
+        repo, commit=str(repo.require_git().head_sha())
+    )
+    assert checked is not None
     report = validate_claim(
-        _parameter("wrong", "kg"), context=build_compilation_context_from_repo(repo)
+        _parameter("wrong", "kg"), context=checked.compilation_context
     )
     assert [problem.code for problem in report.diagnostics] == [
         "claim.unit.form.invalid"
@@ -330,8 +342,12 @@ def test_dimensionless_canonical_unit_must_have_proven_dimensionless_evidence(
             unit_symbol=unit,
         ),
     )
+    checked = compile_repository_checked_bundle(
+        repo, commit=str(repo.require_git().head_sha())
+    )
+    assert checked is not None
     report = validate_claim(
-        _parameter("wrong", unit), context=build_compilation_context_from_repo(repo)
+        _parameter("wrong", unit), context=checked.compilation_context
     )
     assert [problem.code for problem in report.diagnostics] == [
         "claim.unit.form.invalid"
@@ -351,9 +367,13 @@ def test_temperature_signature_aliases_remain_supported(
             dimensions={dimension: 1},
         ),
     )
+    checked = compile_repository_checked_bundle(
+        repo, commit=str(repo.require_git().head_sha())
+    )
+    assert checked is not None
     report = validate_claim(
         _parameter("temperature", "degC"),
-        context=build_compilation_context_from_repo(repo),
+        context=checked.compilation_context,
     )
     assert not report.diagnostics
 
