@@ -20,6 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from propstore.core.assertions import content_digest, semantic_content
+from propstore.families.claim_provenance import BundledClaim, UnbundledClaim
 from propstore.families.claims import Claim
 
 
@@ -28,6 +29,7 @@ class MergeClaim:
     """One claim as the repository merge boundary sees it."""
 
     claim: Claim
+    provenance: BundledClaim | UnbundledClaim
     paper: str | None = None
     page: int | None = None
     branch_origin: str | None = None
@@ -37,6 +39,7 @@ class MergeClaim:
         cls,
         claim: Claim,
         *,
+        provenance: BundledClaim | UnbundledClaim,
         paper: str | None = None,
         page: int | None = None,
         branch_origin: str | None = None,
@@ -45,7 +48,13 @@ class MergeClaim:
 
         if not claim.claim_id:
             return None
-        return cls(claim=claim, paper=paper, page=page, branch_origin=branch_origin)
+        return cls(
+            claim=claim,
+            provenance=provenance,
+            paper=paper,
+            page=page,
+            branch_origin=branch_origin,
+        )
 
     @property
     def artifact_id(self) -> str:

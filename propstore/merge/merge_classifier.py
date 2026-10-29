@@ -33,6 +33,7 @@ from condition_ir import Z3TranslationError
 
 from propstore.conflict_detector import ConflictClass, detect_conflicts
 from propstore.conflict_detector.models import ConflictClaim
+from propstore.families.claim_provenance import BundledClaim, ClaimProvenanceIndex
 from propstore.merge.merge_claims import MergeClaim
 from propstore.merge.witness import ProvenanceWitness
 
@@ -60,10 +61,6 @@ class _DiffKind(Enum):
         if conflict_class == ConflictClass.UNKNOWN:
             return cls.UNKNOWN
         return cls.COMPATIBLE
-
-
-class MergeComparisonProvenanceError(ValueError):
-    """Raised when a merge comparison lacks source-paper provenance."""
 
 
 class IntegrityConstraintViolation(ValueError):
@@ -154,28 +151,22 @@ def _claims_equal(left: MergeClaim, right: MergeClaim) -> bool:
     return left.semantic_key() == right.semantic_key()
 
 
-def _conflict_claim(claim: MergeClaim, *, source_paper: str) -> ConflictClaim:
-    """The conflict-detector view of a merge claim, with its source folded in."""
-
-    return ConflictClaim.from_claim(
-        claim.claim, source_paper=source_paper
-    ).with_source_condition()
-
-
 def _classify_pair(left_claim: MergeClaim, right_claim: MergeClaim) -> _DiffKind:
     """Classify disagreement between two concrete claim alternatives."""
 
-    comparison_source = left_claim.paper or right_claim.paper
-    if not comparison_source:
-        raise MergeComparisonProvenanceError(
-            "cannot classify merge pair without source-paper provenance"
-        )
-
-    left_conflict = _conflict_claim(left_claim, source_paper=comparison_source)
-    right_conflict = _conflict_claim(right_claim, source_paper=comparison_source)
+    left_conflict = ConflictClaim.from_claim(left_claim.claim)
+    right_conflict = ConflictClaim.from_claim(right_claim.claim)
+    provenance = ClaimProvenanceIndex.from_micropublications(
+        bundle
+        for claim in (left_claim, right_claim)
+        if isinstance(claim.provenance, BundledClaim)
+        for bundle in claim.provenance.micropublications
+    )
 
     try:
-        records = detect_conflicts([left_conflict, right_conflict], {}, {})
+        records = detect_conflicts(
+            [left_conflict, right_conflict], {}, {}, provenance=provenance
+        )
     except (ValueError, Z3TranslationError):
         return _DiffKind.UNTRANSLATABLE
 
@@ -472,7 +463,6 @@ __all__ = [
     "IntegrityConstraint",
     "IntegrityConstraintViolation",
     "MergeArgument",
-    "MergeComparisonProvenanceError",
     "RepositoryMergeFramework",
     "build_merge_framework",
 ]

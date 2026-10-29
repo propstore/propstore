@@ -9,6 +9,7 @@ because the rewrite charter is provenance-free.
 
 from __future__ import annotations
 
+from propstore.families.claim_provenance import UnbundledClaim
 from propstore.families.claims import Claim, ClaimType
 from propstore.merge import MergeClaim
 
@@ -29,7 +30,9 @@ def obs_claim(
         concepts=tuple(concepts),
         conditions=tuple(conditions or ()),
     )
-    merge_claim = MergeClaim.from_claim(claim, paper=paper, page=page)
+    merge_claim = MergeClaim.from_claim(
+        claim, provenance=UnbundledClaim(cid), paper=paper, page=page
+    )
     if merge_claim is None:
         raise AssertionError("claim did not normalize to a merge claim")
     return merge_claim
@@ -52,7 +55,9 @@ def param_claim(
         unit="K",
         conditions=tuple(conditions or ()),
     )
-    merge_claim = MergeClaim.from_claim(claim, paper=paper, page=page)
+    merge_claim = MergeClaim.from_claim(
+        claim, provenance=UnbundledClaim(cid), paper=paper, page=page
+    )
     if merge_claim is None:
         raise AssertionError("claim did not normalize to a merge claim")
     return merge_claim
