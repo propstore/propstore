@@ -7,7 +7,7 @@ from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 from propstore.repository import Repository, RepositoryConfigDocument
-from propstore.uri import ni_uri_for_bytes, tag_uri
+from propstore.uri import compute_ni_uri, ni_uri_for_bytes, tag_uri, verify_ni_uri
 
 _TOKEN_CHARS = st.characters(
     whitelist_categories=("Ll", "Lu", "Nd"),
@@ -22,6 +22,21 @@ _URI_AUTHORITIES = st.builds(
 _URI_TOKENS = st.text(_TOKEN_CHARS, min_size=1, max_size=32).filter(
     lambda value: value.strip("._-") != ""
 )
+
+
+@given(st.binary(min_size=0, max_size=512))
+@pytest.mark.property
+def test_ni_uri_sha256_round_trips(payload: bytes) -> None:
+    uri = compute_ni_uri(payload)
+
+    assert uri.startswith("ni:///sha-256;")
+    assert verify_ni_uri(uri, payload) is True
+    assert verify_ni_uri(uri, payload + b"\0") is False
+
+
+def test_ni_uri_rejects_sha1_emission() -> None:
+    with pytest.raises(ValueError):
+        compute_ni_uri(b"abc", algorithm="sha-1")
 
 
 def test_repository_uri_authority_reads_repo_config(tmp_path: Path) -> None:
