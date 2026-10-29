@@ -8,7 +8,12 @@ from condition_ir import ConceptInfo, KindType, to_cel_exprs
 
 from propstore.conflict_detector import ConflictClass, detect_conflicts
 from propstore.conflict_detector.models import ConflictClaim
-from propstore.core.lemon import LexicalEntry, LexicalForm, LexicalSense, OntologyReference
+from propstore.core.lemon import (
+    LexicalEntry,
+    LexicalForm,
+    LexicalSense,
+    OntologyReference,
+)
 from propstore.families.claim_provenance import (
     BundledClaim,
     ClaimProvenanceIndex,
@@ -142,7 +147,9 @@ def test_build_world_and_merge_read_actual_raw_membership(tmp_path: Path) -> Non
             lexical_entry=LexicalEntry(
                 identifier="entry:temperature",
                 canonical_form=LexicalForm(written_rep="temperature", language="en"),
-                senses=(LexicalSense(reference=OntologyReference(uri="u:temperature")),),
+                senses=(
+                    LexicalSense(reference=OntologyReference(uri="u:temperature")),
+                ),
                 physical_dimension_form="temperature",
             ),
         ),
@@ -181,7 +188,10 @@ def test_build_world_and_merge_read_actual_raw_membership(tmp_path: Path) -> Non
         claim.provenance for claim in merge_claims if claim.claim_id == "a"
     )
     assert isinstance(membership, BundledClaim)
-    assert {item.artifact_id for item in membership.micropublications} == {"mp:a", "mp:b"}
+    assert {item.artifact_id for item in membership.micropublications} == {
+        "mp:a",
+        "mp:b",
+    }
     assert any(item.claims == ("a", "blocked") for item in membership.micropublications)
     with WorldQuery(repo) as world:
         stored = world.conflicts()
