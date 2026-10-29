@@ -27,6 +27,7 @@ from quire.references import ForeignKeySpec
 
 from propstore.families.alignment import ConceptAlignmentArtifact
 from propstore.families.calibration import CalibrationCount
+from propstore.families.claim_admission import ClaimAdmission
 from propstore.families.claims import Claim
 from propstore.families.concepts import Concept
 from propstore.families.conflicts import ConflictProjection
@@ -95,7 +96,7 @@ __all__ = [
     "semantic_init_roots",
 ]
 
-PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION = contract_version("2026.10.28.1")
+PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION = contract_version("2026.10.28.2")
 """Wire-contract version of the assembled registry (stamped into bootstrap)."""
 
 # The charter-bearing document classes, in authoring order. The registry's
@@ -132,6 +133,7 @@ _CHARTER_MODELS = (
     SourceFinalizeReportDocument,
     # Derived-only projection families (never authored; populated by the build).
     ConflictProjection,
+    ClaimAdmission,
     BuildDiagnostic,
     CalibrationCount,
     GroundingBuildConfiguration,
@@ -194,6 +196,7 @@ class PropstoreFamily(StrEnum):
     SOURCE_MICROPUBS = "source_micropubs"
     SOURCE_FINALIZE_REPORTS = "source_finalize_reports"
     CONFLICT = "conflict"
+    CLAIM_ADMISSION = "claim_admission"
     BUILD_DIAGNOSTIC = "build_diagnostic"
     CALIBRATION_COUNTS = "calibration_counts"
     GROUNDING_BUILD_CONFIGURATION = "grounding_build_configuration"

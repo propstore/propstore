@@ -21,10 +21,10 @@ from click.testing import CliRunner, Result
 
 from propstore.cli import cli
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
-from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.repository import Repository
 from tests.app_render_helpers import build_demo_repo
+from tests.canonical_claim_fixtures import save_dimensionless_concepts
 
 
 def _invoke(repo: Repository, args: list[str]) -> Result:
@@ -110,9 +110,7 @@ def test_neighborhood_unknown_claim_fails(tmp_path: Path) -> None:
 
 def _algo_repo(tmp_path: Path) -> Repository:
     repo = Repository.init(tmp_path / "kn")
-    repo.families.concept.save(
-        "A", Concept(concept_id="A", canonical_name="A"), message="m"
-    )
+    save_dimensionless_concepts(repo, (("A", "A"),))
     repo.families.context.save(
         "ctx1", Context(context_id="ctx1", name="ctx"), message="m"
     )
@@ -185,3 +183,16 @@ def test_compare_non_algorithm_claim_fails(tmp_path: Path) -> None:
     result = _invoke_compare(repo, ["alg1", "p1"])
     assert result.exit_code != 0
     assert "algorithm" in result.output.lower()
+
+
+def test_compare_quarantined_claim_reports_its_diagnostic(tmp_path: Path) -> None:
+    repo = _algo_repo(tmp_path)
+    repo.families.claim.save(
+        "bad",
+        Claim(claim_id="bad", claim_type=ClaimType.OBSERVATION),
+        message="Add observation missing its statement",
+    )
+    result = _invoke_compare(repo, ["alg1", "bad"])
+    assert result.exit_code != 0
+    assert "Quarantined claim: bad" in result.output
+    assert "statement" in result.output

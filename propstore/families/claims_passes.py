@@ -25,6 +25,7 @@ from propstore.claim_conditions import check_claim, check_claim_conditions
 from propstore.claim_contracts import validate_claim
 from propstore.compiler.context import CompilationContext
 from propstore.compiler.ir import CheckedClaim, ClaimCheckedBundle
+from propstore.families.claim_admission import CLAIM_CHECK_VERSION
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.registry import PropstoreFamily
 from propstore.semantic_passes.registry import PipelineRegistry
@@ -153,7 +154,7 @@ def _check_one(
 class ClaimCheckPass:
     family = _FAMILY
     name = "claim.check"
-    version = "1"
+    version = CLAIM_CHECK_VERSION
     input_stage = ClaimStage.AUTHORED
     output_stage = ClaimStage.CHECKED
 

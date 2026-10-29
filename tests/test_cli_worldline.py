@@ -19,12 +19,12 @@ from click.testing import CliRunner, Result
 from propstore.cli import cli
 from propstore.core.environment import Environment
 from propstore.families.claims import Claim, ClaimType
-from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.families.registry import WorldlineRef
 from propstore.repository import Repository
 from propstore.world import WorldQuery
 from tests.app_render_helpers import build_demo_repo
+from tests.canonical_claim_fixtures import save_dimensionless_concepts
 
 
 def _invoke(repo: Repository, args: list[str]) -> Result:
@@ -34,9 +34,7 @@ def _invoke(repo: Repository, args: list[str]) -> Result:
 def _repo_with_one_atom(tmp_path: Path) -> tuple[Repository, str]:
     """A repo with one parameter claim; returns (repo, its projected atom id)."""
     repo = Repository.init(tmp_path / "knowledge")
-    repo.families.concept.save(
-        "c1", Concept(concept_id="c1", canonical_name="Speed"), message="m"
-    )
+    save_dimensionless_concepts(repo, (("c1", "Speed"),))
     repo.families.context.save(
         "ctx1", Context(context_id="ctx1", name="ctx"), message="m"
     )

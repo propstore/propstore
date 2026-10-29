@@ -31,6 +31,7 @@ from propstore.grounding.facts import (
 )
 from propstore.grounding.grounder import ground
 from propstore.grounding.predicates import PredicateRegistry
+from propstore.world.queries import select_admitted_claims
 
 
 @dataclass(frozen=True)
@@ -103,11 +104,7 @@ def load_grounded_bundle_from_sidecar(
         for row in session.scalars(select(superiority_model))
     )
 
-    claim_model = session.schema.model("claim")
-    claims = tuple(
-        Claim.__charter__.document_from_model(row, Claim)
-        for row in session.scalars(select(claim_model))
-    )
+    claims = tuple(select_admitted_claims(session))
 
     concept_model = session.schema.model("concept")
     concept_documents = tuple(

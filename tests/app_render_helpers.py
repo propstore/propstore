@@ -19,13 +19,14 @@ from propstore.core.lemon import LexicalEntry
 from propstore.core.lemon.forms import LexicalForm
 from propstore.core.lemon.references import OntologyReference
 from propstore.core.lemon.types import LexicalSense
-from propstore.families.claims import Claim, ClaimStatus, ClaimType
+from propstore.families.claims import Claim, ClaimStatus, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept, ConceptStatus
 from propstore.families.contexts import Context
 from propstore.families.forms import FormDefinition
 from propstore.families.relations import Stance
 from propstore.repository import Repository
 from propstore.stances import StanceType
+from tests.canonical_claim_fixtures import concept_with_form
 
 
 def _speed_concept() -> Concept:
@@ -51,15 +52,32 @@ def build_demo_repo(tmp_path: Path) -> Repository:
     repo = Repository.init(tmp_path / "kn")
     repo.families.form.save(
         "velocity",
-        FormDefinition(name="velocity", kind=KindType.QUANTITY, unit_symbol="m/s"),
+        FormDefinition(
+            name="velocity",
+            kind=KindType.QUANTITY,
+            unit_symbol="m/s",
+            dimensions={"L": 1, "T": -1},
+        ),
         message="m",
     )
     repo.families.concept.save("speed", _speed_concept(), message="m")
-    repo.families.concept.save(
-        "distance",
-        Concept(concept_id="distance", canonical_name="distance"),
-        message="m",
-    )
+    for name, unit, dimensions in (
+        ("distance", "m", {"L": 1}),
+        ("duration", "s", {"T": 1}),
+    ):
+        repo.families.form.save(
+            name,
+            FormDefinition(
+                name=name,
+                kind=KindType.QUANTITY,
+                unit_symbol=unit,
+                dimensions=dimensions,
+            ),
+            message="m",
+        )
+        repo.families.concept.save(
+            name, concept_with_form(name, name, name), message="m"
+        )
     repo.families.concept.save(
         "draftconcept",
         Concept(
@@ -115,12 +133,18 @@ def build_demo_repo(tmp_path: Path) -> Repository:
             claim_type=ClaimType.EQUATION,
             expression="v = d / t",
             concepts=("speed", "distance"),
+            variables=(
+                ClaimVariable(concept="speed", symbol="v"),
+                ClaimVariable(concept="distance", symbol="d"),
+                ClaimVariable(concept="duration", symbol="t"),
+            ),
         ),
         Claim(
             claim_id="p_missingval",
             context_id="ctx1",
             claim_type=ClaimType.PARAMETER,
             output_concept="distance",
+            unit="m",
         ),
         Claim(
             claim_id="p_blocked",
@@ -128,6 +152,7 @@ def build_demo_repo(tmp_path: Path) -> Repository:
             claim_type=ClaimType.PARAMETER,
             output_concept="distance",
             value=9.0,
+            unit="m",
             status=ClaimStatus.BLOCKED,
         ),
         Claim(
@@ -136,6 +161,7 @@ def build_demo_repo(tmp_path: Path) -> Repository:
             claim_type=ClaimType.PARAMETER,
             output_concept="speed",
             value=1.0,
+            unit="m/s",
             status=ClaimStatus.DRAFT,
         ),
     )

@@ -24,6 +24,7 @@ from propstore.families.rules import (
 from propstore.grounding.bundle import GroundedRulesBundle, GroundingStatus
 from propstore.grounding.loading import load_grounded_bundle_from_sidecar
 from propstore.repository import Repository
+from tests.canonical_claim_fixtures import save_dimensionless_concepts
 
 
 def _load_sidecar_bundle(path: str) -> GroundedRulesBundle:
@@ -34,9 +35,7 @@ def _load_sidecar_bundle(path: str) -> GroundedRulesBundle:
 
 def _seed_grounding_repo(path: Path) -> Repository:
     repo = Repository.init(path)
-    repo.families.concept.save(
-        "c1", Concept(concept_id="c1", canonical_name="Speed"), message="m"
-    )
+    save_dimensionless_concepts(repo, (("c1", "Speed"),))
     repo.families.context.save(
         "ctx1", Context(context_id="ctx1", name="ctx"), message="m"
     )
@@ -46,6 +45,7 @@ def _seed_grounding_repo(path: Path) -> Repository:
             claim_id="cl1",
             context_id="ctx1",
             claim_type=ClaimType.PARAMETER,
+            output_concept="c1",
             value=1.0,
         ),
         message="m",

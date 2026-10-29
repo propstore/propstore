@@ -34,6 +34,7 @@ from propstore.cli.output import emit
 from propstore.reporting import JsonReportMixin
 from propstore.repository import Repository
 from propstore.world import RenderPolicy, WorldQuery
+from propstore.world.queries import QuarantinedClaimError
 
 
 @click.group()
@@ -105,13 +106,16 @@ def lifecycle_policy(
 
 @contextmanager
 def open_world(repo: Repository) -> Generator[WorldQuery]:
-    """Open a world reader, mapping a missing sidecar to a clean CLI failure."""
+    """Map world availability and checked quarantine to clean CLI failures."""
 
     try:
         with open_app_world_model(repo) as world_query:
             yield world_query
     except WorldSidecarMissingError as exc:
         fail(str(exc))
+    except QuarantinedClaimError as exc:
+        diagnostics = "; ".join(item.message for item in exc.artifact.diagnostics)
+        fail(f"{exc}: {diagnostics}", exit_code=EXIT_VALIDATION)
 
 
 def emit_report_json(report: JsonReportMixin) -> None:

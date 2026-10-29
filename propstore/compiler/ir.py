@@ -13,6 +13,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from propstore.families.claim_admission import (
+    CLAIM_CHECK_VERSION,
+    ClaimAdmission,
+    ClaimAdmissionState,
+    claim_content_digest,
+)
 from propstore.families.claims import Claim
 from propstore.semantic_passes.types import PassDiagnostic
 
@@ -30,6 +36,19 @@ class CheckedClaim:
     claim: Claim
     blocked: bool
     diagnostics: tuple[PassDiagnostic, ...] = ()
+
+    @property
+    def admission(self) -> ClaimAdmission:
+        return ClaimAdmission(
+            claim_id=self.claim.claim_id,
+            state=(
+                ClaimAdmissionState.QUARANTINED
+                if self.blocked
+                else ClaimAdmissionState.ADMITTED
+            ),
+            content_digest=claim_content_digest(self.claim),
+            pass_identity=f"claim.check:{CLAIM_CHECK_VERSION}",
+        )
 
 
 @dataclass(frozen=True)

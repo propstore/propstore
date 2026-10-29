@@ -148,20 +148,11 @@ class RepositoryBuildReport:
     messages: tuple[PassDiagnostic, ...] = ()
     no_concepts: bool = False
     sidecar_missing: bool = False
+    blocked_claim_count: int = 0
 
     @property
     def errors(self) -> tuple[PassDiagnostic, ...]:
         return tuple(message for message in self.messages if message.is_error)
-
-    @property
-    def blocked_claim_count(self) -> int:
-        return len(
-            {
-                message.artifact_id
-                for message in self.messages
-                if message.is_error and message.family is PropstoreFamily.CLAIM
-            }
-        )
 
 
 # --------------------------------------------------------------------------- #
@@ -559,7 +550,8 @@ def build_repository(
         return RepositoryBuildReport(concept_count=0, claim_count=0, no_concepts=True)
 
     authoring_lints = collect_authoring_lints(
-        claims=checked.claims, stances=_stances(repo, commit)
+        claims=tuple(entry.claim for entry in checked.claim_bundle.claims),
+        stances=_stances(repo, commit),
     )
     if strict_authoring and authoring_lints:
         raise CompilerWorkflowError(
@@ -587,7 +579,8 @@ def build_repository(
     )
     return RepositoryBuildReport(
         concept_count=len(checked.concepts),
-        claim_count=len(checked.claims),
+        claim_count=len(checked.claim_bundle.claims),
+        blocked_claim_count=len(checked.claim_bundle.blocked_claims),
         conflict_count=plan.conflict_count,
         phi_node_count=plan.phi_node_count,
         warning_count=warning_count,

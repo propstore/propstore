@@ -22,7 +22,7 @@ from pathlib import Path
 import pytest
 
 from propstore.core.environment import Environment, WorldStore
-from propstore.families.claims import Claim, ClaimStatus, ClaimType
+from propstore.families.claims import Claim, ClaimStatus, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.families.micropublications import Micropublication
@@ -33,6 +33,7 @@ from propstore.grounding.bundle import GroundingStatus
 from propstore.repository import Repository
 from propstore.stances import StanceType
 from propstore.world import RenderPolicy, WorldQuery
+from tests.canonical_claim_fixtures import save_dimensionless_concepts
 
 
 def _repo(tmp_path: Path) -> Repository:
@@ -54,6 +55,7 @@ def _repo(tmp_path: Path) -> Repository:
             claim_type=ClaimType.OBSERVATION,
             output_concept="c1",
             value=3.0,
+            statement="Observed speed 3",
         ),
         message="m",
     )
@@ -65,6 +67,7 @@ def _repo(tmp_path: Path) -> Repository:
             claim_type=ClaimType.OBSERVATION,
             output_concept="c1",
             value=4.0,
+            statement="Observed speed 4",
         ),
         message="m",
     )
@@ -76,6 +79,7 @@ def _repo(tmp_path: Path) -> Repository:
             claim_type=ClaimType.OBSERVATION,
             output_concept="c2",
             value=9.0,
+            statement="Observed distance 9",
             status=ClaimStatus.BLOCKED,
         ),
         message="m",
@@ -424,12 +428,20 @@ def test_build_diagnostics_surfaced_on_opt_in(tmp_path: Path) -> None:
 
 def test_all_micropublications(tmp_path: Path) -> None:
     repo = Repository.init(tmp_path / "kn")
+    repo.families.concept.save(
+        "c1", Concept(concept_id="c1", canonical_name="Speed"), message="m"
+    )
     repo.families.context.save(
         "ctx1", Context(context_id="ctx1", name="ctx"), message="m"
     )
     repo.families.claim.save(
         "cl1",
-        Claim(claim_id="cl1", context_id="ctx1", claim_type=ClaimType.OBSERVATION),
+        Claim(
+            claim_id="cl1",
+            context_id="ctx1",
+            claim_type=ClaimType.OBSERVATION,
+            statement="Bundled observation",
+        ),
         message="m",
     )
     repo.families.micropublication.save(
@@ -454,10 +466,9 @@ def test_all_micropublications(tmp_path: Path) -> None:
 
 def test_parameterization_derived_from_equation_claims(tmp_path: Path) -> None:
     repo = Repository.init(tmp_path / "kn")
-    for concept_id, name in (("v", "Speed"), ("d", "Distance"), ("t", "Time")):
-        repo.families.concept.save(
-            concept_id, Concept(concept_id=concept_id, canonical_name=name), message="m"
-        )
+    save_dimensionless_concepts(
+        repo, (("v", "Speed"), ("d", "Distance"), ("t", "Time"))
+    )
     repo.families.context.save(
         "ctx1", Context(context_id="ctx1", name="ctx"), message="m"
     )
@@ -470,6 +481,10 @@ def test_parameterization_derived_from_equation_claims(tmp_path: Path) -> None:
             output_concept="v",
             concepts=("d", "t"),
             expression="d / t",
+            variables=(
+                ClaimVariable(concept="d", symbol="d"),
+                ClaimVariable(concept="t", symbol="t"),
+            ),
         ),
         message="m",
     )

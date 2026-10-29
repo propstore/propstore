@@ -24,6 +24,7 @@ from propstore.families.predicates import Predicate
 from propstore.families.rules import Atom, BodyLiteral, DefeasibleRule, Term
 from propstore.observatory import EvaluationScenario
 from propstore.repository import Repository
+from tests.canonical_claim_fixtures import save_dimensionless_concepts
 
 # --- import-repository -------------------------------------------------------
 
@@ -109,16 +110,18 @@ def test_import_repository_cli_plan_only_does_not_commit(tmp_path: Path) -> None
 
 def _seed_grounding_repo(root: Path) -> Repository:
     repo = Repository.init(root / "knowledge")
-    repo.families.concept.save(
-        "c1", Concept(concept_id="c1", canonical_name="Speed"), message="m"
-    )
+    save_dimensionless_concepts(repo, (("c1", "Speed"),))
     repo.families.context.save(
         "ctx1", Context(context_id="ctx1", name="ctx"), message="m"
     )
     repo.families.claim.save(
         "cl1",
         Claim(
-            claim_id="cl1", context_id="ctx1", claim_type=ClaimType.PARAMETER, value=1.0
+            claim_id="cl1",
+            context_id="ctx1",
+            claim_type=ClaimType.PARAMETER,
+            output_concept="c1",
+            value=1.0,
         ),
         message="m",
     )

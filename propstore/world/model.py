@@ -73,6 +73,7 @@ from propstore.derived_schema import (
     WORLD_SIDECAR_SCHEMA_VERSION,
     build_world_sidecar_schema,
 )
+from propstore.families.claim_admission import ClaimAdmissionState
 from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimStatus
 from propstore.families.concepts import Concept
@@ -86,6 +87,8 @@ from propstore.grounding.loading import load_grounded_bundle_from_sidecar
 from propstore.world.bound import BoundWorld
 from propstore.world.causal import from_compiled_graph
 from propstore.world.queries import (
+    QuarantinedClaim,
+    QuarantinedClaimError,
     count_claims,
     count_concepts,
     count_conflicts,
@@ -93,8 +96,10 @@ from propstore.world.queries import (
     resolve_claim_id,
     resolve_concept_id,
     search_concepts,
+    select_admitted_claims,
     select_build_diagnostics,
     select_claim,
+    select_claim_admissions,
     select_claims,
     select_concept,
     select_concepts,
@@ -105,7 +110,6 @@ from propstore.world.queries import (
     select_justifications,
     select_lifting_rules,
     select_micropublications,
-    select_stances,
     select_stances_between,
 )
 from propstore.world.types import (
@@ -432,10 +436,11 @@ class WorldQuery(WorldStore):
 
     Honesty / non-commitment: a not-yet-built sidecar raises
     :class:`FileNotFoundError` (the cause — "run pks build" — is surfaced, never
-    collapsed to an empty/zero result), and the storage methods return *every*
-    row regardless of lifecycle status; the policy-aware :meth:`claims_with_policy`
-    / :meth:`build_diagnostics` views are where draft/blocked/quarantine rows are
-    hidden at render time.
+    collapsed to an empty/zero result). Raw authored documents remain in the
+    sidecar. Semantic reads require a matching admitted checked outcome;
+    :meth:`quarantined_claims` exposes retained quarantined documents and
+    diagnostics under explicit policy. Authored lifecycle filtering remains
+    owned by :meth:`claims_with_policy`.
 
     Each open reader holds its own charter schema and schema-local mapped classes,
     so readers over independently built sidecars can coexist safely.
@@ -583,17 +588,52 @@ class WorldQuery(WorldStore):
     def get_claim(self, claim_id: str) -> Claim | None:
         claim = select_claim(self._session, claim_id)
         if claim is not None:
+            self._require_admitted(claim)
             return claim
         resolved = self.resolve_claim(claim_id)
         if resolved is None or resolved == claim_id:
             return None
-        return select_claim(self._session, resolved)
+        claim = select_claim(self._session, resolved)
+        if claim is not None:
+            self._require_admitted(claim)
+        return claim
+
+    def _require_admitted(self, claim: Claim) -> None:
+        admission = select_claim_admissions(self._session).get(claim.claim_id)
+        if admission is None:
+            raise ValueError(f"missing checked admission for claim {claim.claim_id!r}")
+        admission.verify(claim)
+        if admission.state is ClaimAdmissionState.QUARANTINED:
+            raise QuarantinedClaimError(
+                QuarantinedClaim(
+                    claim=claim,
+                    admission=admission,
+                    diagnostics=tuple(
+                        diagnostic
+                        for diagnostic in select_build_diagnostics(self._session)
+                        if diagnostic.claim_id == claim.claim_id
+                    ),
+                )
+            )
+
+    def quarantined_claims(self, policy: RenderPolicy) -> tuple[QuarantinedClaim, ...]:
+        """Inspect retained raw documents only under explicit diagnostic policy."""
+
+        if not policy.show_quarantined:
+            return ()
+        artifacts: list[QuarantinedClaim] = []
+        for claim in select_claims(self._session):
+            try:
+                self._require_admitted(claim)
+            except QuarantinedClaimError as error:
+                artifacts.append(error.artifact)
+        return tuple(artifacts)
 
     def resolve_claim(self, name: str) -> str | None:
         return resolve_claim_id(self._session, name)
 
     def claims_for(self, concept_id: str | None) -> Sequence[Claim]:
-        claims = select_claims(self._session)
+        claims = select_admitted_claims(self._session)
         if concept_id is None:
             return claims
         resolved = self.resolve_concept(concept_id) or concept_id
@@ -609,7 +649,7 @@ class WorldQuery(WorldStore):
         resolved = {self.resolve_claim(claim_id) or claim_id for claim_id in claim_ids}
         return {
             str(claim.claim_id): claim
-            for claim in select_claims(self._session)
+            for claim in select_admitted_claims(self._session)
             if claim.claim_id in resolved
         }
 
@@ -659,17 +699,32 @@ class WorldQuery(WorldStore):
         if not claim_ids:
             return []
         resolved = {self.resolve_claim(claim_id) or claim_id for claim_id in claim_ids}
-        return select_stances_between(self._session, resolved)
+        admitted = {claim.claim_id for claim in self.claims_for(None)}
+        return select_stances_between(self._session, resolved & admitted)
 
     def all_claim_stances(self) -> Sequence[Stance]:
-        return select_stances(self._session)
+        admitted = {claim.claim_id for claim in self.claims_for(None)}
+        return select_stances_between(self._session, admitted)
 
     def all_justifications(self) -> Sequence[Justification]:
-        return select_justifications(self._session)
+        admitted = {claim.claim_id for claim in self.claims_for(None)}
+        return [
+            justification
+            for justification in select_justifications(self._session)
+            if (
+                justification.conclusion is None or justification.conclusion in admitted
+            )
+        ]
 
     def explain(self, claim_id: str) -> Sequence[Stance]:
         resolved = self.resolve_claim(claim_id) or claim_id
-        return select_incident_stances(self._session, resolved)
+        self.get_claim(resolved)
+        admitted = {claim.claim_id for claim in self.claims_for(None)}
+        return [
+            stance
+            for stance in select_incident_stances(self._session, resolved)
+            if stance.source_claim_id in admitted and stance.target_claim_id in admitted
+        ]
 
     # ── relations + parameterizations ────────────────────────────────────────
 
@@ -689,7 +744,7 @@ class WorldQuery(WorldStore):
     def _all_parameterizations(self) -> tuple[ParameterizationEdge, ...]:
         if self._parameterizations is None:
             self._parameterizations = tuple(
-                derive_parameterizations(select_claims(self._session))
+                derive_parameterizations(select_admitted_claims(self._session))
             )
         return self._parameterizations
 
@@ -722,7 +777,12 @@ class WorldQuery(WorldStore):
     # ── micropublications + conflicts ────────────────────────────────────────
 
     def all_micropublications(self) -> Sequence[Micropublication]:
-        return select_micropublications(self._session)
+        admitted = {claim.claim_id for claim in self.claims_for(None)}
+        return [
+            bundle
+            for bundle in select_micropublications(self._session)
+            if all(claim_id in admitted for claim_id in bundle.claims)
+        ]
 
     def claim_provenance(self) -> ClaimProvenanceIndex:
         """Raw bundle attribution, independent of semantic bundle admission."""

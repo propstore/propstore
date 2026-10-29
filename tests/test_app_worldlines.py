@@ -31,7 +31,6 @@ from propstore.app.worldlines import (
     worldline_is_stale,
 )
 from propstore.families.claims import Claim, ClaimType
-from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.families.predicates import Predicate
 from propstore.families.rules import Atom, BodyLiteral, DefeasibleRule, Term
@@ -47,15 +46,14 @@ from propstore.world.types import (
     ValueStatus,
 )
 from propstore.worldline.runner import run_worldline
+from tests.canonical_claim_fixtures import save_dimensionless_concepts
 
 
 def _repo(tmp_path: Path) -> Repository:
     """A repo with one concept (Speed) backed by a single parameter claim."""
 
     repo = Repository.init(tmp_path / "kn")
-    repo.families.concept.save(
-        "c1", Concept(concept_id="c1", canonical_name="Speed"), message="m"
-    )
+    save_dimensionless_concepts(repo, (("c1", "Speed"),))
     repo.families.context.save(
         "ctx1", Context(context_id="ctx1", name="ctx"), message="m"
     )

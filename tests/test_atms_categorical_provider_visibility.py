@@ -1,32 +1,38 @@
-"""Categorical parameterization providers remain visible in the ATMS."""
+"""Invalid category-to-quantity equations remain quarantined before ATMS."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
+from condition_ir import KindType
+
 from propstore.core.environment import Environment
-from propstore.families.claims import Claim, ClaimType
-from propstore.families.concepts import Concept
+from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.contexts import Context
+from propstore.families.forms import FormDefinition
 from propstore.repository import Repository
-from propstore.world import WorldQuery
-from propstore.world.types import ATMSNodeStatus, ATMSOutKind
+from propstore.world import RenderPolicy, WorldQuery
+from tests.canonical_claim_fixtures import (
+    concept_with_form,
+    save_dimensionless_concepts,
+)
 
 
-def test_ws_i_categorical_provider_creates_visible_rejected_derived_node(
+def test_categorical_provider_cannot_admit_a_numeric_equation(
     tmp_path: Path,
 ) -> None:
     repo = Repository.init(tmp_path / "knowledge")
+    repo.families.form.save(
+        "category",
+        FormDefinition(name="category", kind=KindType.CATEGORY),
+        message="Declare category",
+    )
     repo.families.concept.save(
         "category_input",
-        Concept(concept_id="category_input", canonical_name="category_input"),
+        concept_with_form("category_input", "category_input", "category"),
         message="add categorical input",
     )
-    repo.families.concept.save(
-        "numeric_output",
-        Concept(concept_id="numeric_output", canonical_name="numeric_output"),
-        message="add numeric output",
-    )
+    save_dimensionless_concepts(repo, (("numeric_output", "numeric_output"),))
     repo.families.context.save(
         "ctx",
         Context(context_id="ctx", name="test context"),
@@ -53,21 +59,23 @@ def test_ws_i_categorical_provider_creates_visible_rejected_derived_node(
             concepts=("category_input",),
             expression="category_input",
             sympy="category_input",
+            variables=(
+                ClaimVariable(concept="category_input", symbol="category_input"),
+            ),
         ),
         message="add numeric equation",
     )
 
     with WorldQuery(repo) as world:
-        engine = world.bind(Environment()).atms_engine()
-        rejection_value = (
-            "parameterization_input_type_incompatible:"
-            "0:category_input:categorical_provider"
+        assert {claim.claim_id for claim in world.claims_for(None)} == {
+            "categorical_provider"
+        }
+        assert world.all_parameterizations() == ()
+        (artifact,) = world.quarantined_claims(RenderPolicy(show_quarantined=True))
+        assert artifact.claim.claim_id == "numeric_equation"
+        assert any(
+            d.diagnostic_kind == "claim.dimension.kind.invalid"
+            for d in artifact.diagnostics
         )
-        rejection_node_id = engine._derived_node_id("numeric_output", rejection_value)
-        rejection = engine.node_status(rejection_node_id)
-
-    assert rejection.kind == "derived"
-    assert rejection.status is ATMSNodeStatus.OUT
-    assert rejection.out_kind is ATMSOutKind.PARAMETERIZATION_INPUT_TYPE_INCOMPATIBLE
-    assert rejection.reason is not None
-    assert "category_input from categorical_provider has str value" in rejection.reason
+        engine = world.bind(Environment()).atms_engine()
+        assert engine.claim_label("numeric_equation") is None

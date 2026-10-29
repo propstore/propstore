@@ -13,8 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from propstore.families.claims import Claim, ClaimType
-from propstore.families.concepts import Concept
+from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.contexts import Context
 from propstore.families.relations import Stance
 from propstore.repository import Repository
@@ -46,16 +45,14 @@ from propstore.world.reasoning_reports import (
     resolve_world_value,
 )
 from propstore.world.types import ResolutionStrategy
+from tests.canonical_claim_fixtures import save_dimensionless_concepts
 
 
 def _repo(tmp_path: Path) -> Repository:
     repo = Repository.init(tmp_path / "kn")
-    for concept_id in ("A", "B", "C", "D", "speed"):
-        repo.families.concept.save(
-            concept_id,
-            Concept(concept_id=concept_id, canonical_name=concept_id),
-            message="m",
-        )
+    save_dimensionless_concepts(
+        repo, ((name, name) for name in ("A", "B", "C", "D", "speed"))
+    )
     repo.families.context.save(
         "ctx1", Context(context_id="ctx1", name="ctx"), message="m"
     )
@@ -93,6 +90,10 @@ def _repo(tmp_path: Path) -> Repository:
             concepts=("A", "B"),
             expression="A + B",
             sympy="A + B",
+            variables=(
+                ClaimVariable(concept="A", symbol="A"),
+                ClaimVariable(concept="B", symbol="B"),
+            ),
         ),
         message="m",
     )
