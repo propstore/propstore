@@ -736,11 +736,13 @@ def _check_quantitative(
                                             f"unit conversion unavailable: {evidence}, {field}={value!r}, unit {claim.unit!r}: {exc}",
                                         )
                                         break
-    if claim.uncertainty_type == "absolute" and unit is None:
+    if claim.uncertainty_type == "absolute" and (
+        unit is None or form is None or form.kind is not KindType.QUANTITY
+    ):
         problem(
             "uncertainty",
             "claim.quantitative.uncertainty.unit",
-            "absolute uncertainty requires a resolved measurement unit",
+            f"absolute uncertainty requires a resolved quantity measurement unit; {evidence}, authored unit {claim.unit!r}",
         )
     if problems:
         return None, tuple(problems)

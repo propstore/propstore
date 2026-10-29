@@ -9,6 +9,7 @@ can exceed one. Confidence is a probability in the closed interval [0, 1].
 from __future__ import annotations
 
 from math import isfinite
+from typing import TypeAlias
 
 import msgspec
 
@@ -51,7 +52,7 @@ class IntervalValue(msgspec.Struct, frozen=True, tag="interval"):
             raise ValueError("interval point is outside its bounds")
 
 
-type QuantitativeValue = AbsentValue | PointValue | IntervalValue
+QuantitativeValue: TypeAlias = AbsentValue | PointValue | IntervalValue
 
 
 class AbsoluteUncertainty(msgspec.Struct, frozen=True, tag="absolute"):
@@ -82,7 +83,7 @@ class RelativeUncertainty(msgspec.Struct, frozen=True, tag="relative"):
             raise ValueError("relative uncertainty must be a finite nonnegative ratio")
 
 
-type MeasurementUncertainty = AbsoluteUncertainty | RelativeUncertainty
+MeasurementUncertainty: TypeAlias = AbsoluteUncertainty | RelativeUncertainty
 
 
 class QuantitativeEvidence(msgspec.Struct, frozen=True):

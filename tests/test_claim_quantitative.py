@@ -499,3 +499,37 @@ def test_large_point_below_same_unit_interval_does_not_widen_during_comparison()
     point = QuantitativeEvidence(PointValue(2**53 + 3), form, "kHz")
     interval = QuantitativeEvidence(IntervalValue(float(2**53 + 4), None), form, "kHz")
     assert not values_compatible(None, None, claim_a=point, claim_b=interval)
+
+
+@pytest.mark.parametrize("kind", [KindType.STRUCTURAL, KindType.TIMEPOINT])
+def test_absolute_uncertainty_requires_measurement_units_not_scalar_labels(
+    tmp_path: Path, kind: KindType
+) -> None:
+    repo = Repository.init(tmp_path / "scalar-label")
+    form = FormDefinition(name="scalar", kind=kind, is_dimensionless=True)
+    repo.families.form.save(form.name, form, message="Declare scalar form")
+    repo.families.concept.save(
+        "x", concept_with_form("x", "x", form.name), message="Declare scalar concept"
+    )
+    ordinary = Claim(
+        claim_id="ordinary",
+        claim_type=ClaimType.PARAMETER,
+        output_concept="x",
+        value=1,
+        unit="N / (",
+    )
+    absolute = msgspec.structs.replace(
+        ordinary, claim_id="absolute", uncertainty=0.2, uncertainty_type="absolute"
+    )
+    for claim in (ordinary, absolute):
+        repo.families.claim.save(claim.claim_id, claim, message="Author scalar claim")
+    checked = compile_repository_checked_bundle(repo, commit=None)
+    assert checked is not None
+    outcomes = {entry.claim.claim_id: entry for entry in checked.claim_bundle.claims}
+    assert not outcomes["ordinary"].blocked
+    assert outcomes["ordinary"].claim.quantitative.unit == "N / ("
+    assert outcomes["absolute"].blocked
+    assert [problem.code for problem in outcomes["absolute"].diagnostics] == [
+        "claim.quantitative.uncertainty.unit"
+    ]
+    assert repo.families.claim.load("absolute") == absolute

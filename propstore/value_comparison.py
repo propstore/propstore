@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fractions import Fraction
+from typing import TypeAlias
 
 from bridgman import canonicalize_dims
 from condition_ir import KindType
@@ -17,7 +18,7 @@ from propstore.families.claim_quantitative import (
 from propstore.families.forms import FormDefinition
 
 DEFAULT_TOLERANCE = 1e-9
-type Interval = tuple[int | float, int | float, int | float]
+Interval: TypeAlias = tuple[int | float, int | float, int | float]
 
 
 def extract_interval(evidence: QuantitativeEvidence) -> Interval | None:
