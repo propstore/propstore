@@ -24,17 +24,17 @@ from dataclasses import dataclass
 
 import msgspec
 from condition_ir import (
+    CelError,
     CheckedCondition,
     CheckedConditionSet,
     ConceptInfo,
-    CelError,
     checked_condition_set,
     checked_condition_set_from_json,
     checked_condition_set_to_json,
 )
 
-from propstore.families.claims import Claim
 from propstore.cel_validation import check_cel_condition
+from propstore.families.claims import Claim
 
 
 @dataclass(frozen=True)

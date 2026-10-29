@@ -92,14 +92,18 @@ def pass_to_build_diagnostic(
         source_ref=diagnostic.artifact_id,
         file=diagnostic.filename,
         detail_json=(
-            json.dumps({
-                "field": diagnostic.field,
-                "index": diagnostic.index,
-                "expression": diagnostic.cel_diagnostic.expression,
-                "message": diagnostic.cel_diagnostic.message,
-                "is_warning": diagnostic.cel_diagnostic.is_warning,
-            }, sort_keys=True)
-            if diagnostic.cel_diagnostic is not None else None
+            json.dumps(
+                {
+                    "field": diagnostic.field,
+                    "index": diagnostic.index,
+                    "expression": diagnostic.cel_diagnostic.expression,
+                    "message": diagnostic.cel_diagnostic.message,
+                    "is_warning": diagnostic.cel_diagnostic.is_warning,
+                },
+                sort_keys=True,
+            )
+            if diagnostic.cel_diagnostic is not None
+            else None
         ),
     )
 

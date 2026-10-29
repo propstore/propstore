@@ -54,7 +54,9 @@ class PassDiagnostic:
         if self.artifact_id:
             prefix.append(self.artifact_id)
         if self.field:
-            prefix.append(self.field + (f"[{self.index}]" if self.index is not None else ""))
+            prefix.append(
+                self.field + (f"[{self.index}]" if self.index is not None else "")
+            )
         message = self.message
         if self.cel_diagnostic is not None:
             message = f"{self.cel_diagnostic.expression!r}: {message}"

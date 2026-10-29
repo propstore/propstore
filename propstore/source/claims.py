@@ -82,11 +82,14 @@ class SourceCelCheck:
 class SourceCelValidationError(ValueError):
     def __init__(self, checks: tuple[SourceCelCheck, ...]) -> None:
         self.checks = checks
-        super().__init__("; ".join(
-            f"claim {check.artifact_id!r} has an invalid CEL condition "
-            f"at {check.field}[{check.index}]: {item}"
-            for check in checks for item in check.result.diagnostics
-        ))
+        super().__init__(
+            "; ".join(
+                f"claim {check.artifact_id!r} has an invalid CEL condition "
+                f"at {check.field}[{check.index}]: {item}"
+                for check in checks
+                for item in check.result.diagnostics
+            )
+        )
 
 
 def coerce_claim_type(value: object) -> ClaimType:
