@@ -51,3 +51,10 @@ Overlay fixture catalog correction passed all 11 tests in tests/test_overlay_wor
 
 ## Parameterization condition registry edge
 Source inspection found param_objs checking fixture conditions against the pre-compilation local registry, while checked claims and ConditionSolver use compilation_context.condition_registry. Classification: already-owned capability that must use its true owner directly. Disposition: check parameterization conditions directly through condition-ir using the actual compilation registry, and delete the obsolete local JSON encode/decode helper plus its imports after removing its sole caller. No production behavior or behavioral assertions change; ongoing hosted CI remains parent-owned.
+
+## Offered-queryable catalog repair
+Latest hosted run reports five failures from offered ATMS queryables missing from the fixture's canonical catalog. Classification: valid capability with wrong representation at fixture IO; disposition: declare the complete offered queryable concepts and use those owners directly. The inferred fixture registry must not override metadata for canonical catalog concepts. Preserve all relevance and budget counts; no runtime parse, inferred production fallback or admission fabrication. Production owner confirmed stable source before focused execution.
+
+The other two region failures belong to #187's warning-severity owner defect: the original extensible category inputs are valid. Root corrected the initial fixture diagnosis from primary source before commit; enumerated-region setup edits were removed, leaving original region fixtures and partition assertions unchanged. Root owns that production dependency.
+
+Offered-queryable fixture repair passed all 25 cases in the two actively edited ATMS suites, including unchanged relevance, exhaustion counts and property-based budget monotonicity assertions. Log: logs/test-runs/offered-queryable-catalog-20261029-004932.log. No diff remains in test_world_model_glue.py. No production edits, local CI gates or publication; parent owns #187 and next hosted CI.

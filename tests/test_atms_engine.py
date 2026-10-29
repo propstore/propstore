@@ -29,6 +29,7 @@ from tests.atms_feed import (
     assumption_id_for,
     build_bound,
 )
+from tests.canonical_claim_fixtures import concept_with_form
 
 
 def test_unconditional_claim_is_true_and_supported() -> None:
@@ -169,6 +170,9 @@ def test_stability_distinguishes_stable_and_unstable_claims() -> None:
 def test_relevance_marks_the_flipping_queryable() -> None:
     bound = build_bound(
         claims=[ClaimSpec("c_cond", "concept1", value=2.0, conditions=("x == 1",))],
+        concepts=tuple(
+            concept_with_form(name, name, "quantity") for name in ("x", "y")
+        ),
     )
     relevant = bound.claim_relevant_queryables(
         "c_cond",
@@ -272,6 +276,9 @@ def test_future_budget_exhaustion_raises() -> None:
     # future subsets until the budget is exhausted.
     bound = build_bound(
         claims=[ClaimSpec("c_cond", "concept1", value=2.0, conditions=("w == 5",))],
+        concepts=tuple(
+            concept_with_form(name, name, "quantity") for name in ("w", "x", "y", "z")
+        ),
     )
     queryables = [
         QueryableAssumption.from_cel("x == 1"),

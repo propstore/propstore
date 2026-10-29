@@ -281,6 +281,7 @@ def build_bound(
                 concept_id, concept_id, "quantity"
             )
     concept_objs = tuple(concept_catalog[name] for name in sorted(concept_catalog))
+    canonical_names = {concept.canonical_name for concept in concept_objs}
 
     claim_objs = tuple(
         Claim(
@@ -299,7 +300,9 @@ def build_bound(
         claim_objs,
         concept_objs,
         forms=forms,
-        condition_registry=registry,
+        condition_registry={
+            name: info for name, info in registry.items() if name not in canonical_names
+        },
         context_ids=tuple(
             sorted({spec.context_id for spec in claims if spec.context_id is not None})
         ),
@@ -318,7 +321,9 @@ def build_bound(
                 None
                 if not param.conditions
                 else checked_condition_set(
-                    check_condition_ir(condition, compilation_context.condition_registry)
+                    check_condition_ir(
+                        condition, compilation_context.condition_registry
+                    )
                     for condition in param.conditions
                 )
             ),
