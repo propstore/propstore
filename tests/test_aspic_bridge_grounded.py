@@ -22,7 +22,8 @@ from argumentation.structured.aspic.aspic import GroundAtom, KnowledgeBase, Lite
 
 from propstore.aspic_bridge import project_grounded_rules
 from propstore.aspic_bridge.grounding import ground_facts_to_axioms
-from propstore.core.literal_keys import LiteralKey, claim_key, ground_key
+from propstore.core.id_types import to_claim_id, to_context_id
+from propstore.core.literal_keys import IstLiteralKey, LiteralKey, claim_key, ground_key
 from propstore.families.rules import Atom, BodyLiteral, DefeasibleRule, Term
 from propstore.grounding.bundle import GroundedRulesBundle
 from propstore.grounding.grounder import ground
@@ -158,13 +159,16 @@ def test_existing_literals_preserved_and_grounded_atoms_added() -> None:
     )
     bundle = _ground((rule,), (_fact("bird", "tweety"),))
 
-    seed_key = claim_key("claim-alpha")
+    seed_key = claim_key("claim-alpha", context_id="context:alpha")
     seed_lit = Literal(atom=GroundAtom("claim-alpha"), negated=False)
     literals: dict[LiteralKey, Literal] = {seed_key: seed_lit}
 
     out = project_grounded_rules(bundle, literals).literals
 
-    assert out[seed_key] == seed_lit
+    assert out[
+        IstLiteralKey(to_context_id("context:alpha"), to_claim_id("claim-alpha"))
+    ] is seed_lit
+    assert claim_key("claim-alpha", context_id="context:other") not in out
     assert ground_key(GroundAtom("flies", ("tweety",)), False) in out
     assert ground_key(GroundAtom("bird", ("tweety",)), False) in out
 

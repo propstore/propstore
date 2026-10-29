@@ -117,8 +117,6 @@ def _extend_literals(
 def project_grounded_rules(
     bundle: GroundedRulesBundle,
     literals: dict[LiteralKey, Literal],
-    *,
-    complement_encoder: object | None = None,
 ) -> GroundedAspicProjection:
     """Project a grounded bundle into ASPIC+ rules.
 
@@ -127,7 +125,6 @@ def project_grounded_rules(
     downstream projection code.
     """
 
-    del complement_encoder
     grounded = _project_bundle(bundle)
     if grounded is None:
         return GroundedAspicProjection(
@@ -154,12 +151,9 @@ def ground_facts_to_axioms(
     bundle: GroundedRulesBundle,
     literals: dict[LiteralKey, Literal],
     kb: KnowledgeBase,
-    *,
-    complement_encoder: object | None = None,
 ) -> KnowledgeBase:
     """Fold grounded facts into ``K_n`` (empty-bundle path leaves ``kb`` as-is)."""
 
-    del complement_encoder
     grounded = _project_bundle(bundle)
     if grounded is None:
         return kb
