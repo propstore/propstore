@@ -57,6 +57,7 @@ from propstore.derived_schema import (
 from propstore.families.grounding import GroundingBuildConfiguration
 from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY, registered_charters
 from propstore.semantic_passes.registry import PipelineRegistry
+from propstore.source.indexes import SourceIndex
 
 if TYPE_CHECKING:
     from propstore.repository import Repository
@@ -202,15 +203,6 @@ def _semantic_pass_versions() -> tuple[dict[str, str], ...]:
     )
 
 
-def _source_branch_tips(repo: Repository) -> tuple[tuple[str, str], ...]:
-    tips = [
-        (branch.name, branch.tip_sha)
-        for branch in repo.snapshot.iter_branches()
-        if branch.kind == "source"
-    ]
-    return tuple(sorted(tips))
-
-
 def world_sidecar_hash_inputs(
     source_revision: str,
     *,
@@ -300,7 +292,12 @@ def materialize_world_sidecar(
         schema = build_world_sidecar_schema()
         content_hash = world_sidecar_hash(
             resolved_commit,
-            source_branch_tips=_source_branch_tips(repo),
+            source_branch_tips=tuple(
+                (entry.branch.name, entry.branch.tip_sha)
+                for entry in SourceIndex.from_repository(
+                    repo, commit=resolved_commit
+                ).entries
+            ),
             schema_hash=schema.catalog_hash,
             grounding_max_arguments=grounding_max_arguments,
         )

@@ -192,10 +192,11 @@ def test_at_journal_step_matches_direct_dispatch_over_capture_journal() -> None:
         ground_state = direct_dispatch(journal, k)
         accepted = set(ground_state.accepted_atom_ids)
         expected = {
-            str(claim.claim_id)
+            str(witness.claim.claim_id)
             for atom in ground_state.base.atoms
-            if atom.atom_id in accepted and hasattr(atom, "source_claims")
-            for claim in atom.source_claims
+            if atom.atom_id in accepted and hasattr(atom, "source_support")
+            for witness in atom.source_support
+            if witness.active
         }
         assert at_journal_step(space, journal, k).claim_ids() == expected
 

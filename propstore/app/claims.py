@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from propstore.algorithm_bindings import algorithm_bindings, algorithm_known_values
 from propstore.app.claim_views import (
     claim_condition_expression,
     claim_focus_concept,
@@ -69,12 +70,8 @@ def compare_algorithm_claims(
 ) -> ClaimCompareReport:
     """Compare two algorithm claims' bodies via AST equivalence (``ast_equiv``).
 
-    Both claims must exist (else :class:`UnknownClaimError`) and both must carry a
-    non-empty algorithm ``body`` (else :class:`ClaimComparisonError`). The charter
-    claim carries no per-variable symbol→concept bindings, so the comparison runs
-    over the bare bodies; ``known_values`` is passed through to the partial-eval
-    tier. A runaway comparison surfaces as :class:`ClaimComparisonError` rather
-    than crashing the caller.
+    Claims must have canonical ALGORITHM type, bodies, and complete canonical
+    bindings. Known values are keyed by canonical concept identity.
     """
 
     from ast_equiv import AlgorithmParseError
@@ -90,12 +87,23 @@ def compare_algorithm_claims(
 
     body_a = claim_a.body
     body_b = claim_b.body
-    if not body_a or not body_b:
+    if (
+        claim_a.claim_type is not ClaimType.ALGORITHM
+        or claim_b.claim_type is not ClaimType.ALGORITHM
+        or not body_a
+        or not body_b
+    ):
         raise ClaimComparisonError("Both claims must be algorithm claims with a body.")
 
-    known_values = None if request.known_values is None else dict(request.known_values)
     try:
-        result = ast_compare(body_a, {}, body_b, {}, known_values=known_values)
+        bindings_a = algorithm_bindings(claim_a.variables, body_a)
+        bindings_b = algorithm_bindings(claim_b.variables, body_b)
+        known_values = algorithm_known_values(
+            request.known_values, bindings_a, bindings_b
+        )
+        result = ast_compare(
+            body_a, bindings_a, body_b, bindings_b, known_values=known_values
+        )
     except RecursionError as exc:
         raise ClaimComparisonError(
             "Algorithm comparison exceeded recursion depth."
@@ -104,6 +112,8 @@ def compare_algorithm_claims(
         raise ClaimComparisonError(
             f"Claim body is not a parseable algorithm: {exc}"
         ) from exc
+    except ValueError as exc:
+        raise ClaimComparisonError(str(exc)) from exc
 
     return ClaimCompareReport(
         tier=result.tier.name,

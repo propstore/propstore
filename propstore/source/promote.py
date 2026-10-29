@@ -86,6 +86,7 @@ from .common import (
     source_paper_slug,
     utc_now,
 )
+from .indexes import SourceIndex
 from .reference_indexes import primary_claim_index as build_primary_claim_index
 from .reference_indexes import resolve_source_or_primary_claim_id
 from .reference_indexes import source_claim_index as build_source_claim_index
@@ -440,11 +441,8 @@ def compile_all_source_promotion_blocked_projection_rows(
     if git is None:
         return PromotionBlockedProjectionRows(())
     diagnostics: list[BuildDiagnostic] = []
-    for branch in repo.snapshot.iter_branches():
-        if branch.kind != "source":
-            continue
-        source_name = branch.name.removeprefix("source/")
-        rows = compile_source_promotion_blocked_projection_rows(repo, source_name)
+    for ref in SourceIndex.from_repository(repo).refs:
+        rows = compile_source_promotion_blocked_projection_rows(repo, ref.name)
         diagnostics.extend(rows.diagnostics)
     return PromotionBlockedProjectionRows(tuple(diagnostics))
 
