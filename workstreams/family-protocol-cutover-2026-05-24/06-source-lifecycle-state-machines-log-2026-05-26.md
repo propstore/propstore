@@ -216,7 +216,6 @@ Surfaces:
   - Owner after cleanup: `propstore.families.concepts.lifecycle`
   - Action: Removed `load_primary_branch_concepts`,
     `load_primary_branch_concept_docs`, `parameterization_group_merge_preview`,
-    `preview_source_parameterization_group_merges`,
     `primary_branch_concept_match`, and `projected_source_concepts` from the
     source package export surface.
   - Evidence: Source workflow modules and tests import the concept-family owner
