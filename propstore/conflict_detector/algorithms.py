@@ -8,7 +8,7 @@ partial-eval tier) never conflict; a proven non-equivalence is condition-classif
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from ast_equiv import AlgorithmParseError
@@ -16,11 +16,14 @@ from ast_equiv import compare as ast_compare
 from condition_ir import ConceptInfo, ConditionSolver
 
 from propstore.algorithm_bindings import AlgorithmBindingError, algorithm_bindings
+from propstore.families.claim_admission import ClaimAdmission, require_admitted_claims
+from propstore.families.claim_provenance import ClaimProvenanceIndex
+from propstore.families.claims import Claim
 
 from .collectors import collect_algorithm_claims
 from .condition_classifier import classify_conditions
 from .context import append_context_classified_record, claim_context
-from .models import ConflictClaim, ConflictRecord
+from .models import ConflictRecord
 
 if TYPE_CHECKING:
     from propstore.context_lifting import LiftingSystem
@@ -29,12 +32,16 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def detect_algorithm_conflicts(
-    claims: Sequence[ConflictClaim],
+    claims: Sequence[Claim],
     cel_registry: Mapping[str, ConceptInfo],
     *,
+    admissions: Collection[ClaimAdmission],
+    provenance: ClaimProvenanceIndex,
     lifting_system: LiftingSystem | None = None,
     solver: ConditionSolver | None = None,
 ) -> list[ConflictRecord]:
+    require_admitted_claims(claims, admissions)
+    condition_solver = solver if solver is not None else ConditionSolver(cel_registry)
     records: list[ConflictRecord] = []
     by_concept = collect_algorithm_claims(claims)
 
@@ -72,8 +79,12 @@ def detect_algorithm_conflicts(
                 if result.equivalent:
                     continue
 
-                conditions_a = sorted(claim_a.conditions)
-                conditions_b = sorted(claim_b.conditions)
+                checked_a, checked_b = (
+                    claim_a.checked_conditions,
+                    claim_b.checked_conditions,
+                )
+                conditions_a = list(checked_a.sources)
+                conditions_b = list(checked_b.sources)
                 derivation_chain = (
                     f"similarity:{result.similarity:.3f} tier:{result.tier}"
                 )
@@ -100,10 +111,9 @@ def detect_algorithm_conflicts(
                         claim_a_id=claim_a.claim_id,
                         claim_b_id=claim_b.claim_id,
                         warning_class=classify_conditions(
-                            conditions_a,
-                            conditions_b,
-                            cel_registry,
-                            solver=solver,
+                            checked_a,
+                            checked_b,
+                            solver=condition_solver,
                         ),
                         conditions_a=conditions_a,
                         conditions_b=conditions_b,
@@ -113,4 +123,4 @@ def detect_algorithm_conflicts(
                     )
                 )
 
-    return records
+    return [record.with_provenance(provenance) for record in records]

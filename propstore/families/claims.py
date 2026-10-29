@@ -12,8 +12,8 @@ Substrate boundary (CLAUDE.md, PLAN.md §12):
 
 * ONE canonical ``Claim`` type — there is no ``ClaimDocument`` / ``ClaimRecord``
   / ``ClaimRow`` second spelling and no ``to_payload`` / ``from_payload`` /
-  ``coerce_`` conversion. ``ConflictClaim`` / ``MergeClaim`` (later phases) are
-  field-subset VIEWS over this one charter, never independent storage.
+  ``coerce_`` conversion. Runtime comparisons consume this canonical object with
+  separate checked admission and provenance evidence.
 * Conditions are authored as CEL source strings (``conditions``). Their checked
   form is condition-ir's own ``CheckedConditionSet``, serialized with that
   package's json codec into ``conditions_ir`` (see
@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Annotated, Protocol
 
 import msgspec
+from condition_ir import CheckedConditionSet
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.charters import charter_catalog
 from quire.family_store import DocumentFamilyStore
@@ -251,8 +252,18 @@ class Claim(CharterDoc):
     def quantitative(self) -> QuantitativeEvidence:
         """Require the checked owner; authored scalar bags are not runtime values."""
         if self.quantitative_ir is None:
-            raise ValueError(f"claim {self.claim_id!r} has no checked quantitative evidence")
+            raise ValueError(
+                f"claim {self.claim_id!r} has no checked quantitative evidence"
+            )
         return self.quantitative_ir
+
+    @property
+    def checked_conditions(self) -> CheckedConditionSet:
+        from propstore.claim_conditions import compile_checked_conditions
+
+        if self.conditions_ir is None:
+            raise ValueError(f"claim {self.claim_id!r} has no checked conditions")
+        return compile_checked_conditions(self.conditions_ir)
 
 
 @dataclass(frozen=True)
@@ -334,7 +345,9 @@ def _row_to_claim(row: _ClaimRow) -> Claim:
         equations=row.equations,
         conditions=row.conditions,
         conditions_ir=row.conditions_ir,
-        quantitative_ir=msgspec.convert(row.quantitative_ir, type=QuantitativeEvidence | None),
+        quantitative_ir=msgspec.convert(
+            row.quantitative_ir, type=QuantitativeEvidence | None
+        ),
         value=row.value,
         lower_bound=row.lower_bound,
         upper_bound=row.upper_bound,
