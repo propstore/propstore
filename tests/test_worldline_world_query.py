@@ -17,7 +17,6 @@ import pytest
 
 from propstore.core.environment import Environment
 from propstore.families.claims import Claim, ClaimType
-from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.families.relations import Stance
 from propstore.repository import Repository
@@ -27,15 +26,14 @@ from propstore.world.types import ResolutionStrategy, ValueStatus
 from propstore.worldline.definition import WorldlineDefinition, WorldlineInputs
 from propstore.worldline.interfaces import WorldlineStore
 from propstore.worldline.runner import run_worldline
+from tests.canonical_claim_fixtures import save_dimensionless_concepts
 
 
 def _conflict_repo(tmp_path: Path) -> Repository:
     """A concept with two rival unconditional parameter claims, plus a rebuttal."""
 
     repo = Repository.init(tmp_path / "kn")
-    repo.families.concept.save(
-        "c1", Concept(concept_id="c1", canonical_name="Speed"), message="m"
-    )
+    save_dimensionless_concepts(repo, (("c1", "Speed"),))
     repo.families.context.save(
         "ctx1", Context(context_id="ctx1", name="ctx"), message="m"
     )

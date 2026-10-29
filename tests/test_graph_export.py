@@ -19,7 +19,7 @@ from propstore.core.lemon import LexicalEntry
 from propstore.core.lemon.forms import LexicalForm
 from propstore.core.lemon.references import OntologyReference
 from propstore.core.lemon.types import LexicalSense
-from propstore.families.claims import Claim, ClaimType
+from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.families.forms import FormDefinition
@@ -33,6 +33,7 @@ from propstore.graph_export import (
 from propstore.repository import Repository
 from propstore.stances import StanceType
 from propstore.world import WorldQuery
+from tests.canonical_claim_fixtures import save_dimensionless_concepts
 
 
 def _gate_concept() -> Concept:
@@ -58,15 +59,15 @@ def _repo(tmp_path: Path) -> Repository:
         message="m",
     )
     repo.families.concept.save("gate", _gate_concept(), message="m")
-    for cid, name in (
-        ("c1", "fundamental_frequency"),
-        ("c2", "subglottal_pressure"),
-        ("c5", "return_phase_ratio"),
-        ("c6", "return_phase_time"),
-    ):
-        repo.families.concept.save(
-            cid, Concept(concept_id=cid, canonical_name=name), message="m"
-        )
+    save_dimensionless_concepts(
+        repo,
+        (
+            ("c1", "fundamental_frequency"),
+            ("c2", "subglottal_pressure"),
+            ("c5", "return_phase_ratio"),
+            ("c6", "return_phase_time"),
+        ),
+    )
 
     # Two conflicting parameter claims for c1 (no conditions -> always active).
     repo.families.claim.save(
@@ -114,6 +115,9 @@ def _repo(tmp_path: Path) -> Repository:
             output_concept="c5",
             concepts=["c6", "c1"],
             expression="c5 = c6 * c1",
+            variables=tuple(
+                ClaimVariable(concept=name, symbol=name) for name in ("c5", "c6", "c1")
+            ),
         ),
         message="m",
     )

@@ -134,7 +134,7 @@ contracts:
       value_field: value
 - kind: family-registry
   name: propstore
-  contract_version: 2026.10.28.1
+  contract_version: 2026.10.28.2
   body:
     families:
     - contract_version: 2026.07.21
@@ -224,6 +224,9 @@ contracts:
     - contract_version: 2026.06.29
       key: conflict
       name: conflict
+    - contract_version: 2026.10.28
+      key: claim_admission
+      name: claim_admission
     - contract_version: 2026.06.29
       key: build_diagnostic
       name: build_diagnostic
@@ -329,6 +332,26 @@ contracts:
       target_field: concept_id
     identity_field: claim_id
     key: claim
+- kind: family
+  name: claim_admission
+  contract_version: 2026.10.28
+  body:
+    accessor: claim_admission
+    artifact_family: claim_admission
+    artifact_family_contract:
+      doc_type: propstore.families.claim_admission.ClaimAdmissionModel
+      placement:
+        branch:
+          policy: owner
+        codec: stem
+        extension: .yaml
+        kind: flat-yaml
+        namespace: claim_admission
+        ref_field: self
+    artifact_family_contract_version: 2026.10.28
+    foreign_keys: []
+    identity_field: claim_id
+    key: claim_admission
 - kind: family
   name: concept
   contract_version: 2026.07.21
@@ -1175,4 +1198,4 @@ contracts:
     family: form
 registry:
   name: propstore
-  contract_version: 2026.10.28.1
+  contract_version: 2026.10.28.2

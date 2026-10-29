@@ -27,8 +27,8 @@ from quire.references import ForeignKeySpec
 
 from propstore.families.alignment import ConceptAlignmentArtifact
 from propstore.families.calibration import CalibrationCount
-from propstore.families.claims import Claim
 from propstore.families.claim_admission import ClaimAdmission
+from propstore.families.claims import Claim
 from propstore.families.concepts import Concept
 from propstore.families.conflicts import ConflictProjection
 from propstore.families.contexts import Context, LiftingMaterialization, LiftingRule
@@ -96,7 +96,7 @@ __all__ = [
     "semantic_init_roots",
 ]
 
-PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION = contract_version("2026.10.28.1")
+PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION = contract_version("2026.10.28.2")
 """Wire-contract version of the assembled registry (stamped into bootstrap)."""
 
 # The charter-bearing document classes, in authoring order. The registry's

@@ -13,15 +13,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from propstore.families.claims import Claim
 from propstore.families.claim_admission import (
     CLAIM_CHECK_VERSION,
     ClaimAdmission,
     ClaimAdmissionState,
     claim_content_digest,
 )
+from propstore.families.claims import Claim
 from propstore.semantic_passes.types import PassDiagnostic
-
 
 
 @dataclass(frozen=True)

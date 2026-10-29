@@ -476,11 +476,15 @@ def _build_sidecar_file(
             )
             if checked is not None:
                 _project_documents(
-                    session, schema, "claim",
+                    session,
+                    schema,
+                    "claim",
                     tuple(entry.claim for entry in checked.claim_bundle.claims),
                 )
                 _project_documents(
-                    session, schema, "claim_admission",
+                    session,
+                    schema,
+                    "claim_admission",
                     tuple(entry.admission for entry in checked.claim_bundle.claims),
                 )
             if plan is not None:

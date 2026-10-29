@@ -73,8 +73,8 @@ from propstore.derived_schema import (
     WORLD_SIDECAR_SCHEMA_VERSION,
     build_world_sidecar_schema,
 )
-from propstore.families.claims import Claim, ClaimStatus
 from propstore.families.claim_admission import ClaimAdmissionState
+from propstore.families.claims import Claim, ClaimStatus
 from propstore.families.concepts import Concept
 from propstore.families.diagnostics import BuildDiagnostic
 from propstore.families.forms import FormDefinition
@@ -95,9 +95,9 @@ from propstore.world.queries import (
     resolve_claim_id,
     resolve_concept_id,
     search_concepts,
+    select_admitted_claims,
     select_build_diagnostics,
     select_claim,
-    select_admitted_claims,
     select_claim_admissions,
     select_claims,
     select_concept,
@@ -708,8 +708,11 @@ class WorldQuery(WorldStore):
     def all_justifications(self) -> Sequence[Justification]:
         admitted = {claim.claim_id for claim in self.claims_for(None)}
         return [
-            justification for justification in select_justifications(self._session)
-            if (justification.conclusion is None or justification.conclusion in admitted)
+            justification
+            for justification in select_justifications(self._session)
+            if (
+                justification.conclusion is None or justification.conclusion in admitted
+            )
         ]
 
     def explain(self, claim_id: str) -> Sequence[Stance]:
@@ -717,7 +720,8 @@ class WorldQuery(WorldStore):
         self.get_claim(resolved)
         admitted = {claim.claim_id for claim in self.claims_for(None)}
         return [
-            stance for stance in select_incident_stances(self._session, resolved)
+            stance
+            for stance in select_incident_stances(self._session, resolved)
             if stance.source_claim_id in admitted and stance.target_claim_id in admitted
         ]
 
@@ -774,7 +778,8 @@ class WorldQuery(WorldStore):
     def all_micropublications(self) -> Sequence[Micropublication]:
         admitted = {claim.claim_id for claim in self.claims_for(None)}
         return [
-            bundle for bundle in select_micropublications(self._session)
+            bundle
+            for bundle in select_micropublications(self._session)
             if all(claim_id in admitted for claim_id in bundle.claims)
         ]
 

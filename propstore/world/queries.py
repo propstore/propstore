@@ -19,8 +19,8 @@ render-time view over the claim charters rather than a duplicated projection.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, TypeGuard
 
 from condition_ir import CheckedConditionSet, checked_condition_set_from_json
@@ -34,8 +34,8 @@ from propstore.conflict_detector.models import (
 from propstore.core.graph_types import ParameterizationEdge
 from propstore.core.id_types import to_claim_id, to_concept_id, to_concept_ids
 from propstore.core.store_results import ConceptSearchHit
-from propstore.families.claims import Claim, ClaimType
 from propstore.families.claim_admission import ClaimAdmission, ClaimAdmissionState
+from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context, LiftingRule
 from propstore.families.coreference import CoreferenceMergeArgumentDoc
@@ -184,7 +184,9 @@ def select_claim_admissions(session: DerivedSession) -> dict[str, ClaimAdmission
 
     model = session.schema.model("claim_admission")
     return {
-        row.claim_id: ClaimAdmission.__charter__.document_from_model(row, ClaimAdmission)
+        row.claim_id: ClaimAdmission.__charter__.document_from_model(
+            row, ClaimAdmission
+        )
         for row in session.scalars(select(model))
     }
 

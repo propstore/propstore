@@ -154,6 +154,7 @@ class RepositoryBuildReport:
     def errors(self) -> tuple[PassDiagnostic, ...]:
         return tuple(message for message in self.messages if message.is_error)
 
+
 # --------------------------------------------------------------------------- #
 # Shared compilation (ONE check set for both workflows)
 # --------------------------------------------------------------------------- #
@@ -550,7 +551,7 @@ def build_repository(
 
     authoring_lints = collect_authoring_lints(
         claims=tuple(entry.claim for entry in checked.claim_bundle.claims),
-        stances=_stances(repo, commit)
+        stances=_stances(repo, commit),
     )
     if strict_authoring and authoring_lints:
         raise CompilerWorkflowError(

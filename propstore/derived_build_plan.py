@@ -216,7 +216,10 @@ def _missing(claim_id: str | None, valid_claims: frozenset[str]) -> bool:
 
 
 def _quarantine_dangling_references(
-    repo: Repository, *, commit: str | None, valid_claims: frozenset[str],
+    repo: Repository,
+    *,
+    commit: str | None,
+    valid_claims: frozenset[str],
     quarantined_claims: frozenset[str],
 ) -> tuple[QuarantineDiagnostic, ...]:
     """Find stance / justification / micropublication refs to absent claims.
@@ -241,7 +244,8 @@ def _quarantine_dangling_references(
                         kind="stance",
                         diagnostic_kind=(
                             "claim.quarantined_subject"
-                            if ref in quarantined_claims else "stance_validation"
+                            if ref in quarantined_claims
+                            else "stance_validation"
                         ),
                         message=(
                             f"stance {stance.stance_id!r} references "
@@ -279,7 +283,8 @@ def _quarantine_dangling_references(
                         kind="justification",
                         diagnostic_kind=(
                             "claim.quarantined_subject"
-                            if premise in quarantined_claims else "justification_validation"
+                            if premise in quarantined_claims
+                            else "justification_validation"
                         ),
                         message=(
                             f"justification {justification.justification_id!r} references "
@@ -300,7 +305,8 @@ def _quarantine_dangling_references(
                         kind="micropublication",
                         diagnostic_kind=(
                             "claim.quarantined_subject"
-                            if claim_ref in quarantined_claims else "micropublication_validation"
+                            if claim_ref in quarantined_claims
+                            else "micropublication_validation"
                         ),
                         message=(
                             f"micropublication {micropub.artifact_id!r} references "
@@ -341,12 +347,16 @@ def compile_sidecar_build_plan(
     conflicts = _compile_conflicts(checked, micropubs)
     valid_claims = frozenset(claim.claim_id for claim in checked.admitted_claims)
     quarantine = _quarantine_dangling_references(
-        repo, commit=commit, valid_claims=valid_claims,
-        quarantined_claims=frozenset(claim.claim_id for claim in checked.quarantined_claims),
+        repo,
+        commit=commit,
+        valid_claims=valid_claims,
+        quarantined_claims=frozenset(
+            claim.claim_id for claim in checked.quarantined_claims
+        ),
     )
     authoring_lints = collect_authoring_lints(
         claims=tuple(entry.claim for entry in checked.claim_bundle.claims),
-        stances=_stances(repo, commit)
+        stances=_stances(repo, commit),
     )
 
     diagnostics: list[BuildDiagnostic] = []

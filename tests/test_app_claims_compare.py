@@ -19,17 +19,15 @@ from propstore.app.claims import (
     compare_algorithm_claims,
 )
 from propstore.families.claims import Claim, ClaimType
-from propstore.families.concepts import Concept
 from propstore.families.contexts import Context
 from propstore.repository import Repository
 from propstore.world import WorldQuery
+from tests.canonical_claim_fixtures import save_dimensionless_concepts
 
 
 def _repo(tmp_path: Path) -> Repository:
     repo = Repository.init(tmp_path / "kn")
-    repo.families.concept.save(
-        "A", Concept(concept_id="A", canonical_name="A"), message="m"
-    )
+    save_dimensionless_concepts(repo, (("A", "A"),))
     repo.families.context.save(
         "ctx1", Context(context_id="ctx1", name="ctx"), message="m"
     )
