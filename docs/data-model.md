@@ -212,7 +212,6 @@ A procedural computation as a Python function body:
 - id: claim50
   type: algorithm
   concept: concept12
-  stage: excitation
   body: |
     def glottal_pulse(t, T0, Tp, Tn):
         if t < Tp:
