@@ -7,7 +7,7 @@ import pytest
 
 from propstore.aspic_bridge import build_aspic_projection
 from propstore.compiler.workflows import build_repository
-from propstore.families.claim_admission import ClaimAdmissionState
+from propstore.families.claim_admission import CLAIM_CHECK_VERSION, ClaimAdmissionState
 from propstore.families.claims import Claim, ClaimStatus, ClaimType
 from propstore.families.concepts import Concept
 from propstore.families.justifications import Justification
@@ -52,7 +52,7 @@ def test_blocked_observation_cannot_supply_a_world_value(tmp_path: Path) -> None
         assert artifact.claim.value == 12
         assert artifact.admission.state is ClaimAdmissionState.QUARANTINED
         assert artifact.admission.content_digest
-        assert artifact.admission.pass_identity == "claim.check:1"
+        assert artifact.admission.pass_identity == f"claim.check:{CLAIM_CHECK_VERSION}"
         with pytest.raises(ValueError, match="stale checked admission"):
             artifact.admission.verify(msgspec.structs.replace(artifact.claim, value=99))
         with pytest.raises(ValueError, match="stale checked admission"):

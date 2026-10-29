@@ -59,8 +59,13 @@ def test_concept_view_resolves_by_name(tmp_path: Path) -> None:
 
 def test_concept_form_missing_without_lexical_entry(tmp_path: Path) -> None:
     repo = build_demo_repo(tmp_path)
+    repo.families.concept.save(
+        "unformed",
+        Concept(concept_id="unformed", canonical_name="unformed"),
+        message="m",
+    )
     with WorldQuery(repo) as world:
-        report = build_concept_view(world, "distance", policy=_default_policy())
+        report = build_concept_view(world, "unformed", policy=_default_policy())
     assert report.form.state is ViewState.MISSING
     assert report.form.form_name is None
 
