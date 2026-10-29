@@ -5,6 +5,7 @@ on:
     branches: [master, main]
   pull_request:
     branches: [master, main]
+  merge_group:
 
 permissions:
   contents: read
@@ -17,22 +18,51 @@ jobs:
   test:
     name: Python 3.13
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           version: "0.13.1"
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
 
       - name: Install dependencies
+        id: dependencies
         run: uv sync --dev --locked
 
+      - name: Check workflow syntax
+        if: ${{ !cancelled() }}
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+
+      - name: Audit workflow security
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: uv run --locked zizmor --offline .github/workflows
+
+      - name: Check package typing
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: uv run --locked pyright propstore
+
+      - name: Check import contracts
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: uv run --locked lint-imports
+
+      - name: Lint Python
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: uv run --locked ruff check propstore tests scripts
+
+      - name: Check Python formatting
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: uv run --locked ruff format --check propstore tests scripts
+
       - name: Run tests
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
         run: sh ./scripts/run_logged_pytest.sh --no-sources
