@@ -237,12 +237,16 @@ def build_knowledge_graph(
         concept_id = _claim_concept_id(claim)
         metadata: dict[str, Any] = {
             "type": None if claim.claim_type is None else claim.claim_type.value,
-            "value": claim.value,
+            "value": claim.quantitative.point,
             "concept_id": None if concept_id is None else str(concept_id),
         }
         if concept_id is not None and str(concept_id) in concept_statuses:
             metadata["status"] = concept_statuses[str(concept_id)]
-        label = claim_id if claim.value is None else f"{claim_id}={claim.value}"
+        label = (
+            claim_id
+            if claim.quantitative.point is None
+            else f"{claim_id}={claim.quantitative.point}"
+        )
         graph.nodes.append(
             GraphNode(id=claim_id, label=label, node_type="claim", metadata=metadata)
         )

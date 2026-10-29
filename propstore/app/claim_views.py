@@ -24,9 +24,11 @@ from dataclasses import dataclass
 from propstore.app.rendering import RenderPolicySummary, summarize_render_policy
 from propstore.app.view_state import ViewState
 from propstore.core.scalars import ScalarValue
+from propstore.families.claim_quantitative import AbsoluteUncertainty, IntervalValue
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept
 from propstore.reporting import JsonReportMixin
+from propstore.value_comparison import value_str
 from propstore.world import RenderPolicy, WorldQuery
 
 # Claim types whose assertion is not a single scalar value: an absent ``value``
@@ -237,42 +239,53 @@ def _claim_concept(claim: Claim, concept: Concept | None) -> ClaimViewConcept:
 
 
 def _claim_value(claim: Claim) -> ClaimViewValue:
-    if claim.value is None:
+    evidence = claim.quantitative
+    value = evidence.point
+    if isinstance(evidence.value, IntervalValue) and value is None:
+        return ClaimViewValue(
+            state=ViewState.KNOWN,
+            value=None,
+            unit=evidence.unit,
+            sentence=f"Value is bounded by {value_str(None, evidence, with_unit=True)}.",
+        )
+    if value is None:
         if claim.claim_type in _NON_SCALAR_CLAIM_TYPES:
             return ClaimViewValue(
                 state=ViewState.NOT_APPLICABLE,
                 value=None,
-                unit=claim.unit,
+                unit=evidence.unit,
                 sentence=f"Value is not applicable for a {claim_type_text(claim)} claim.",
             )
         return ClaimViewValue(
             state=ViewState.MISSING,
             value=None,
-            unit=claim.unit,
+            unit=evidence.unit,
             sentence="Value is missing.",
         )
-    unit = claim.unit
-    sentence = f"Value is {claim.value} {unit}." if unit else f"Value is {claim.value}."
+    unit = evidence.unit
+    sentence = f"Value is {value} {unit}." if unit else f"Value is {value}."
     return ClaimViewValue(
         state=ViewState.KNOWN,
-        value=claim.value,
+        value=value,
         unit=unit,
         sentence=sentence,
     )
 
 
 def _claim_uncertainty(claim: Claim) -> ClaimViewUncertainty:
-    has_interval = claim.lower_bound is not None or claim.upper_bound is not None
+    evidence = claim.quantitative
+    interval = evidence.value if isinstance(evidence.value, IntervalValue) else None
+    uncertainty = evidence.uncertainty
     if (
-        claim.uncertainty is None
-        and not has_interval
-        and claim.sample_size is None
-        and claim.confidence is None
+        uncertainty is None
+        and interval is None
+        and evidence.sample_size is None
+        and evidence.confidence is None
     ):
         return ClaimViewUncertainty(
             state=ViewState.MISSING,
             uncertainty=None,
-            uncertainty_type=claim.uncertainty_type,
+            uncertainty_type=None,
             lower_bound=None,
             upper_bound=None,
             sample_size=None,
@@ -281,12 +294,16 @@ def _claim_uncertainty(claim: Claim) -> ClaimViewUncertainty:
         )
     return ClaimViewUncertainty(
         state=ViewState.KNOWN,
-        uncertainty=claim.uncertainty,
-        uncertainty_type=claim.uncertainty_type,
-        lower_bound=claim.lower_bound,
-        upper_bound=claim.upper_bound,
-        sample_size=claim.sample_size,
-        confidence=claim.confidence,
+        uncertainty=None if uncertainty is None else uncertainty.magnitude,
+        uncertainty_type=None
+        if uncertainty is None
+        else "absolute"
+        if isinstance(uncertainty, AbsoluteUncertainty)
+        else "relative",
+        lower_bound=None if interval is None else interval.lower,
+        upper_bound=None if interval is None else interval.upper,
+        sample_size=evidence.sample_size,
+        confidence=evidence.confidence,
         sentence="Uncertainty information is present.",
     )
 

@@ -83,9 +83,9 @@ def _concept_canonical_name(world: WorldQuery, concept_id: str) -> str | None:
 
 
 def _claim_value_display(claim: Claim) -> str:
-    if claim.unit:
-        return f"value={claim.value} {claim.unit}"
-    return f"value={claim.value}"
+    if claim.quantitative.unit:
+        return f"value={claim.quantitative.point} {claim.quantitative.unit}"
+    return f"value={claim.quantitative.point}"
 
 
 def _active_value_display(active: ActiveClaim, claim: Claim | None) -> str:
@@ -164,6 +164,9 @@ class WorldDiagnosticLine:
     target: str
     diagnostic_kind: str
     message: str
+    severity: str = "error"
+    file: str | None = None
+    detail_json: str | None = None
 
 
 @dataclass(frozen=True)
@@ -200,6 +203,9 @@ def query_world_concept(
             target=str(diagnostic.claim_id or diagnostic.source_ref or "?"),
             diagnostic_kind=str(diagnostic.diagnostic_kind),
             message=str(diagnostic.message),
+            severity=diagnostic.severity,
+            file=diagnostic.file,
+            detail_json=diagnostic.detail_json,
         )
         for diagnostic in world.build_diagnostics(request.policy)
     )
@@ -340,7 +346,7 @@ def explain_world_claim(
         concept_display_id=(
             None if concept_id is None else _concept_display_id(world, concept_id)
         ),
-        value=claim.value,
+        value=claim.quantitative.point,
         stances=tuple(stances),
     )
 

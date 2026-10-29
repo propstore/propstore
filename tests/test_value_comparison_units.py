@@ -7,62 +7,40 @@ form and the claims' units are available, so ``200 Hz`` and ``0.2 kHz`` match.
 from __future__ import annotations
 
 import pytest
-from condition_ir import KindType
 
-from propstore.conflict_detector.models import ConflictClaim
-from propstore.dimensions import UnitConversion
-from propstore.families.forms import FormDefinition
+from propstore.core.scalars import ScalarValue
+from propstore.families.claim_quantitative import PointValue, QuantitativeEvidence
 from propstore.value_comparison import values_compatible
-
-
-def _claim(claim_id: str, value: float, unit: str) -> ConflictClaim:
-    return ConflictClaim(claim_id=claim_id, value=value, unit=unit)
-
-
-def _frequency_form() -> FormDefinition:
-    return FormDefinition(
-        name="frequency",
-        kind=KindType.QUANTITY,
-        unit_symbol="Hz",
-        allowed_units=("Hz", "kHz"),
-        dimensions={"T": -1},
-        conversions={
-            "kHz": UnitConversion(unit="kHz", type="multiplicative", multiplier=1000.0),
-        },
-    )
+from tests.checked_claim_helpers import frequency_form
 
 
 def test_values_compatible_different_units_same_value() -> None:
-    forms = {"frequency": _frequency_form()}
+    form = frequency_form()
     assert values_compatible(
         None,
         None,
-        claim_a=_claim("a", 200.0, "Hz"),
-        claim_b=_claim("b", 0.2, "kHz"),
-        forms=forms,
-        concept_form="frequency",
+        claim_a=QuantitativeEvidence(PointValue(200.0), form, "Hz"),
+        claim_b=QuantitativeEvidence(PointValue(0.2), form, "kHz"),
     )
 
 
 def test_values_compatible_different_units_different_value() -> None:
-    forms = {"frequency": _frequency_form()}
+    form = frequency_form()
     assert not values_compatible(
         None,
         None,
-        claim_a=_claim("a", 200.0, "Hz"),
-        claim_b=_claim("b", 0.3, "kHz"),
-        forms=forms,
-        concept_form="frequency",
+        claim_a=QuantitativeEvidence(PointValue(200.0), form, "Hz"),
+        claim_b=QuantitativeEvidence(PointValue(0.3), form, "kHz"),
     )
 
 
-def test_values_compatible_no_forms_fallback() -> None:
-    # Without forms, raw numeric comparison applies: 200 != 0.2.
+def test_values_compatible_without_form_or_unit_evidence() -> None:
+    # Unspecified unit evidence leaves these distinct numeric points distinct.
     assert not values_compatible(
         None,
         None,
-        claim_a=_claim("a", 200.0, "Hz"),
-        claim_b=_claim("b", 0.2, "kHz"),
+        claim_a=QuantitativeEvidence(PointValue(200.0), None, None),
+        claim_b=QuantitativeEvidence(PointValue(0.2), None, None),
     )
 
 
@@ -77,8 +55,8 @@ def test_values_compatible_no_forms_fallback() -> None:
     ],
 )
 def test_values_compatible_separates_direct_and_numeric_scalars(
-    left: object,
-    right: object,
+    left: ScalarValue,
+    right: ScalarValue,
     expected: bool,
 ) -> None:
     assert values_compatible(left, right) is expected

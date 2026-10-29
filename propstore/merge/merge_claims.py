@@ -17,9 +17,13 @@ branch they were annotated with — get distinct assertion ids and stay rival.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
+from condition_ir import ConceptInfo
+
 from propstore.core.assertions import content_digest, semantic_content
+from propstore.families.claim_admission import ClaimAdmission
 from propstore.families.claim_provenance import BundledClaim, UnbundledClaim
 from propstore.families.claims import Claim
 
@@ -30,9 +34,14 @@ class MergeClaim:
 
     claim: Claim
     provenance: BundledClaim | UnbundledClaim
+    admission: ClaimAdmission
+    condition_registry: Mapping[str, ConceptInfo]
     paper: str | None = None
     page: int | None = None
     branch_origin: str | None = None
+
+    def __post_init__(self) -> None:
+        self.admission.require_admitted(self.claim)
 
     @classmethod
     def from_claim(
@@ -40,17 +49,18 @@ class MergeClaim:
         claim: Claim,
         *,
         provenance: BundledClaim | UnbundledClaim,
+        admission: ClaimAdmission,
+        condition_registry: Mapping[str, ConceptInfo],
         paper: str | None = None,
         page: int | None = None,
         branch_origin: str | None = None,
-    ) -> MergeClaim | None:
-        """Wrap a stored claim, or ``None`` when it has no identity."""
-
-        if not claim.claim_id:
-            return None
+    ) -> MergeClaim:
+        """Carry a canonical admitted claim with its actual compilation owners."""
         return cls(
             claim=claim,
             provenance=provenance,
+            admission=admission,
+            condition_registry=condition_registry,
             paper=paper,
             page=page,
             branch_origin=branch_origin,

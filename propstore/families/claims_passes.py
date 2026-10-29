@@ -21,12 +21,14 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 
+import msgspec
+
 from propstore.claim_conditions import check_claim, check_claim_conditions
 from propstore.claim_contracts import validate_claim
 from propstore.compiler.context import CompilationContext
 from propstore.compiler.ir import CheckedClaim, ClaimCheckedBundle
 from propstore.families.claim_admission import CLAIM_CHECK_VERSION
-from propstore.families.claims import Claim, ClaimType
+from propstore.families.claims import Claim
 from propstore.families.registry import PropstoreFamily
 from propstore.semantic_passes.registry import PipelineRegistry
 from propstore.semantic_passes.runner import run_pipeline
@@ -83,6 +85,7 @@ def _error(
         filename=loaded.filename,
         artifact_id=loaded.claim_id,
         pass_name="claim.check",
+        field=field,
     )
 
 
@@ -93,25 +96,8 @@ def _check_one(
     claim = loaded.claim
     diagnostics: list[PassDiagnostic] = []
 
-    form = None
-    concept_info = None
-    form_concept_id = None
-    if claim.claim_type is ClaimType.PARAMETER:
-        form_concept_id = claim.output_concept
-    elif claim.claim_type is ClaimType.MEASUREMENT:
-        form_concept_id = claim.target_concept
-    if form_concept_id is not None:
-        concept = context.concepts_by_id.get(form_concept_id)
-        if concept is not None and concept.lexical_entry is not None:
-            form_name = concept.lexical_entry.physical_dimension_form
-            if form_name is not None:
-                form = context.form_registry.registry.get(form_name)
-                concept_info = context.condition_registry.get(concept.canonical_name)
-
     contract_report = validate_claim(
         claim,
-        form=form,
-        concept_info=concept_info,
         context=context,
     )
     for problem in contract_report.diagnostics:
@@ -120,11 +106,18 @@ def _check_one(
     condition_report = check_claim_conditions(claim, context.condition_registry)
     for condition_problem in condition_report.diagnostics:
         diagnostics.append(
-            _error(
-                "claim.condition",
-                f"{condition_problem.condition!r}: {condition_problem.message}",
-                loaded,
-                "conditions",
+            PassDiagnostic(
+                level="warning" if condition_problem.diagnostic.is_warning else "error",
+                code="claim.condition",
+                message=condition_problem.message,
+                family=_FAMILY,
+                stage=ClaimStage.CHECKED,
+                filename=loaded.filename,
+                artifact_id=loaded.claim_id,
+                pass_name="claim.check",
+                field="conditions",
+                index=condition_problem.index,
+                cel_diagnostic=condition_problem.diagnostic,
             )
         )
 
@@ -144,9 +137,12 @@ def _check_one(
         )
 
     normalized = check_claim(claim, context.condition_registry)
+    normalized = msgspec.structs.replace(
+        normalized, quantitative_ir=contract_report.quantitative
+    )
     return CheckedClaim(
         claim=normalized,
-        blocked=bool(diagnostics),
+        blocked=any(item.is_error for item in diagnostics),
         diagnostics=tuple(diagnostics),
     )
 

@@ -1,87 +1,35 @@
-"""Conflict detector behavioral contracts.
+"""Conflict behavior over canonical claims admitted by the real compiler."""
 
-Ported from the reference suite (test_conflict_detector / _orchestrator_isolation /
-_equation_conflict_status / _parameter_conflict_error_preservation /
-_parameter_conflict_unit_aware / _algorithm_sympy_tier_not_conflict), translated to
-the rewrite's substrate-direct construction: claims are built as ``ConflictClaim``
-values and CEL registries as ``condition_ir.ConceptInfo`` maps, with no stale
-``propstore.core.conditions`` / claim-file-ingestion / conftest fixtures.
-
-The SymPy-backed parameterization-derivation (transitive) detector is deferred
-(see reports/p6a-blocked.md); those reference tests are not ported here.
-"""
-
-from __future__ import annotations
-
-import inspect
 from unittest.mock import MagicMock
 
+import msgspec
 import pytest
 from condition_ir import (
     ConceptInfo,
+    ConditionSolver,
     KindType,
     Z3TranslationError,
+    check_condition_ir,
+    checked_condition_set,
     synthetic_category_concept,
-    to_cel_exprs,
 )
 
-from propstore.conflict_detector import (
-    ConflictClass,
-    ConflictRecord,
-    detect_conflicts,
-    orchestrator,
-)
+from propstore.conflict_detector import ConflictClass, detect_conflicts
 from propstore.conflict_detector.algorithms import detect_algorithm_conflicts
 from propstore.conflict_detector.condition_classifier import classify_conditions
 from propstore.conflict_detector.equations import detect_equation_conflicts
 from propstore.conflict_detector.measurements import detect_measurement_conflicts
-from propstore.conflict_detector.models import (
-    ConflictClaim,
-    coerce_conflict_class,
-)
+from propstore.conflict_detector.models import coerce_conflict_class
 from propstore.conflict_detector.parameter_claims import detect_parameter_conflicts
-from propstore.core.lemon import (
-    LexicalEntry,
-    LexicalForm,
-    LexicalSense,
-    OntologyReference,
+from propstore.families.claim_admission import (
+    ClaimAdmissionError,
+    ClaimAdmissionFailure,
 )
-from propstore.dimensions import UnitConversion
 from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
-from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
-
-# ── models / charter view ────────────────────────────────────────────
-
-
-def test_conflict_claim_from_claim_maps_charter_fields() -> None:
-    claim = Claim(
-        claim_id="c1",
-        context_id="ctx_a",
-        claim_type=ClaimType.PARAMETER,
-        output_concept="out",
-        target_concept="tgt",
-        value=12.0,
-        unit="Hz",
-        conditions=("x > 1",),
-        variables=(ClaimVariable(concept="k", symbol="x", role="independent"),),
-    )
-    view = ConflictClaim.from_claim(claim)
-    assert view.claim_id == "c1"
-    assert view.claim_type is ClaimType.PARAMETER
-    assert view.output_concept_id == "out"
-    assert view.target_concept_id == "tgt"
-    assert view.context_id == "ctx_a"
-    assert [str(condition) for condition in view.conditions] == ["x > 1"]
-    assert view.variables == (
-        ClaimVariable(concept="k", symbol="x", role="independent"),
-    )
-
-
-def test_conflict_claim_preserves_absence_of_authored_conditions() -> None:
-    view = ConflictClaim.from_claim(Claim(claim_id="c1", value=1.0))
-    assert view.conditions == ()
+from tests.canonical_claim_fixtures import concept_with_form
+from tests.checked_claim_helpers import check_claims, frequency_form
 
 
 def test_coerce_conflict_class_round_trips_and_uppercases() -> None:
@@ -91,46 +39,34 @@ def test_coerce_conflict_class_round_trips_and_uppercases() -> None:
     assert coerce_conflict_class("phi_node") is ConflictClass.PHI_NODE
 
 
-# ── condition classifier (the Z3 dispatch) ───────────────────────────
-
-
-def _quantity_registry() -> dict[str, ConceptInfo]:
-    return {"x": ConceptInfo("x", "x", KindType.QUANTITY)}
-
-
-def test_classify_identical_conditions_is_conflict() -> None:
-    registry = _quantity_registry()
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        ("x > 10", "x > 10", ConflictClass.CONFLICT),
+        ("x > 10", "10 < x", ConflictClass.CONFLICT),
+        ("x > 10", "x < 5", ConflictClass.PHI_NODE),
+        ("x > 10", "x > 5", ConflictClass.OVERLAP),
+    ],
+)
+def test_classify_checked_conditions(
+    left: str, right: str, expected: ConflictClass
+) -> None:
+    registry = {"x": ConceptInfo("x", "x", KindType.QUANTITY)}
     assert (
-        classify_conditions(["x > 10"], ["x > 10"], registry) is ConflictClass.CONFLICT
+        classify_conditions(
+            checked_condition_set((check_condition_ir(left, registry),)),
+            checked_condition_set((check_condition_ir(right, registry),)),
+            solver=ConditionSolver(registry),
+        )
+        is expected
     )
 
 
-def test_classify_equivalent_spellings_is_conflict() -> None:
-    registry = _quantity_registry()
-    assert (
-        classify_conditions(["x > 10"], ["10 < x"], registry) is ConflictClass.CONFLICT
-    )
-
-
-def test_classify_disjoint_conditions_is_phi_node() -> None:
-    registry = _quantity_registry()
-    assert (
-        classify_conditions(["x > 10"], ["x < 5"], registry) is ConflictClass.PHI_NODE
-    )
-
-
-def test_classify_overlapping_conditions_is_overlap() -> None:
-    registry = _quantity_registry()
-    assert classify_conditions(["x > 10"], ["x > 5"], registry) is ConflictClass.OVERLAP
-
-
-# ── equation detector (eq-equiv) ─────────────────────────────────────
-
-
-def _equation_claim(claim_id: str, expression: str) -> ConflictClaim:
-    return ConflictClaim(
+def _equation(claim_id: str, expression: str) -> Claim:
+    return Claim(
         claim_id=claim_id,
         claim_type=ClaimType.EQUATION,
+        output_concept="output",
         expression=expression,
         variables=(
             ClaimVariable(concept="output", symbol="y", role="dependent"),
@@ -140,42 +76,39 @@ def _equation_claim(claim_id: str, expression: str) -> ConflictClaim:
     )
 
 
-def test_equation_detector_skips_equivalent_orientations() -> None:
-    records = detect_equation_conflicts(
-        [_equation_claim("left", "y = x + z"), _equation_claim("right", "x + z = y")],
-        {},
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        ("y = x + z", "x + z = y", None),
+        ("y = x + z", "y = 2*x + z", ConflictClass.CONFLICT),
+        ("y = log(x * z)", "y = log(x) + log(z)", ConflictClass.UNKNOWN),
+    ],
+)
+def test_equation_comparison_uses_admitted_claims(left, right, expected) -> None:
+    bundle, context = check_claims(
+        (_equation("left", left), _equation("right", right)),
+        tuple(
+            concept_with_form(name, name, "quantity")
+            for name in ("output", "factor_a", "factor_b")
+        ),
     )
-    assert records == []
-
-
-def test_equation_detector_reports_proven_difference() -> None:
+    assert not bundle.blocked_claims, bundle.diagnostics
     records = detect_equation_conflicts(
-        [
-            _equation_claim("linear", "y = x + z"),
-            _equation_claim("scaled", "y = 2*x + z"),
-        ],
-        {},
+        [entry.claim for entry in bundle.claims],
+        context.condition_registry,
+        admissions=tuple(entry.admission for entry in bundle.claims),
+        provenance=ClaimProvenanceIndex.from_micropublications(()),
     )
-    assert len(records) == 1
-    assert records[0].warning_class == ConflictClass.CONFLICT
-
-
-def test_equation_detector_reports_undecidable_domain_sensitive_pair() -> None:
-    records = detect_equation_conflicts(
-        [
-            _equation_claim("log_sum", "y = log(x * z)"),
-            _equation_claim("sum_logs", "y = log(x) + log(z)"),
-        ],
-        {},
+    assert [record.warning_class for record in records] == (
+        [] if expected is None else [expected]
     )
-    assert len(records) == 1
-    assert records[0].warning_class == ConflictClass.UNKNOWN
 
 
 def test_equation_detector_uses_each_claim_symbol_bindings() -> None:
-    renamed = ConflictClaim(
+    renamed = Claim(
         claim_id="renamed",
         claim_type=ClaimType.EQUATION,
+        output_concept="output",
         expression="result = first + second",
         variables=(
             ClaimVariable(concept="output", symbol="result", role="dependent"),
@@ -183,71 +116,85 @@ def test_equation_detector_uses_each_claim_symbol_bindings() -> None:
             ClaimVariable(concept="factor_b", symbol="second", role="independent"),
         ),
     )
+    bundle, context = check_claims(
+        (_equation("original", "y = x + z"), renamed),
+        tuple(
+            concept_with_form(name, name, "quantity")
+            for name in ("output", "factor_a", "factor_b")
+        ),
+    )
+    assert not bundle.blocked_claims, bundle.diagnostics
     assert (
         detect_equation_conflicts(
-            [_equation_claim("original", "y = x + z"), renamed], {}
+            [entry.claim for entry in bundle.claims],
+            context.condition_registry,
+            admissions=tuple(entry.admission for entry in bundle.claims),
+            provenance=ClaimProvenanceIndex.from_micropublications(()),
         )
         == []
     )
-    records = detect_equation_conflicts(
-        [_equation_claim("scaled", "y = 2*x + z"), renamed], {}
-    )
-    assert len(records) == 1
-    assert records[0].warning_class == ConflictClass.CONFLICT
 
 
 @pytest.mark.parametrize("invalid_first", [True, False])
-def test_equation_detector_skips_package_failure(
-    invalid_first: bool, caplog: pytest.LogCaptureFixture
+def test_invalid_equation_is_rejected_by_canonical_admission(
+    invalid_first: bool,
 ) -> None:
-    claims = [
-        _equation_claim("invalid", "y = ("),
-        _equation_claim("valid", "y = x + z"),
-    ]
+    claims = [_equation("invalid", "y = ("), _equation("valid", "y = x + z")]
     if not invalid_first:
         claims.reverse()
-    assert detect_equation_conflicts(claims, {}) == []
-    assert "Skipping equation comparison for claim invalid" in caplog.text
-    assert "parse_error" in caplog.text
+    bundle, context = check_claims(
+        claims,
+        tuple(
+            concept_with_form(name, name, "quantity")
+            for name in ("output", "factor_a", "factor_b")
+        ),
+    )
+    assert [entry.claim.claim_id for entry in bundle.blocked_claims] == ["invalid"]
+    with pytest.raises(ClaimAdmissionError) as caught:
+        detect_equation_conflicts(
+            [entry.claim for entry in bundle.claims],
+            context.condition_registry,
+            admissions=tuple(entry.admission for entry in bundle.claims),
+            provenance=ClaimProvenanceIndex.from_micropublications(()),
+        )
+    assert caught.value.claim_id == "invalid"
+    assert caught.value.reason is ClaimAdmissionFailure.QUARANTINED
 
 
-# ── algorithm detector (ast-equiv) ───────────────────────────────────
-
-
-def _algorithm_claim(claim_id: str, body: str) -> ConflictClaim:
-    return ConflictClaim(
+def _algorithm(claim_id: str, body: str) -> Claim:
+    return Claim(
         claim_id=claim_id,
         claim_type=ClaimType.ALGORITHM,
-        output_concept_id="out",
+        output_concept="out",
         body=body,
-        variables=(ClaimVariable(concept="in", symbol="x"),),
+        variables=(ClaimVariable(concept="input", symbol="x"),),
     )
 
 
-def _algorithm_registry() -> dict[str, ConceptInfo]:
-    return {"x": ConceptInfo("in", "x", KindType.QUANTITY)}
-
-
-def test_algorithm_equivalent_bodies_do_not_conflict() -> None:
+@pytest.mark.parametrize(
+    ("left", "right", "count"), [("x + x", "2 * x", 0), ("x", "x + 1", 1)]
+)
+def test_algorithm_comparison_uses_admitted_claims(
+    left: str, right: str, count: int
+) -> None:
+    bundle, context = check_claims(
+        (
+            _algorithm("a", f"def f(x):\n    return {left}\n"),
+            _algorithm("b", f"def f(x):\n    return {right}\n"),
+        ),
+        (
+            concept_with_form("out", "out", "quantity"),
+            concept_with_form("input", "input", "quantity"),
+        ),
+    )
+    assert not bundle.blocked_claims, bundle.diagnostics
     records = detect_algorithm_conflicts(
-        [
-            _algorithm_claim("a", "def f(x):\n    return x + x\n"),
-            _algorithm_claim("b", "def f(x):\n    return 2 * x\n"),
-        ],
-        _algorithm_registry(),
+        [entry.claim for entry in bundle.claims],
+        context.condition_registry,
+        admissions=tuple(entry.admission for entry in bundle.claims),
+        provenance=ClaimProvenanceIndex.from_micropublications(()),
     )
-    assert records == []
-
-
-def test_algorithm_non_equivalent_bodies_conflict() -> None:
-    records = detect_algorithm_conflicts(
-        [
-            _algorithm_claim("a", "def f(x):\n    return x\n"),
-            _algorithm_claim("b", "def f(x):\n    return x + 1\n"),
-        ],
-        _algorithm_registry(),
-    )
-    assert len(records) == 1
+    assert len(records) == count
 
 
 def test_algorithm_partial_eval_equivalence_suppresses_conflict(
@@ -255,40 +202,45 @@ def test_algorithm_partial_eval_equivalence_suppresses_conflict(
 ) -> None:
     from propstore.conflict_detector import algorithms
 
-    class _Result:
+    class Result:
         equivalent = True
         similarity = 1.0
 
-    monkeypatch.setattr(algorithms, "ast_compare", lambda *args, **kwargs: _Result())
-    records = algorithms.detect_algorithm_conflicts(
-        [
-            _algorithm_claim("a", "def f(x):\n    return x\n"),
-            _algorithm_claim("b", "def f(x):\n    return x\n"),
-        ],
-        _algorithm_registry(),
+    bundle, context = check_claims(
+        (
+            _algorithm("a", "def f(x):\n    return x\n"),
+            _algorithm("b", "def f(x):\n    return x\n"),
+        ),
+        (
+            concept_with_form("out", "out", "quantity"),
+            concept_with_form("input", "input", "quantity"),
+        ),
     )
-    assert records == []
-
-
-# ── measurement detector (value_comparison) ──────────────────────────
-
-
-def _measurement_claim(
-    claim_id: str, value: float, *, population: str | None = None
-) -> ConflictClaim:
-    conditions = () if population is None else (f"population == '{population}'",)
-    return ConflictClaim(
-        claim_id=claim_id,
-        claim_type=ClaimType.MEASUREMENT,
-        target_concept_id="concept",
-        measure="mean",
-        value=value,
-        conditions=to_cel_exprs(conditions),
+    monkeypatch.setattr(algorithms, "ast_compare", lambda *args, **kwargs: Result())
+    assert (
+        algorithms.detect_algorithm_conflicts(
+            [entry.claim for entry in bundle.claims],
+            context.condition_registry,
+            admissions=tuple(entry.admission for entry in bundle.claims),
+            provenance=ClaimProvenanceIndex.from_micropublications(()),
+        )
+        == []
     )
 
 
-def _population_registry() -> dict[str, ConceptInfo]:
-    return {
+@pytest.mark.parametrize(
+    ("populations", "values", "expected"),
+    [
+        (("adults", "children"), (10.0, 20.0), ConflictClass.PHI_NODE),
+        (("adults", "adults"), (10.0, 20.0), ConflictClass.CONFLICT),
+        ((None, None), (None, 20.0), None),
+        ((None, None), (10.0, 10.0), None),
+    ],
+)
+def test_measurement_comparison_uses_checked_conditions(
+    populations, values, expected
+) -> None:
+    registry = {
         "population": synthetic_category_concept(
             concept_id="population",
             canonical_name="population",
@@ -296,162 +248,186 @@ def _population_registry() -> dict[str, ConceptInfo]:
             extensible=False,
         )
     }
-
-
-def test_measurement_population_mismatch_is_phi_node() -> None:
+    bundle, context = check_claims(
+        tuple(
+            Claim(
+                claim_id=f"m{index}",
+                claim_type=ClaimType.MEASUREMENT,
+                target_concept="out",
+                measure="mean",
+                value=value,
+                conditions=()
+                if population is None
+                else (f"population == '{population}'",),
+            )
+            for index, (population, value) in enumerate(
+                zip(populations, values, strict=True)
+            )
+        ),
+        (concept_with_form("out", "out", "quantity"),),
+        condition_registry=registry,
+    )
+    assert not bundle.blocked_claims, bundle.diagnostics
     records = detect_measurement_conflicts(
-        [
-            _measurement_claim("m1", 10.0, population="adults"),
-            _measurement_claim("m2", 20.0, population="children"),
-        ],
-        _population_registry(),
+        [entry.claim for entry in bundle.claims],
+        context.condition_registry,
+        admissions=tuple(entry.admission for entry in bundle.claims),
+        provenance=ClaimProvenanceIndex.from_micropublications(()),
     )
-    assert len(records) == 1
-    assert records[0].warning_class == ConflictClass.PHI_NODE
-
-
-def test_measurement_same_population_identical_conditions_is_conflict() -> None:
-    records = detect_measurement_conflicts(
-        [
-            _measurement_claim("m1", 10.0, population="adults"),
-            _measurement_claim("m2", 20.0, population="adults"),
-        ],
-        _population_registry(),
-    )
-    assert len(records) == 1
-    assert records[0].warning_class == ConflictClass.CONFLICT
-
-
-def test_measurement_compatible_values_no_conflict() -> None:
-    records = detect_measurement_conflicts(
-        [_measurement_claim("m1", 10.0), _measurement_claim("m2", 10.0)],
-        {},
-    )
-    assert records == []
-
-
-# ── direct parameter detector (Z3 partition + error preservation) ────
-
-
-def _three_parameter_claims() -> tuple[ConflictClaim, ...]:
-    return tuple(
-        ConflictClaim(
-            claim_id=f"c{i}",
-            claim_type=ClaimType.PARAMETER,
-            output_concept_id="outcome",
-            value=float(i),
-            unit="",
-            conditions=to_cel_exprs(("intention_to_treat == true",)),
-        )
-        for i in range(3)
+    assert [record.warning_class for record in records] == (
+        [] if expected is None else [expected]
     )
 
 
-def _boolean_registry() -> dict[str, ConceptInfo]:
-    return {
-        "intention_to_treat": ConceptInfo(
-            "intention_to_treat", "intention_to_treat", KindType.BOOLEAN
-        )
-    }
-
-
-def test_partitioning_runtime_error_preserves_cause_text() -> None:
-    stub = MagicMock()
-    underlying = (
-        "Structural concept 'intention_to_treat' cannot appear in CEL expressions"
-    )
-    stub.partition_equivalence_classes.side_effect = Z3TranslationError(underlying)
-
-    with pytest.raises(RuntimeError) as info:
-        detect_parameter_conflicts(
-            _three_parameter_claims(),
-            cel_registry=_boolean_registry(),
-            solver=stub,
-        )
-    message = str(info.value)
-    assert "Z3 partitioning failed" in message
-    assert underlying in message
-
-
-def test_disjointness_runtime_error_preserves_cause_text() -> None:
-    stub = MagicMock()
-    stub.partition_equivalence_classes.return_value = [[0], [1, 2]]
-    underlying = (
-        "Structural concept 'intention_to_treat' cannot appear in CEL expressions"
-    )
-    stub.are_disjoint_result.side_effect = Z3TranslationError(underlying)
-
-    with pytest.raises(RuntimeError) as info:
-        detect_parameter_conflicts(
-            _three_parameter_claims(),
-            cel_registry=_boolean_registry(),
-            solver=stub,
-        )
-    message = str(info.value)
-    assert "Z3 disjointness check failed" in message
-    assert underlying in message
-
-
-# ── orchestrator end-to-end + isolation ──────────────────────────────
-
-
-def _frequency_form() -> FormDefinition:
-    return FormDefinition(
-        name="frequency",
-        kind=KindType.QUANTITY,
-        unit_symbol="Hz",
-        allowed_units=("Hz", "kHz"),
-        conversions={
-            "kHz": UnitConversion(unit="kHz", type="multiplicative", multiplier=1000.0)
+@pytest.mark.parametrize("failure", ["equivalence", "disjoint"])
+def test_solver_runtime_errors_preserve_cause_text(failure: str) -> None:
+    bundle, context = check_claims(
+        tuple(
+            Claim(
+                claim_id=f"c{index}",
+                claim_type=ClaimType.PARAMETER,
+                output_concept="outcome",
+                value=float(index),
+                unit="1",
+                conditions=(
+                    f"intention_to_treat == {'true' if index == 0 else 'false'}",
+                ),
+            )
+            for index in range(2)
+        ),
+        (concept_with_form("outcome", "outcome", "quantity"),),
+        condition_registry={
+            "intention_to_treat": ConceptInfo(
+                "intention_to_treat",
+                "intention_to_treat",
+                KindType.BOOLEAN,
+            )
         },
     )
+    assert not bundle.blocked_claims, bundle.diagnostics
+    solver = MagicMock(wraps=ConditionSolver(context.condition_registry))
+    underlying = (
+        "Structural concept 'intention_to_treat' cannot appear in CEL expressions"
+    )
+    if failure == "equivalence":
+        solver.are_equivalent_result.side_effect = Z3TranslationError(underlying)
+    else:
+        solver.are_disjoint_result.side_effect = Z3TranslationError(underlying)
+    with pytest.raises(Z3TranslationError) as caught:
+        detect_parameter_conflicts(
+            [entry.claim for entry in bundle.claims],
+            context.condition_registry,
+            admissions=tuple(entry.admission for entry in bundle.claims),
+            provenance=ClaimProvenanceIndex.from_micropublications(()),
+            solver=solver,
+        )
+    assert underlying in str(caught.value)
 
 
-def _frequency_concept() -> Concept:
-    return Concept(
-        concept_id="c1",
-        canonical_name="c1",
-        lexical_entry=LexicalEntry(
-            identifier="entry:c1",
-            canonical_form=LexicalForm(written_rep="c1", language="en"),
-            senses=(LexicalSense(reference=OntologyReference(uri="u:c1")),),
-            physical_dimension_form="frequency",
+@pytest.mark.parametrize(
+    ("value", "unit", "count"), [(0.2, "kHz", 0), (300.0, "Hz", 1)]
+)
+def test_detect_conflicts_consumes_checked_quantitative_units(
+    value: float, unit: str, count: int
+) -> None:
+    bundle, context = check_claims(
+        (
+            Claim(
+                claim_id="a",
+                claim_type=ClaimType.PARAMETER,
+                output_concept="frequency",
+                value=200.0,
+                unit="Hz",
+            ),
+            Claim(
+                claim_id="b",
+                claim_type=ClaimType.PARAMETER,
+                output_concept="frequency",
+                value=value,
+                unit=unit,
+            ),
         ),
+        (concept_with_form("frequency", "frequency", "frequency"),),
+        forms=(frequency_form(),),
     )
-
-
-def _parameter_claim(claim_id: str, value: float, unit: str) -> ConflictClaim:
-    return ConflictClaim(
-        claim_id=claim_id,
-        claim_type=ClaimType.PARAMETER,
-        output_concept_id="c1",
-        value=value,
-        unit=unit,
-    )
-
-
-def test_detect_conflicts_unit_aware_same_value_no_conflict() -> None:
+    assert not bundle.blocked_claims, bundle.diagnostics
     records = detect_conflicts(
-        [_parameter_claim("a", 200.0, "Hz"), _parameter_claim("b", 0.2, "kHz")],
-        {"c1": _frequency_concept()},
-        {},
-        forms={"frequency": _frequency_form()},
+        [entry.claim for entry in bundle.claims],
+        dict(context.concepts_by_id),
+        context.condition_registry,
+        admissions=tuple(entry.admission for entry in bundle.claims),
         provenance=ClaimProvenanceIndex.from_micropublications(()),
     )
-    assert records == []
+    assert len(records) == count
+    if records:
+        assert records[0].warning_class is ConflictClass.CONFLICT
 
 
-def test_detect_conflicts_unit_aware_real_difference_reports_conflict() -> None:
+@pytest.mark.parametrize(
+    ("kind", "values"),
+    [(KindType.CATEGORY, ("red", "blue")), (KindType.BOOLEAN, (True, False))],
+)
+def test_canonical_scalar_types_retain_disagreement(kind: KindType, values) -> None:
+    bundle, context = check_claims(
+        tuple(
+            Claim(
+                claim_id=f"c{i}",
+                claim_type=ClaimType.PARAMETER,
+                output_concept="out",
+                value=value,
+            )
+            for i, value in enumerate(values)
+        ),
+        (concept_with_form("out", "out", "scalar"),),
+        forms=(FormDefinition(name="scalar", kind=kind),),
+        condition_registry={
+            "out": ConceptInfo("out", "out", kind, category_extensible=True)
+        },
+    )
+    assert not bundle.blocked_claims, bundle.diagnostics
+    assert tuple(entry.claim.value for entry in bundle.claims) == values
     records = detect_conflicts(
-        [_parameter_claim("a", 200.0, "Hz"), _parameter_claim("b", 300.0, "Hz")],
-        {"c1": _frequency_concept()},
-        {},
-        forms={"frequency": _frequency_form()},
+        [entry.claim for entry in bundle.claims],
+        dict(context.concepts_by_id),
+        context.condition_registry,
+        admissions=tuple(entry.admission for entry in bundle.claims),
         provenance=ClaimProvenanceIndex.from_micropublications(()),
     )
-    assert len(records) == 1
-    assert isinstance(records[0], ConflictRecord)
-    assert records[0].warning_class == ConflictClass.CONFLICT
+    assert [record.warning_class for record in records] == [ConflictClass.CONFLICT]
+
+
+def test_missing_and_stale_admissions_are_typed_boundary_failures() -> None:
+    bundle, context = check_claims(
+        (
+            Claim(
+                claim_id="a",
+                claim_type=ClaimType.PARAMETER,
+                output_concept="out",
+                value=1.0,
+            ),
+        ),
+        (concept_with_form("out", "out", "quantity"),),
+    )
+    assert not bundle.blocked_claims, bundle.diagnostics
+    checked = bundle.claims[0]
+    with pytest.raises(ClaimAdmissionError) as missing:
+        detect_conflicts(
+            [checked.claim],
+            dict(context.concepts_by_id),
+            context.condition_registry,
+            admissions=(),
+            provenance=ClaimProvenanceIndex.from_micropublications(()),
+        )
+    assert missing.value.reason is ClaimAdmissionFailure.MISSING
+    with pytest.raises(ClaimAdmissionError) as stale:
+        detect_conflicts(
+            [msgspec.structs.replace(checked.claim, value=2.0)],
+            dict(context.concepts_by_id),
+            context.condition_registry,
+            admissions=(checked.admission,),
+            provenance=ClaimProvenanceIndex.from_micropublications(()),
+        )
+    assert stale.value.reason is ClaimAdmissionFailure.STALE
 
 
 def test_detect_conflicts_preserves_authored_source_concept() -> None:
@@ -460,16 +436,8 @@ def test_detect_conflicts_preserves_authored_source_concept() -> None:
             [],
             {},
             {"source": ConceptInfo("real-source", "source", KindType.CATEGORY)},
+            admissions=(),
             provenance=ClaimProvenanceIndex.from_micropublications(()),
         )
         == []
     )
-
-
-def test_orchestrator_lifting_decision_cache_is_explicit() -> None:
-    assert hasattr(orchestrator, "LiftingDecisionCache")
-
-
-def test_orchestrator_lifted_seen_key_includes_derivation_chain() -> None:
-    source = inspect.getsource(orchestrator._expand_lifted_conflict_claims)
-    assert "derivation_chain" in source

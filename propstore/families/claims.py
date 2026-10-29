@@ -12,8 +12,8 @@ Substrate boundary (CLAUDE.md, PLAN.md §12):
 
 * ONE canonical ``Claim`` type — there is no ``ClaimDocument`` / ``ClaimRecord``
   / ``ClaimRow`` second spelling and no ``to_payload`` / ``from_payload`` /
-  ``coerce_`` conversion. ``ConflictClaim`` / ``MergeClaim`` (later phases) are
-  field-subset VIEWS over this one charter, never independent storage.
+  ``coerce_`` conversion. Runtime comparisons consume this canonical object with
+  separate checked admission and provenance evidence.
 * Conditions are authored as CEL source strings (``conditions``). Their checked
   form is condition-ir's own ``CheckedConditionSet``, serialized with that
   package's json codec into ``conditions_ir`` (see
@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Annotated, Protocol
 
 import msgspec
+from condition_ir import CheckedConditionSet
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.charters import charter_catalog
 from quire.family_store import DocumentFamilyStore
@@ -47,6 +48,7 @@ from sqlalchemy import select
 
 from propstore.core.scalars import ScalarValue, validate_scalar_value
 from propstore.families import SEMANTIC_FOREIGN_KEY_CONTRACT_VERSION
+from propstore.families.claim_quantitative import QuantitativeEvidence
 
 
 class ClaimType(str, Enum):
@@ -118,7 +120,7 @@ class ClaimVariable(msgspec.Struct, frozen=True, forbid_unknown_fields=True):
 @charter(
     key="claim",
     name="claim",
-    contract_version="2026.07.21",
+    contract_version="2026.10.29",
     placement="claim",
     identity_field="claim_id",
     semantic="propstore.claim",
@@ -227,6 +229,9 @@ class Claim(CharterDoc):
     equations: Annotated[tuple[str, ...], charter_field(json=True)] = ()
     conditions: Annotated[tuple[str, ...], charter_field(json=True)] = ()
     conditions_ir: str | None = None
+    quantitative_ir: Annotated[
+        QuantitativeEvidence | None, charter_field(json=True)
+    ] = None
     value: Annotated[
         ScalarValue | None,
         charter_field(nullable=True, storage_codec="messagepack"),
@@ -242,6 +247,23 @@ class Claim(CharterDoc):
     def __post_init__(self) -> None:
         super().__post_init__()
         validate_scalar_value(self.value)
+
+    @property
+    def quantitative(self) -> QuantitativeEvidence:
+        """Require the checked owner; authored scalar bags are not runtime values."""
+        if self.quantitative_ir is None:
+            raise ValueError(
+                f"claim {self.claim_id!r} has no checked quantitative evidence"
+            )
+        return self.quantitative_ir
+
+    @property
+    def checked_conditions(self) -> CheckedConditionSet:
+        from propstore.claim_conditions import compile_checked_conditions
+
+        if self.conditions_ir is None:
+            raise ValueError(f"claim {self.claim_id!r} has no checked conditions")
+        return compile_checked_conditions(self.conditions_ir)
 
 
 @dataclass(frozen=True)
@@ -279,6 +301,7 @@ class _ClaimRow(Protocol):
     equations: tuple[str, ...]
     conditions: tuple[str, ...]
     conditions_ir: str | None
+    quantitative_ir: QuantitativeEvidence | None
     value: ScalarValue | None
     lower_bound: float | None
     upper_bound: float | None
@@ -322,6 +345,9 @@ def _row_to_claim(row: _ClaimRow) -> Claim:
         equations=row.equations,
         conditions=row.conditions,
         conditions_ir=row.conditions_ir,
+        quantitative_ir=msgspec.convert(
+            row.quantitative_ir, type=QuantitativeEvidence | None
+        ),
         value=row.value,
         lower_bound=row.lower_bound,
         upper_bound=row.upper_bound,
@@ -401,6 +427,7 @@ class ClaimRepository:
                         "equations": claim.equations,
                         "conditions": claim.conditions,
                         "conditions_ir": claim.conditions_ir,
+                        "quantitative_ir": claim.quantitative_ir,
                         "value": claim.value,
                         "lower_bound": claim.lower_bound,
                         "upper_bound": claim.upper_bound,

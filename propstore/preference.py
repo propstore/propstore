@@ -24,7 +24,6 @@ from propstore.families.claims import Claim
 from propstore.provenance import Provenance, ProvenanceStatus
 
 _METADATA_STRENGTH_BASE_RATE = 0.5
-_DOGMATIC_TOL = 1e-9
 
 
 @dataclass(frozen=True)
@@ -64,45 +63,26 @@ def _vacuous_provenance() -> Provenance:
     )
 
 
-def _positive_float(value: object) -> float | None:
-    if isinstance(value, bool) or not isinstance(value, int | float):
-        return None
-    return float(value) if value > 0 else None
-
-
-def _unit_float(value: object, *, lower_inclusive: bool) -> float | None:
-    if isinstance(value, bool) or not isinstance(value, int | float):
-        return None
-    lo_ok = value >= 0.0 if lower_inclusive else value > 0.0
-    return float(value) if lo_ok and value <= 1.0 else None
-
-
 def metadata_strength_vector(claim: Claim | ActiveClaim) -> MetadataStrengthVector:
     """Compute a heuristic fixed-length strength vector from claim metadata.
 
-    Always returns exactly 3 dimensions so that Def 19 (Modgil & Prakken 2018,
-    p.21) Elitist/Democratic set comparisons stay commensurable across claims with
-    different metadata profiles. When explicit uncertainty is absent but sample
-    size and confidence are present, uncertainty is derived through Jøsang 2001's
-    evidence-to-opinion mapping (p.20-21). When metadata is insufficient even for
-    that mapping, the vector is paired with a vacuous opinion so preference
-    consumers never treat absence of evidence as finite evidence.
+    Always returns exactly three coordinates. Confidence and positive sample
+    evidence use the existing evidence-to-opinion owner mapping; measurement
+    distances and ratios do not become subjective-logic ignorance masses.
+    Without both confidence and sample size the accompanying opinion is vacuous.
 
     Fixed dimensions:
       [0] log_sample_size: ``log1p(sample_size)``
-      [1] inverse_uncertainty: ``1 / uncertainty``
+      [1] inverse subjective uncertainty from confidence/sample evidence
       [2] confidence: direct value
     """
 
-    sample_size_value = _positive_float(claim.sample_size)
-    uncertainty_value = _unit_float(claim.uncertainty, lower_inclusive=False)
-    confidence_value = _unit_float(claim.confidence, lower_inclusive=True)
+    evidence = claim.quantitative
+    sample_size_value = evidence.sample_size
+    confidence_value = evidence.confidence
+    uncertainty_value: float | None = None
 
-    if (
-        confidence_value is not None
-        and sample_size_value is not None
-        and uncertainty_value is None
-    ):
+    if confidence_value is not None and sample_size_value is not None:
         opinion = Opinion.from_probability(
             confidence_value,
             sample_size_value,
@@ -110,23 +90,15 @@ def metadata_strength_vector(claim: Claim | ActiveClaim) -> MetadataStrengthVect
         )
         uncertainty_value = opinion.uncertainty
         provenance = _stated_provenance()
-    elif confidence_value is not None and uncertainty_value is not None:
-        certainty = 1.0 - uncertainty_value
-        opinion = Opinion(
-            b=confidence_value * certainty,
-            d=(1.0 - confidence_value) * certainty,
-            u=uncertainty_value,
-            a=_METADATA_STRENGTH_BASE_RATE,
-            allow_dogmatic=uncertainty_value < _DOGMATIC_TOL,
-        )
-        provenance = _stated_provenance()
     else:
         opinion = Opinion.vacuous(_METADATA_STRENGTH_BASE_RATE)
         provenance = _vacuous_provenance()
 
     dimensions = (
         math.log1p(sample_size_value) if sample_size_value is not None else 0.0,
-        1.0 / uncertainty_value if uncertainty_value is not None else 0.0,
+        1.0 / uncertainty_value
+        if uncertainty_value is not None and uncertainty_value > 0
+        else 0.0,
         confidence_value if confidence_value is not None else 0.0,
     )
     return MetadataStrengthVector(

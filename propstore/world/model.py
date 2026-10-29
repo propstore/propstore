@@ -73,7 +73,7 @@ from propstore.derived_schema import (
     WORLD_SIDECAR_SCHEMA_VERSION,
     build_world_sidecar_schema,
 )
-from propstore.families.claim_admission import ClaimAdmissionState
+from propstore.families.claim_admission import ClaimAdmission, ClaimAdmissionState
 from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimStatus
 from propstore.families.concepts import Concept
@@ -783,6 +783,9 @@ class WorldQuery(WorldStore):
             for bundle in select_micropublications(self._session)
             if all(claim_id in admitted for claim_id in bundle.claims)
         ]
+
+    def claim_admissions(self) -> Mapping[str, ClaimAdmission]:
+        return select_claim_admissions(self._session)
 
     def claim_provenance(self) -> ClaimProvenanceIndex:
         """Raw bundle attribution, independent of semantic bundle admission."""

@@ -32,6 +32,7 @@ def _seed_conflict(
     """master/branch each hold a rival value for ``claim1`` over ``concept_x``."""
     repo = init_repo(tmp_path / "knowledge")
     author_concept(repo, "concept_x")
+    author_concept(repo, "temp")
     author_param_claim(repo, "claim1", "concept_x", 250.0)
     base_sha = repo.require_git().branch_sha("master")
     assert base_sha is not None

@@ -36,6 +36,8 @@ from propstore.grounding.bundle import GroundedRulesBundle
 from propstore.praf import PropstorePrAF, build_praf
 from propstore.probabilistic_relations import ClaimGraphRelations
 from propstore.stances import StanceType
+from tests.canonical_claim_fixtures import concept_with_form
+from tests.checked_claim_helpers import check_claims
 from tests.world_store_feed import CompiledGraphStore
 
 _OPINION_STRONG = {
@@ -55,14 +57,21 @@ _OPINION_WEAK = {
 
 
 def _claim(claim_id: str, value: float, *, sample_size: int = 50) -> Claim:
-    return Claim(
-        claim_id=claim_id,
-        claim_type=ClaimType.PARAMETER,
-        output_concept="temp",
-        value=value,
-        sample_size=sample_size,
-        confidence=1.0,
+    bundle, _ = check_claims(
+        (
+            Claim(
+                claim_id=claim_id,
+                claim_type=ClaimType.PARAMETER,
+                output_concept="temp",
+                value=value,
+                sample_size=sample_size,
+                confidence=1.0,
+            ),
+        ),
+        (concept_with_form("temp", "temp", "quantity"),),
     )
+    assert not bundle.blocked_claims, bundle.diagnostics
+    return bundle.claims[0].claim
 
 
 def _edge(source: str, target: str, relation: str, **opinion: float) -> Stance:

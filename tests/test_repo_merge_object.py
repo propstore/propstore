@@ -28,6 +28,7 @@ def _seed_with_base_claim(tmp_path: Path, branch_name: str, base_value: float):
 
     repo = init_repo(tmp_path / "knowledge")
     author_concept(repo, "concept_x")
+    author_concept(repo, "temp")
     author_param_claim(repo, "claim1", "concept_x", base_value)
     base_sha = repo.require_git().branch_sha("master")
     assert base_sha is not None

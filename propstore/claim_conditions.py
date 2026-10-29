@@ -24,30 +24,30 @@ from dataclasses import dataclass
 
 import msgspec
 from condition_ir import (
+    CelError,
     CheckedCondition,
     CheckedConditionSet,
     ConceptInfo,
-    check_cel_expression,
-    check_condition_ir,
     checked_condition_set,
     checked_condition_set_from_json,
     checked_condition_set_to_json,
 )
 
+from propstore.cel_validation import check_cel_condition
 from propstore.families.claims import Claim
 
 
 @dataclass(frozen=True)
 class ClaimConditionDiagnostic:
-    """A non-committal record of a problem in one authored CEL condition.
-
-    Diagnostics are accumulated, never raised: an invalid condition is reported
-    here and excluded from the checked set, but the claim still processes (the
-    quarantine-with-provenance discipline, not an abort).
-    """
+    """An original substrate diagnostic located in an authored condition tuple."""
 
     condition: str
-    message: str
+    diagnostic: CelError
+    index: int
+
+    @property
+    def message(self) -> str:
+        return self.diagnostic.message
 
 
 @dataclass(frozen=True)
@@ -55,7 +55,7 @@ class ClaimConditionReport:
     """The checked outcome of a claim's authored conditions.
 
     ``checked`` is condition-ir's own ``CheckedConditionSet`` (used directly, not
-    a propstore spelling); ``diagnostics`` carries any CEL type errors.
+    a propstore spelling); ``diagnostics`` retains CEL warnings and errors.
     """
 
     checked: CheckedConditionSet
@@ -74,15 +74,14 @@ def check_claim_conditions(
 
     checked: list[CheckedCondition] = []
     diagnostics: list[ClaimConditionDiagnostic] = []
-    for source in claim.conditions:
-        errors = check_cel_expression(source, registry)
-        if errors:
-            diagnostics.extend(
-                ClaimConditionDiagnostic(condition=source, message=str(error))
-                for error in errors
-            )
-            continue
-        checked.append(check_condition_ir(source, registry))
+    for index, source in enumerate(claim.conditions):
+        result = check_cel_condition(source, registry)
+        diagnostics.extend(
+            ClaimConditionDiagnostic(condition=source, diagnostic=item, index=index)
+            for item in result.diagnostics
+        )
+        if result.checked is not None:
+            checked.append(result.checked)
     return ClaimConditionReport(
         checked=checked_condition_set(checked), diagnostics=tuple(diagnostics)
     )

@@ -26,12 +26,17 @@ from __future__ import annotations
 import enum
 import re
 import warnings
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import product
 from typing import TYPE_CHECKING
 
-from condition_ir import CelExpr, to_cel_exprs
+from condition_ir import (
+    CelExpr,
+    CheckedConditionSet,
+    checked_condition_set,
+    to_cel_exprs,
+)
 from human_to_sympy import (
     NumericEvaluation,
     NumericEvaluationStatus,
@@ -40,8 +45,10 @@ from human_to_sympy import (
 
 from propstore.core.graph_types import ParameterizationEdge
 from propstore.dimensions import normalize_to_si
+from propstore.families.claim_admission import ClaimAdmission, require_admitted_claims
 from propstore.families.claim_provenance import ClaimProvenanceIndex
-from propstore.families.claims import Exactness
+from propstore.families.claim_quantitative import PointValue, QuantitativeEvidence
+from propstore.families.claims import Claim, Exactness
 from propstore.families.concepts import Concept
 from propstore.parameterization import build_parameterization_groups
 from propstore.value_comparison import (
@@ -53,7 +60,7 @@ from propstore.value_comparison import (
 
 from .collectors import collect_parameter_claims
 from .context import claim_context, classify_pair_context
-from .models import ConflictClaim, ConflictClass, ConflictRecord
+from .models import ConflictClass, ConflictRecord
 
 if TYPE_CHECKING:
     from propstore.context_lifting import LiftingSystem
@@ -72,13 +79,25 @@ _StateKey = tuple[str, str, tuple[str, ...], tuple[CelExpr, ...], str | None, in
 @dataclass(frozen=True)
 class DerivedConflictValue:
     concept_id: str
-    value: float
+    quantitative: QuantitativeEvidence
     source_claim_ids: tuple[str, ...]
-    conditions: tuple[CelExpr, ...]
+    checked_conditions: CheckedConditionSet
     context_id: str | None
     derivation_chain: str
     hop_count: int
-    unit: str | None = None
+
+    @property
+    def value(self) -> int | float:
+        interval = extract_interval(self.quantitative)
+        if interval is None:
+            raise ValueError(
+                "a derived quantitative result must contain a numeric value"
+            )
+        return interval[0]
+
+    @property
+    def conditions(self) -> tuple[CelExpr, ...]:
+        return to_cel_exprs(self.checked_conditions.sources)
 
 
 class _Sentinel(enum.Enum):
@@ -170,18 +189,13 @@ def _filtered_edges(
 
 def _normalize_claim_value(
     value: float,
-    claim: ConflictClaim,
-    concept_id: str,
-    concepts: ConceptIndex,
-    forms: Mapping[str, FormDefinition] | None,
-) -> float:
-    if forms is None:
+    claim: Claim,
+) -> int | float:
+    evidence = claim.quantitative
+    if evidence.form is None:
         return value
-    unit = claim.unit
-    form_name = _concept_form_name(concepts, concept_id)
-    if form_name is None or form_name not in forms:
-        return value
-    form_def = forms[form_name]
+    unit = evidence.unit
+    form_def = evidence.form
     if unit == form_def.unit_symbol:
         return value
     return normalize_to_si(value, unit, form_def)
@@ -264,43 +278,43 @@ def _merge_contexts_for_derivation(
     return min(candidates)
 
 
-def _merge_conditions(*groups: Iterable[CelExpr]) -> tuple[CelExpr, ...]:
-    merged = {
-        str(condition) for group in groups for condition in group if str(condition)
-    }
-    return to_cel_exprs(sorted(merged))
+def _merge_conditions(*groups: CheckedConditionSet) -> CheckedConditionSet:
+    return checked_condition_set(
+        condition for group in groups for condition in group.conditions
+    )
 
 
 def _direct_state_for_claim(
     concept_id: str,
-    claim: ConflictClaim,
+    claim: Claim,
     concepts: ConceptIndex,
     forms: Mapping[str, FormDefinition] | None,
 ) -> DerivedConflictValue | None:
-    interval = extract_interval(claim)
+    interval = extract_interval(claim.quantitative)
     if interval is None:
         return None
     center, lo, hi = interval
     if abs(hi - lo) >= DEFAULT_TOLERANCE:
         return None
-    normalized = _normalize_claim_value(center, claim, concept_id, concepts, forms)
+    normalized = _normalize_claim_value(center, claim)
     return DerivedConflictValue(
         concept_id=concept_id,
-        value=normalized,
-        source_claim_ids=(claim.claim_id,),
-        conditions=to_cel_exprs(
-            sorted(str(condition) for condition in claim.conditions)
+        quantitative=QuantitativeEvidence(
+            value=PointValue(normalized),
+            form=claim.quantitative.form,
+            unit=_concept_unit_symbol(concepts, forms, concept_id),
         ),
+        source_claim_ids=(claim.claim_id,),
+        checked_conditions=claim.checked_conditions,
         context_id=claim_context(claim),
         derivation_chain=f"{concept_id}={normalized}(claim:{claim.claim_id})",
         hop_count=0,
-        unit=_concept_unit_symbol(concepts, forms, concept_id),
     )
 
 
 def _direct_states_for_concept(
     concept_id: str,
-    claims: Sequence[ConflictClaim],
+    claims: Sequence[Claim],
     concepts: ConceptIndex,
     forms: Mapping[str, FormDefinition] | None,
 ) -> list[DerivedConflictValue]:
@@ -323,19 +337,11 @@ def _direct_states_for_concept(
     return states
 
 
-def _quantity_inputs_only(inputs: Sequence[str], concepts: ConceptIndex) -> bool:
-    for concept_id in inputs:
-        form = _concept_form_name(concepts, concept_id)
-        if form in (None, "", "category", "structural", "boolean"):
-            return False
-    return True
-
-
 def _derive_state(
     concept_id: str,
     sympy_expr: str,
     input_states: Sequence[DerivedConflictValue],
-    edge_conditions: Sequence[CelExpr],
+    edge_conditions: CheckedConditionSet,
     concepts: ConceptIndex,
     forms: Mapping[str, FormDefinition] | None,
     lifting_system: LiftingSystem | None,
@@ -373,19 +379,24 @@ def _derive_state(
         )
     )
     merged_conditions = _merge_conditions(
-        *(state.conditions for state in input_states),
+        *(state.checked_conditions for state in input_states),
         edge_conditions,
     )
     chain_parts = " + ".join(state.derivation_chain for state in input_states)
     return DerivedConflictValue(
         concept_id=concept_id,
-        value=derived_value,
+        quantitative=QuantitativeEvidence(
+            value=PointValue(derived_value),
+            form=None
+            if forms is None
+            else forms.get(_concept_form_name(concepts, concept_id) or ""),
+            unit=_concept_unit_symbol(concepts, forms, concept_id),
+        ),
         source_claim_ids=source_claim_ids,
-        conditions=merged_conditions,
+        checked_conditions=merged_conditions,
         context_id=merged_context,
         derivation_chain=f"{chain_parts} -> {sympy_expr} -> {concept_id}={derived_value}",
         hop_count=max(state.hop_count for state in input_states) + 1,
-        unit=_concept_unit_symbol(concepts, forms, concept_id),
     )
 
 
@@ -418,7 +429,7 @@ def _append_parameterization_record(
     seen_record_keys: set[_RecordKey],
     *,
     concept_id: str,
-    direct_claim: ConflictClaim,
+    direct_claim: Claim,
     derived_state: DerivedConflictValue,
     warning_class: ConflictClass,
 ) -> None:
@@ -432,10 +443,16 @@ def _append_parameterization_record(
             claim_a_id=direct_claim.claim_id,
             claim_b_id=_representative_source_claim_id(derived_state.source_claim_ids),
             warning_class=warning_class,
-            conditions_a=sorted(direct_claim.conditions),
+            conditions_a=list(to_cel_exprs(direct_claim.checked_conditions.sources)),
             conditions_b=list(derived_state.conditions),
-            value_a=value_str(direct_claim.value, claim=direct_claim, with_unit=True),
-            value_b=value_str(derived_state.value, claim=derived_state, with_unit=True),
+            value_a=value_str(
+                direct_claim.quantitative.point,
+                claim=direct_claim.quantitative,
+                with_unit=True,
+            ),
+            value_b=value_str(
+                derived_state.value, claim=derived_state.quantitative, with_unit=True
+            ),
             derivation_chain=derived_state.derivation_chain,
         )
     )
@@ -446,20 +463,17 @@ def _compare_direct_claim_against_derived(
     seen_record_keys: set[_RecordKey],
     *,
     concept_id: str,
-    direct_claim: ConflictClaim,
+    direct_claim: Claim,
     derived_state: DerivedConflictValue,
     lifting_system: LiftingSystem | None,
     forms: Mapping[str, FormDefinition] | None,
     concepts: ConceptIndex,
 ) -> None:
-    concept_form = _concept_form_name(concepts, concept_id)
     if values_compatible(
-        direct_claim.value,
+        direct_claim.quantitative.point,
         derived_state.value,
-        claim_a=direct_claim,
-        claim_b=derived_state,
-        forms=forms,
-        concept_form=concept_form,
+        claim_a=direct_claim.quantitative,
+        claim_b=derived_state.quantitative,
     ):
         return
 
@@ -486,16 +500,18 @@ def _compare_direct_claim_against_derived(
 
 
 def detect_parameterization_conflicts(
-    by_concept: dict[str, list[ConflictClaim]],
+    claims: Sequence[Claim],
     concepts: ConceptIndex,
     parameterizations: ParameterizationIndex,
-    claims: Sequence[ConflictClaim],
     *,
+    admissions: Collection[ClaimAdmission],
+    provenance: ClaimProvenanceIndex,
     lifting_system: LiftingSystem | None = None,
     forms: Mapping[str, FormDefinition] | None = None,
 ) -> list[ConflictRecord]:
+    require_admitted_claims(claims, admissions)
     records: list[ConflictRecord] = []
-    all_param_claims = by_concept or collect_parameter_claims(claims)
+    all_param_claims = collect_parameter_claims(claims)
     seen_record_keys: set[_RecordKey] = set()
     edges = _filtered_edges(
         parameterizations, exactness_filter=frozenset({Exactness.EXACT})
@@ -508,8 +524,6 @@ def detect_parameterization_conflicts(
 
         for edge in concept_edges:
             inputs = _edge_inputs(edge)
-            if not _quantity_inputs_only(inputs, concepts):
-                continue
             input_state_lists = [
                 _direct_states_for_concept(
                     input_id,
@@ -525,9 +539,11 @@ def detect_parameterization_conflicts(
             sympy_expr = edge.sympy
             if sympy_expr is None:
                 continue
-            edge_conditions = to_cel_exprs(
-                sorted(str(condition) for condition in edge.conditions)
-            )
+            edge_conditions = edge.checked_conditions
+            if edge_conditions is None:
+                raise ValueError(
+                    "parameterization requires checked equation conditions"
+                )
             for input_states in product(*input_state_lists):
                 derived_state = _derive_state(
                     concept_id,
@@ -552,7 +568,7 @@ def detect_parameterization_conflicts(
                         forms=forms,
                         concepts=concepts,
                     )
-    return records
+    return [record.with_provenance(provenance) for record in records]
 
 
 # --- Transitive detector -------------------------------------------------------
@@ -570,10 +586,10 @@ def _state_key(state: DerivedConflictValue) -> _StateKey:
 
 
 def _detect_transitive_conflicts_for_claims(
-    claims: Sequence[ConflictClaim],
+    claims: Sequence[Claim],
     concepts: ConceptIndex,
     parameterizations: ParameterizationIndex,
-    by_concept: dict[str, list[ConflictClaim]],
+    by_concept: dict[str, list[Claim]],
     *,
     lifting_system: LiftingSystem | None = None,
     forms: Mapping[str, FormDefinition] | None = None,
@@ -621,13 +637,13 @@ def _detect_transitive_conflicts_for_claims(
                     sympy_expr = edge.sympy
                     if sympy_expr is None:
                         continue
-                    if not _quantity_inputs_only(inputs, concepts):
-                        continue
                     if any(input_id not in resolved for input_id in inputs):
                         continue
-                    edge_conditions = to_cel_exprs(
-                        sorted(str(condition) for condition in edge.conditions)
-                    )
+                    edge_conditions = edge.checked_conditions
+                    if edge_conditions is None:
+                        raise ValueError(
+                            "parameterization requires checked equation conditions"
+                        )
                     ordered_input_states = [resolved[input_id] for input_id in inputs]
                     for input_states in product(*ordered_input_states):
                         derived_state = _derive_state(
@@ -674,10 +690,11 @@ def _detect_transitive_conflicts_for_claims(
 
 
 def detect_transitive_conflicts(
-    claims: Sequence[ConflictClaim],
+    claims: Sequence[Claim],
     concepts: ConceptIndex,
     parameterizations: ParameterizationIndex,
     *,
+    admissions: Collection[ClaimAdmission],
     provenance: ClaimProvenanceIndex,
     lifting_system: LiftingSystem | None = None,
     forms: Mapping[str, FormDefinition] | None = None,
@@ -690,6 +707,7 @@ def detect_transitive_conflicts(
     claim for the same concept becomes a conflict record.
     """
 
+    require_admitted_claims(claims, admissions)
     by_concept = collect_parameter_claims(claims)
     records = _detect_transitive_conflicts_for_claims(
         claims,

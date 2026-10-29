@@ -32,7 +32,7 @@ from argumentation.frameworks.partial_af import PartialArgumentationFramework
 from condition_ir import Z3TranslationError
 
 from propstore.conflict_detector import ConflictClass, detect_conflicts
-from propstore.conflict_detector.models import ConflictClaim
+from propstore.families.claim_admission import ClaimAdmissionError
 from propstore.families.claim_provenance import BundledClaim, ClaimProvenanceIndex
 from propstore.merge.merge_claims import MergeClaim
 from propstore.merge.witness import ProvenanceWitness
@@ -154,8 +154,11 @@ def _claims_equal(left: MergeClaim, right: MergeClaim) -> bool:
 def _classify_pair(left_claim: MergeClaim, right_claim: MergeClaim) -> _DiffKind:
     """Classify disagreement between two concrete claim alternatives."""
 
-    left_conflict = ConflictClaim.from_claim(left_claim.claim)
-    right_conflict = ConflictClaim.from_claim(right_claim.claim)
+    registry = dict(left_claim.condition_registry)
+    for name, info in right_claim.condition_registry.items():
+        if name in registry and registry[name] != info:
+            return _DiffKind.UNTRANSLATABLE
+        registry[name] = info
     provenance = ClaimProvenanceIndex.from_micropublications(
         bundle
         for claim in (left_claim, right_claim)
@@ -165,8 +168,14 @@ def _classify_pair(left_claim: MergeClaim, right_claim: MergeClaim) -> _DiffKind
 
     try:
         records = detect_conflicts(
-            [left_conflict, right_conflict], {}, {}, provenance=provenance
+            [left_claim.claim, right_claim.claim],
+            {},
+            registry,
+            admissions=(left_claim.admission, right_claim.admission),
+            provenance=provenance,
         )
+    except ClaimAdmissionError:
+        raise
     except (ValueError, Z3TranslationError):
         return _DiffKind.UNTRANSLATABLE
 

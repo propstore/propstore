@@ -10,6 +10,7 @@ from msgspec.structs import replace as replace_struct
 
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.labels import Label
+from propstore.families.claim_quantitative import PointValue, QuantitativeEvidence
 from propstore.families.claims import ClaimType
 from propstore.support_revision.entrenchment import EntrenchmentReport
 from propstore.support_revision.explanation_types import EntrenchmentReason
@@ -164,7 +165,7 @@ def _changed_semantic_state(state: EpistemicState, legacy_id: str) -> EpistemicS
         source_claim = ActiveClaim(
             claim_id="claim_legacy_updated",
             claim_type=ClaimType.PARAMETER,
-            value="legacy",
+            quantitative=QuantitativeEvidence(PointValue("legacy"), None, None),
             concept_id="concept_legacy",
             source_paper="paper:updated",
         )

@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Generic, Literal, Protocol, TypeVar
 
+from condition_ir import CelError
+
 from propstore.families.registry import PropstoreFamily
 
 StageId = StrEnum
@@ -33,6 +35,9 @@ class PassDiagnostic:
     filename: str | None = None
     artifact_id: str | None = None
     pass_name: str | None = None
+    field: str | None = None
+    index: int | None = None
+    cel_diagnostic: CelError | None = None
 
     @property
     def is_error(self) -> bool:
@@ -48,9 +53,16 @@ class PassDiagnostic:
             prefix.append(self.filename)
         if self.artifact_id:
             prefix.append(self.artifact_id)
+        if self.field:
+            prefix.append(
+                self.field + (f"[{self.index}]" if self.index is not None else "")
+            )
+        message = self.message
+        if self.cel_diagnostic is not None:
+            message = f"{self.cel_diagnostic.expression!r}: {message}"
         if prefix:
-            return f"{': '.join(prefix)}: {self.message}"
-        return self.message
+            return f"{': '.join(prefix)}: {message}"
+        return message
 
     def __str__(self) -> str:
         return self.render()

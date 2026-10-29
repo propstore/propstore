@@ -75,7 +75,7 @@ def claim_target_value(
         status=status,
         source=source,
         claim_id=claim_id,
-        value=claim.value,
+        value=claim.quantitative.point,
         claim_type=None if claim.claim_type is None else claim.claim_type.value,
         statement=claim.statement,
         expression=claim.expression,
@@ -520,7 +520,7 @@ def _resolve_claim_input(
     claim_id = str(claim.claim_id)
     trace.record_claim_dependency(claim_id)
     return WorldlineInputSource(
-        value=claim.value,
+        value=claim.quantitative.point,
         source="claim",
         claim_id=display_claim_id(context.world, claim_id) or claim_id,
     )

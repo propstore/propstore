@@ -275,7 +275,7 @@ class ATMSClaimNode:
 
     @property
     def value(self) -> ScalarValue | None:
-        return self.claim.value
+        return self.claim.quantitative.point
 
 
 @dataclass(frozen=True)
@@ -1917,9 +1917,7 @@ class ATMSEngine:
 
         claim = _node_claim(node)
         if claim is not None:
-            _label, quality = self._runtime.claim_support(
-                ActiveClaim(claim_id=str(claim.claim_id))
-            )
+            _label, quality = self._runtime.claim_support(ActiveClaim.from_claim(claim))
             return quality
         return SupportQuality.SEMANTIC_COMPATIBLE
 

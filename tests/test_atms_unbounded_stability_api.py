@@ -13,6 +13,7 @@ import propstore.world.atms as atms_module
 from propstore.world.bound import BoundWorld
 from propstore.world.types import ATMSNodeStatus, QueryableAssumption
 from tests.atms_feed import ClaimSpec, build_bound
+from tests.canonical_claim_fixtures import concept_with_form
 
 
 def _budget_exhausted_type() -> type[BaseException]:
@@ -26,6 +27,10 @@ def _flip_world(
 ) -> tuple[BoundWorld, str, list[QueryableAssumption]]:
     condition = f"q{flip_index} == {flip_index}"
     bound = build_bound(
+        concepts=tuple(
+            concept_with_form(f"q{index}", f"q{index}", "quantity")
+            for index in range(queryable_count)
+        ),
         claims=[
             ClaimSpec(
                 claim_id="claim_future",

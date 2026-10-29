@@ -75,16 +75,6 @@ if TYPE_CHECKING:
     from propstore.core.graph_types import ActiveWorldGraph
 
 
-def _optional_int(value: object) -> int | None:
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float) and value.is_integer():
-        return int(value)
-    return None
-
-
 def _resolve_recency(
     claims: Sequence[ActiveClaim],
 ) -> tuple[str | None, str | None]:
@@ -127,7 +117,7 @@ def _resolve_sample_size(
     best_n: int | None = None
     best_claims: list[str] = []
     for c in claims:
-        n = _optional_int(c.sample_size)
+        n = c.quantitative.sample_size
         if n is None:
             continue
         if best_n is None or n > best_n:
@@ -661,7 +651,7 @@ def _resolve_praf(
                 None if claim is None else claim.opinion_disbelief,
                 None if claim is None else claim.opinion_uncertainty,
                 None if claim is None else claim.opinion_base_rate,
-                None if claim is None else claim.confidence,
+                None if claim is None else claim.quantitative.confidence,
                 criterion=decision_criterion,
                 pessimism_index=pessimism_index,
             )

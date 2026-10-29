@@ -13,9 +13,10 @@ from typing import TYPE_CHECKING
 
 from condition_ir import CelExpr
 
+from propstore.families.claims import Claim
 from propstore.families.contexts import LiftingDecisionStatus
 
-from .models import ConflictClaim, ConflictClass, ConflictRecord
+from .models import ConflictClass, ConflictRecord
 
 if TYPE_CHECKING:
     from propstore.context_lifting import LiftingDecision, LiftingSystem
@@ -54,7 +55,7 @@ def classify_pair_context(
     return ConflictClass.CONTEXT_PHI_NODE
 
 
-def claim_context(claim: ConflictClaim) -> str | None:
+def claim_context(claim: Claim) -> str | None:
     return claim.context_id
 
 

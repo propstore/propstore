@@ -5,7 +5,7 @@ package:
 contracts:
 - kind: claim_type_contract
   name: algorithm
-  contract_version: 2026.06.30
+  contract_version: 2026.10.29
   body:
     concept_links:
     - field: output_concept
@@ -21,7 +21,7 @@ contracts:
     - propstore.claim_contracts.AlgorithmUnboundNamesCheck
 - kind: claim_type_contract
   name: comparison
-  contract_version: 2026.06.30
+  contract_version: 2026.10.29
   body:
     concept_links:
     - field: concepts
@@ -34,7 +34,7 @@ contracts:
     semantic_checks: []
 - kind: claim_type_contract
   name: equation
-  contract_version: 2026.06.30
+  contract_version: 2026.10.29
   body:
     concept_links:
     - field: output_concept
@@ -49,7 +49,7 @@ contracts:
     - propstore.claim_contracts.DimensionalConsistencyCheck
 - kind: claim_type_contract
   name: limitation
-  contract_version: 2026.06.30
+  contract_version: 2026.10.29
   body:
     concept_links:
     - field: concepts
@@ -62,7 +62,7 @@ contracts:
     semantic_checks: []
 - kind: claim_type_contract
   name: measurement
-  contract_version: 2026.06.30
+  contract_version: 2026.10.29
   body:
     concept_links:
     - field: target_concept
@@ -76,7 +76,7 @@ contracts:
     semantic_checks: []
 - kind: claim_type_contract
   name: mechanism
-  contract_version: 2026.06.30
+  contract_version: 2026.10.29
   body:
     concept_links:
     - field: concepts
@@ -89,7 +89,7 @@ contracts:
     semantic_checks: []
 - kind: claim_type_contract
   name: model
-  contract_version: 2026.06.30
+  contract_version: 2026.10.29
   body:
     concept_links: []
     nonempty_fields: []
@@ -97,7 +97,7 @@ contracts:
     semantic_checks: []
 - kind: claim_type_contract
   name: observation
-  contract_version: 2026.06.30
+  contract_version: 2026.10.29
   body:
     concept_links:
     - field: concepts
@@ -110,7 +110,7 @@ contracts:
     semantic_checks: []
 - kind: claim_type_contract
   name: parameter
-  contract_version: 2026.06.30
+  contract_version: 2026.10.29
   body:
     concept_links:
     - field: output_concept
@@ -140,7 +140,7 @@ contracts:
     - contract_version: 2026.07.21
       key: concept
       name: concept
-    - contract_version: 2026.07.21
+    - contract_version: 2026.10.29
       key: claim
       name: claim
     - contract_version: 2026.06.29
@@ -206,7 +206,7 @@ contracts:
     - contract_version: 2026.06.29
       key: source_concepts
       name: source_concepts
-    - contract_version: 2026.06.29
+    - contract_version: 2026.10.29
       key: source_claims
       name: source_claims
     - contract_version: 2026.06.29
@@ -284,7 +284,7 @@ contracts:
     key: calibration_counts
 - kind: family
   name: claim
-  contract_version: 2026.07.21
+  contract_version: 2026.10.29
   body:
     accessor: claim
     artifact_family: claim
@@ -298,7 +298,7 @@ contracts:
         kind: flat-yaml
         namespace: claim
         ref_field: self
-    artifact_family_contract_version: 2026.07.21
+    artifact_family_contract_version: 2026.10.29
     foreign_keys:
     - many: false
       required: false
@@ -877,7 +877,7 @@ contracts:
     key: same_as_assertion
 - kind: family
   name: source_claims
-  contract_version: 2026.06.29
+  contract_version: 2026.10.29
   body:
     accessor: source_claims
     artifact_family: source_claims
@@ -892,7 +892,7 @@ contracts:
           template: source/{stem}
         filename: claims.yaml
         kind: fixed-file
-    artifact_family_contract_version: 2026.06.29
+    artifact_family_contract_version: 2026.10.29
     foreign_keys: []
     key: source_claims
 - kind: family

@@ -8,10 +8,22 @@ def test_regime_split_same_value_claims_remain_distinct_with_ignorance() -> None
     merge = build_merge_framework(
         {
             "master": [
-                param_claim("claim1", "concept_x", 300.0, conditions=["T < 100"])
+                param_claim(
+                    "claim1",
+                    "concept_x",
+                    300.0,
+                    conditions=["T < 100"],
+                    condition_concepts=("T",),
+                )
             ],
             "paper/regime-right": [
-                param_claim("claim1", "concept_x", 300.0, conditions=["T >= 100"])
+                param_claim(
+                    "claim1",
+                    "concept_x",
+                    300.0,
+                    conditions=["T >= 100"],
+                    condition_concepts=("T",),
+                )
             ],
         },
         "master",

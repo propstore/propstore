@@ -9,16 +9,22 @@ in-memory charter feed, including exact canonical scalar value identity.
 from __future__ import annotations
 
 import pytest
+from condition_ir import KindType
 
 from propstore.core.scalars import ScalarValue
 from propstore.families.claims import ClaimType
+from propstore.families.forms import FormDefinition
 from propstore.world.overlay import OverlayWorld
 from propstore.world.types import SyntheticClaim, ValueStatus
 from tests.atms_feed import ClaimSpec, ParamSpec, build_bound
+from tests.canonical_claim_fixtures import concept_with_form
 
 
 def test_overlay_adds_synthetic_claim_for_new_concept() -> None:
-    base = build_bound(claims=(ClaimSpec(claim_id="a", concept_id="A", value=2.0),))
+    base = build_bound(
+        claims=(ClaimSpec(claim_id="a", concept_id="A", value=2.0),),
+        concepts=(concept_with_form("B", "B", "quantity"),),
+    )
     overlay = OverlayWorld(
         base,
         add=[
@@ -33,9 +39,30 @@ def test_overlay_adds_synthetic_claim_for_new_concept() -> None:
     assert result.claims[0].value == 7.0
 
 
-@pytest.mark.parametrize("value", ["fast", True, 2, 2.5])
-def test_overlay_preserves_synthetic_scalar_value(value: ScalarValue) -> None:
-    base = build_bound(claims=())
+@pytest.mark.parametrize(
+    ("value", "kind"),
+    [
+        ("fast", KindType.CATEGORY),
+        (True, KindType.BOOLEAN),
+        (2, KindType.QUANTITY),
+        (2.5, KindType.QUANTITY),
+    ],
+)
+def test_overlay_preserves_synthetic_scalar_value(
+    value: ScalarValue, kind: KindType
+) -> None:
+    base = build_bound(
+        claims=(),
+        concepts=(concept_with_form("A", "A", "synthetic"),),
+        forms=(
+            FormDefinition(
+                name="synthetic",
+                kind=kind,
+                is_dimensionless=kind is KindType.QUANTITY,
+                unit_symbol="1" if kind is KindType.QUANTITY else None,
+            ),
+        ),
+    )
     overlay = OverlayWorld(
         base,
         add=[SyntheticClaim(id="syn", concept_id="A", value=value)],

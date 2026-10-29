@@ -53,10 +53,22 @@ def test_merge_report_surfaces_ignorance_query_state() -> None:
     merge = build_merge_framework(
         {
             "master": [
-                param_claim("claim1", "concept_x", 300.0, conditions=["temp > 300"])
+                param_claim(
+                    "claim1",
+                    "concept_x",
+                    300.0,
+                    conditions=["temp > 300"],
+                    condition_concepts=("temp",),
+                )
             ],
             "paper/phi": [
-                param_claim("claim1", "concept_x", 150.0, conditions=["temp < 200"])
+                param_claim(
+                    "claim1",
+                    "concept_x",
+                    150.0,
+                    conditions=["temp < 200"],
+                    condition_concepts=("temp",),
+                )
             ],
         },
         "master",

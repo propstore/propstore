@@ -1,73 +1,17 @@
-"""Shared conflict detector models.
-
-A :class:`ConflictClaim` is the field-subset VIEW of the one canonical
-:class:`~propstore.families.claims.Claim` charter document that the detectors
-compare (the view the claim charter's docstring promises).
-:meth:`ConflictClaim.from_claim` is attribute access plus the single
-package-owned lowering at the boundary — authored CEL condition strings become
-condition-ir ``CelExpr`` via ``to_cel_exprs``. There is no payload dict, no
-``from_payload``, and no second spelling of the claim or its variable bindings.
-"""
+"""Conflict comparison results; input claims remain canonical charter objects."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from enum import Enum
 
-from condition_ir import CelExpr, to_cel_exprs
+from condition_ir import CelExpr
 
 from propstore.families.claim_provenance import (
     BundledClaim,
     ClaimProvenanceIndex,
     UnbundledClaim,
 )
-from propstore.families.claims import Claim, ClaimType, ClaimVariable
-
-
-@dataclass(frozen=True)
-class ConflictClaim:
-    claim_id: str
-    claim_type: ClaimType | None = None
-    output_concept_id: str | None = None
-    target_concept_id: str | None = None
-    measure: str | None = None
-    value: float | None = None
-    lower_bound: float | int | None = None
-    upper_bound: float | int | None = None
-    unit: str | None = None
-    expression: str | None = None
-    sympy: str | None = None
-    body: str | None = None
-    context_id: str | None = None
-    conditions: tuple[CelExpr, ...] = field(default_factory=tuple)
-    variables: tuple[ClaimVariable, ...] = ()
-
-    @classmethod
-    def from_claim(cls, claim: Claim) -> ConflictClaim:
-        """The detector view of the claim's authored semantics."""
-
-        return cls(
-            claim_id=claim.claim_id,
-            claim_type=claim.claim_type,
-            output_concept_id=claim.output_concept,
-            target_concept_id=claim.target_concept,
-            measure=claim.measure,
-            value=(
-                float(claim.value)
-                if isinstance(claim.value, int | float)
-                and not isinstance(claim.value, bool)
-                else None
-            ),
-            lower_bound=claim.lower_bound,
-            upper_bound=claim.upper_bound,
-            unit=claim.unit,
-            expression=claim.expression,
-            sympy=claim.sympy,
-            body=claim.body,
-            context_id=claim.context_id,
-            conditions=to_cel_exprs(claim.conditions),
-            variables=claim.variables,
-        )
 
 
 class ConflictClass(Enum):
@@ -107,8 +51,6 @@ class ConflictRecord:
     provenance_b: BundledClaim | UnbundledClaim | None = None
 
     def with_provenance(self, provenance: ClaimProvenanceIndex) -> ConflictRecord:
-        """Attach canonical membership without changing comparison semantics."""
-
         return replace(
             self,
             provenance_a=provenance.for_claim(self.claim_a_id),
