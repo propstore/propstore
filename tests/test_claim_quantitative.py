@@ -269,3 +269,12 @@ def test_interval_only_claim_view_does_not_report_absence() -> None:
     value = _claim_value(claim)
     assert value.state is ViewState.KNOWN
     assert "[1, 3]" in value.sentence
+
+
+def test_large_point_below_same_unit_interval_does_not_widen_during_comparison() -> None:
+    from propstore.value_comparison import values_compatible
+
+    form = FormDefinition(name="frequency", kind=KindType.QUANTITY, dimensions={"T":-1}, unit_symbol="Hz")
+    point = QuantitativeEvidence(PointValue(2**53 + 3), form, "kHz")
+    interval = QuantitativeEvidence(IntervalValue(float(2**53 + 4), None), form, "kHz")
+    assert not values_compatible(None, None, claim_a=point, claim_b=interval)

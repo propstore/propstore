@@ -40,8 +40,12 @@ def intervals_compatible(a: Interval, b: Interval, tolerance: float = DEFAULT_TO
     _, lo_a, hi_a = a
     _, lo_b, hi_b = b
     if abs(hi_a - lo_a) < tolerance and abs(hi_b - lo_b) < tolerance:
-        return abs(lo_a - lo_b) < tolerance
-    return lo_a <= hi_b + tolerance and lo_b <= hi_a + tolerance
+        return abs(Fraction(lo_a) - Fraction(lo_b)) < tolerance
+    if lo_a > hi_b and (lo_a == float("inf") or hi_b == float("-inf") or Fraction(lo_a) - Fraction(hi_b) > tolerance):
+        return False
+    if lo_b > hi_a and (lo_b == float("inf") or hi_a == float("-inf") or Fraction(lo_b) - Fraction(hi_a) > tolerance):
+        return False
+    return True
 
 
 def _normalized(evidence: QuantitativeEvidence, interval: Interval, target: FormDefinition | None) -> Interval:
@@ -81,6 +85,8 @@ def values_compatible(
             return values_compatible(claim_a.point, claim_b.point, tolerance)
         a, b = extract_interval(claim_a), extract_interval(claim_b)
         if a is not None and b is not None:
+            if claim_a.unit == claim_b.unit and form_a == form_b:
+                return intervals_compatible(a, b, tolerance)
             return intervals_compatible(_normalized(claim_a, a, form_a), _normalized(claim_b, b, form_a), tolerance)
         value_a, value_b = claim_a.point, claim_b.point
     if isinstance(value_a, int | float) and not isinstance(value_a, bool) and isinstance(value_b, int | float) and not isinstance(value_b, bool):
