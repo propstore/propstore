@@ -435,10 +435,11 @@ class WorldQuery(WorldStore):
 
     Honesty / non-commitment: a not-yet-built sidecar raises
     :class:`FileNotFoundError` (the cause — "run pks build" — is surfaced, never
-    collapsed to an empty/zero result), and the storage methods return *every*
-    row regardless of lifecycle status; the policy-aware :meth:`claims_with_policy`
-    / :meth:`build_diagnostics` views are where draft/blocked/quarantine rows are
-    hidden at render time.
+    collapsed to an empty/zero result). Raw authored documents remain in the
+    sidecar. Semantic reads require a matching admitted checked outcome;
+    :meth:`quarantined_claims` exposes retained quarantined documents and
+    diagnostics under explicit policy. Authored lifecycle filtering remains
+    owned by :meth:`claims_with_policy`.
 
     Each open reader holds its own charter schema and schema-local mapped classes,
     so readers over independently built sidecars can coexist safely.
@@ -697,7 +698,8 @@ class WorldQuery(WorldStore):
         if not claim_ids:
             return []
         resolved = {self.resolve_claim(claim_id) or claim_id for claim_id in claim_ids}
-        return select_stances_between(self._session, resolved)
+        admitted = {claim.claim_id for claim in self.claims_for(None)}
+        return select_stances_between(self._session, resolved & admitted)
 
     def all_claim_stances(self) -> Sequence[Stance]:
         admitted = {claim.claim_id for claim in self.claims_for(None)}
@@ -708,12 +710,16 @@ class WorldQuery(WorldStore):
         return [
             justification for justification in select_justifications(self._session)
             if (justification.conclusion is None or justification.conclusion in admitted)
-            and all(premise in admitted for premise in justification.premises)
         ]
 
     def explain(self, claim_id: str) -> Sequence[Stance]:
         resolved = self.resolve_claim(claim_id) or claim_id
-        return select_incident_stances(self._session, resolved)
+        self.get_claim(resolved)
+        admitted = {claim.claim_id for claim in self.claims_for(None)}
+        return [
+            stance for stance in select_incident_stances(self._session, resolved)
+            if stance.source_claim_id in admitted and stance.target_claim_id in admitted
+        ]
 
     # ── relations + parameterizations ────────────────────────────────────────
 
@@ -766,7 +772,11 @@ class WorldQuery(WorldStore):
     # ── micropublications + conflicts ────────────────────────────────────────
 
     def all_micropublications(self) -> Sequence[Micropublication]:
-        return select_micropublications(self._session)
+        admitted = {claim.claim_id for claim in self.claims_for(None)}
+        return [
+            bundle for bundle in select_micropublications(self._session)
+            if all(claim_id in admitted for claim_id in bundle.claims)
+        ]
 
     def conflicts(self) -> Sequence[ConflictRecord]:
         return select_conflicts(self._session)

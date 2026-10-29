@@ -38,10 +38,18 @@ The issue's original blocked count example was partly repaired: current count de
 
 ## Next step
 
-Commit the first vertical slice, then classify and repair dependent-reference diagnostics (quarantined is currently described as nonexistent), complete stance/explanation/micropublication filtering, and add blocked-equation/grounding/argumentation regressions. Parent handles remaining CI and prerequisite integration.
+Parent publishes #144 branch and reads PR CI. Repair concrete failures in scope. #209 waits for #145/#82/#27/#208 owner integration; do not replace them with detector-local approximations.
 
 ## Iteration 1 - admission through WorldQuery
 
 Persist ClaimAdmission charter objects containing typed admitted/quarantined state, full checked-document digest and claim pass identity in the existing derived snapshot. Delete RepositoryCheckedBundle.claims; use explicitly admitted/quarantined collections, and enumerate all checked artifacts only at projection/lint boundaries. WorldQuery semantic claims and parameterizations, and grounding loading, now consume admitted records. Explicit policy-gated quarantine inspection retains raw document and diagnostics; lookup of quarantined claims raises QuarantinedClaimError. Report count now reads blocked checked artifacts.
 
 Actively authored focused test command: `powershell -File scripts/run_logged_pytest.ps1 tests/test_checked_admission.py -q -n 0` passed 2 tests; log `logs/test-runs/pytest-20261028-234015.log`. The preceding run failed because the new test passed RenderPolicy as positional Environment; corrected test to the existing keyword API. No CI steps run locally.
+
+## Iteration 2 - dependent semantic edges
+
+Disposition correction from primary source: ASPIC extract_justifications explicitly retains inactive-premise licenses because removing them fabricates independent reported premises. Keep licenses with admitted conclusions even if a premise is quarantined; the missing active premise prevents argument construction. This is a declaration capability, not a blocked claim node. Exclude quarantined conclusions, stance endpoints and micropublication claim bundles from semantic inventories. References now distinguish quarantined subjects from nonexistent subjects in their diagnostic kind and message.
+
+Final authored focused run passed 3 tests, log `logs/test-runs/pytest-20261028-234554.log`. Tests cover retained raw status/diagnostics, explicit quarantine lookup failure, changed-document/pass admission rejection, NO_CLAIMS value result, revalidation at a new sidecar, multiple diagnostics counted once, blocked equations producing no parameterization, blocked parameters producing no conflicts or grounding facts, no blocked ATMS nodes, and no ASPIC argument from a quarantined premise. `git diff --check` passed. PR CI and repository-wide suites remain unrun locally by instruction.
+
+Known integration concern for PR CI: tests/test_world_query.py uses missing-statement OBSERVATION fixtures, which are truly quarantined by the canonical contract. Repair those fixtures to valid claims where their tests intend active reasoning; do not weaken admission. #145 worker may merge the first admission commit; compiler/ir.py and claims_passes.py are stable for its quantitative additions.
