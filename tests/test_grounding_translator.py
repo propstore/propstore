@@ -23,7 +23,7 @@ def _var(name: str) -> Term:
     return Term(kind="var", name=name)
 
 
-def _const(value: str | int | float | bool) -> Term:
+def _const(value: str | float | bool) -> Term:
     return Term(kind="const", value=value)
 
 

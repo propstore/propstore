@@ -66,16 +66,17 @@ def _collect_nodes(path: Path) -> list[MigrationNode]:
         if isinstance(statement, ast.ClassDef) and statement.name.startswith("Test"):
             class_marked = module_marked or _decorators_include_migration(statement)
             for member in statement.body:
-                if isinstance(
-                    member, (ast.FunctionDef, ast.AsyncFunctionDef)
-                ) and member.name.startswith("test_"):
-                    if class_marked or _decorators_include_migration(member):
-                        results.append(
-                            MigrationNode(
-                                path,
-                                f"{path.as_posix()}::{statement.name}::{member.name}",
-                            )
+                if (
+                    isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and member.name.startswith("test_")
+                    and (class_marked or _decorators_include_migration(member))
+                ):
+                    results.append(
+                        MigrationNode(
+                            path,
+                            f"{path.as_posix()}::{statement.name}::{member.name}",
                         )
+                    )
     return results
 
 

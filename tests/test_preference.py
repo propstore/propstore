@@ -6,7 +6,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-import propstore.preference as preference
+from propstore import preference
 from propstore.families.claims import Claim
 from propstore.preference import claim_strength
 from propstore.provenance import ProvenanceStatus

@@ -24,15 +24,29 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
-from calibration import TemperatureScaler as TemperatureScaler
-from calibration import brier_score as brier_score
-from calibration import expected_calibration_error as expected_calibration_error
-from calibration import log_loss as log_loss
+from calibration import (
+    TemperatureScaler,
+    brier_score,
+    expected_calibration_error,
+    log_loss,
+)
 from doxa import Opinion
 
 from propstore.core.base_rates import BaseRateUnresolved
 from propstore.core.id_types import AssertionId
 from propstore.provenance import Provenance
+
+__all__ = [
+    "CalibrationSource",
+    "CategoryPrior",
+    "CategoryPriorRegistry",
+    "CorpusCalibrator",
+    "TemperatureScaler",
+    "brier_score",
+    "categorical_to_opinion",
+    "expected_calibration_error",
+    "log_loss",
+]
 
 # ---------------------------------------------------------------------------
 # Corpus CDF Calibration

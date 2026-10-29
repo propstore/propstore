@@ -16,6 +16,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
+from doxa import opinion_sensitivity
+
 from propstore.core.environment import Environment
 from propstore.core.id_types import to_context_id
 from propstore.fragility_contributors import (
@@ -33,7 +35,6 @@ from propstore.fragility_scoring import (
     combine_fragility,
     detect_interactions,
     imps_rev,
-    opinion_sensitivity,
     score_conflict,
     support_derivative_fragility,
     weighted_epistemic_score,

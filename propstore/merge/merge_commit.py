@@ -528,9 +528,9 @@ def create_merge_commit(
 
 
 __all__ = [
-    "NonClaimMergeConflict",
     "DivergentMergeTargetError",
     "MergeCommitPlan",
+    "NonClaimMergeConflict",
     "build_repository_merge_framework",
     "create_merge_commit",
     "plan_merge_commit",

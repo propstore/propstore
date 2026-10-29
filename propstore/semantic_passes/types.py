@@ -107,18 +107,18 @@ class PipelineResult(Generic[T]):
         return not self.errors and self.output is not None
 
 
-InT = TypeVar("InT", contravariant=True)
+InputT = TypeVar("InputT", contravariant=True)
 OutT = TypeVar("OutT")
 
 
-class SemanticPass(Protocol[InT, OutT]):
+class SemanticPass(Protocol[InputT, OutT]):
     family: PropstoreFamily
     name: str
     version: str
     input_stage: StageId
     output_stage: StageId
 
-    def run(self, value: InT, context: object) -> PassResult[OutT]: ...
+    def run(self, value: InputT, context: object) -> PassResult[OutT]: ...
 
 
 @dataclass(frozen=True)

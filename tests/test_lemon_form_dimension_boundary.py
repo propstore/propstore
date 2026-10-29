@@ -12,7 +12,7 @@ import bridgman
 import pytest
 from condition_ir import KindType
 
-import propstore.dimensions as dimensions
+from propstore import dimensions
 from propstore.core.lemon import (
     LexicalEntry,
     LexicalForm,

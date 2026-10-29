@@ -19,7 +19,7 @@ from __future__ import annotations
 import importlib
 import struct
 from collections.abc import Callable, Mapping, Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import ModuleType
 from typing import Any, Protocol
 
@@ -125,7 +125,7 @@ def embed_entities(
     embedded = 0
     errors = 0
     dimensions: int | None = None
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     for offset in range(0, len(to_embed), batch_size):
         batch = to_embed[offset : offset + batch_size]

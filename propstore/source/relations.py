@@ -10,7 +10,7 @@ claim id — never a raw source-local handle.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import msgspec
@@ -61,7 +61,7 @@ _ALLOWED_JUSTIFICATION_RULE_STRENGTHS = frozenset({"strict", "defeasible"})
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _validate_justification_rule_fields(

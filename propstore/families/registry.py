@@ -41,28 +41,34 @@ from propstore.families.micropublications import Micropublication
 
 # Re-exported so the proposal subsystem and tests can use
 # ``propstore.families.registry`` as the one import site for proposal refs.
-from propstore.families.predicates import Predicate, PredicateProposal
-from propstore.families.predicates import PredicateProposalRef as PredicateProposalRef
+from propstore.families.predicates import (
+    Predicate,
+    PredicateProposal,
+    PredicateProposalRef,
+)
 from propstore.families.relations import Stance, StanceProposal
-from propstore.families.rules import DefeasibleRule, RuleProposal
-from propstore.families.rules import RuleProposalRef as RuleProposalRef
-from propstore.families.rules import RuleSuperiority
+from propstore.families.rules import (
+    DefeasibleRule,
+    RuleProposal,
+    RuleProposalRef,
+    RuleSuperiority,
+)
 from propstore.families.sameas import SameAs
 
 # Re-exported here so the source subsystem can use ``propstore.families.registry``
 # as the one import site for source-branch refs and placement (matching the
 # canonical-source/claim/etc. refs that also live with the registry).
-from propstore.families.sources import SOURCE_BRANCH as SOURCE_BRANCH
 from propstore.families.sources import (
+    SOURCE_BRANCH,
     SourceClaimsDocument,
     SourceConceptsDocument,
     SourceDocument,
     SourceFinalizeReportDocument,
     SourceJustificationsDocument,
     SourceMicropublicationsDocument,
+    SourceRef,
+    SourceStancesDocument,
 )
-from propstore.families.sources import SourceRef as SourceRef
-from propstore.families.sources import SourceStancesDocument
 from propstore.families.temporal import (
     DescriptionTemporalAnchorDoc,
     HappensBeforeEdgeDoc,
@@ -71,8 +77,23 @@ from propstore.families.temporal import (
 
 # Re-exported so the worldline owner/CLI subsystem can use
 # ``propstore.families.registry`` as the one import site for the worldline ref.
-from propstore.worldline.definition import WorldlineDefinition
-from propstore.worldline.definition import WorldlineRef as WorldlineRef
+from propstore.worldline.definition import WorldlineDefinition, WorldlineRef
+
+__all__ = [
+    "PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION",
+    "SOURCE_BRANCH",
+    "PredicateProposalRef",
+    "PropstoreFamily",
+    "RuleProposalRef",
+    "SourceRef",
+    "WorldlineRef",
+    "registered_charters",
+    "semantic_charters",
+    "semantic_foreign_keys",
+    "semantic_import_families",
+    "semantic_import_roots",
+    "semantic_init_roots",
+]
 
 PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION = contract_version("2026.10.20.3")
 """Wire-contract version of the assembled registry (stamped into bootstrap)."""

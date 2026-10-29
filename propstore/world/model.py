@@ -36,7 +36,7 @@ from __future__ import annotations
 from collections.abc import Generator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from causal_models import InterventionWorld, ObservationWorld, Value
 from condition_ir import ConditionSolver, to_cel_exprs, with_standard_synthetic_bindings
@@ -479,7 +479,7 @@ class WorldQuery(WorldStore):
         self._parameterizations: tuple[ParameterizationEdge, ...] | None = None
         self._grounding_bundle: GroundedRulesBundle | None = None
 
-    def __enter__(self) -> WorldQuery:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc: object) -> None:

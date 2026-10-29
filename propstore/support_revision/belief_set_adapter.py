@@ -637,7 +637,7 @@ def _plain_hash(payload: Any) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
-def _json_rank(rank: int | float) -> int | float | str:
+def _json_rank(rank: float) -> int | float | str:
     rank_value = float(rank)
     if math.isinf(rank_value):
         return "inf"

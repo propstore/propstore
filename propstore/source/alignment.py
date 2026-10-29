@@ -205,15 +205,10 @@ def align_repository_snapshots(
                 raise TypeError(f"Imported concept {handle.ref!s} is not a Concept")
             concept = concept_value
             argument_digest = hashlib.sha256(
-                "\0".join(
-                    (
-                        repository_origin,
-                        source_commit,
-                        import_branch,
-                        import_commit,
-                        concept.concept_id,
-                    )
-                ).encode("utf-8")
+                (
+                    f"{repository_origin}\0{source_commit}\0{import_branch}\0"
+                    f"{import_commit}\0{concept.concept_id}"
+                ).encode()
             ).hexdigest()
             arguments.append(
                 AlignmentArgument(

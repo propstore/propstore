@@ -20,7 +20,7 @@ branch with provenance; there is no truth-gate and no render-time filtering here
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import msgspec
@@ -156,11 +156,13 @@ def validate_source_claim_cel_expressions(
         [LoadedConcept(concept=concept) for concept in primary_concepts],
         context=ConceptPipelineContext(form_registry=forms),
     )
-    if not isinstance(primary_result.output, ConceptCheckedRegistry):
+    if primary_result.output is None:
         detail = "; ".join(
             diagnostic.message for diagnostic in primary_result.diagnostics
         )
         raise ValueError(f"primary concept validation failed: {detail}")
+    if not isinstance(primary_result.output, ConceptCheckedRegistry):
+        raise TypeError("concept pipeline returned an unexpected output type")
     registry = dict(primary_result.output.condition_registry)
 
     concepts_doc = load_source_concepts_document(repo, source_name)
@@ -397,7 +399,7 @@ def commit_source_claims_batch(
             produced_by=ExtractionProvenanceDocument(
                 reader=reader,
                 method=method,
-                timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                timestamp=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             ),
         )
     validate_source_claims(repo, source_name, raw)

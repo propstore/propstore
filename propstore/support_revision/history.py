@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
@@ -19,6 +20,8 @@ from propstore.support_revision.state import (
     EpistemicState,
     RevisionContinuationUnavailable,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 EPistemicSnapshotVersion = "propstore.epistemic_snapshot.v3"
 TransitionJournalVersion = "propstore.transition_journal.v6"
@@ -498,8 +501,10 @@ class TransitionJournal(
             return ReplayReport(
                 ok=False,
                 errors=(
-                    "historical journal is readable; call migrate().replay() to "
-                    "recompute outcomes under the current revision semantics",
+                    (
+                        "historical journal is readable; call migrate().replay() to "
+                        "recompute outcomes under the current revision semantics"
+                    ),
                 ),
             )
         checked: list[str] = []
@@ -519,6 +524,9 @@ class TransitionJournal(
                     policy=entry.version_policy_snapshot,
                 )
             except Exception as exc:
+                _LOGGER.exception(
+                    "Journal entry %s replay failed for %s", index, entry.operator.value
+                )
                 errors.append(
                     f"entry {index} replay failed for {entry.operator.value}: {exc}"
                 )

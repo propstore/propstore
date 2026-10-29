@@ -78,7 +78,7 @@ def iter_cel_identifiers(expression: str) -> frozenset[str]:
 
 def structural_concepts_in_expression(
     expression: str,
-    registry: Mapping[str, "ConceptInfo"],
+    registry: Mapping[str, ConceptInfo],
 ) -> tuple[str, ...]:
     """Return the structural concepts a CEL expression references, if any.
 

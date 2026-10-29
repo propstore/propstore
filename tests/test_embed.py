@@ -117,23 +117,29 @@ def test_storage_operational_error_propagates() -> None:
             raise sqlite3.OperationalError("disk I/O error")
 
     store = _FailingStore([EmbeddingEntity("c1", 1, "h1", "text")])
-    with patch("propstore.heuristic.embed.require_litellm", return_value=MagicMock()):
-        with pytest.raises(sqlite3.OperationalError, match="disk I/O error"):
-            embed_entities(store, "m")
+    with (
+        patch("propstore.heuristic.embed.require_litellm", return_value=MagicMock()),
+        pytest.raises(sqlite3.OperationalError, match="disk I/O error"),
+    ):
+        embed_entities(store, "m")
 
 
 def test_unexpected_provider_error_propagates() -> None:
     store = _MemoryStore([EmbeddingEntity("c1", 1, "h1", "text")])
     litellm = MagicMock()
     litellm.embedding.side_effect = RuntimeError("boom")
-    with patch("propstore.heuristic.embed.require_litellm", return_value=litellm):
-        with pytest.raises(RuntimeError, match="boom"):
-            embed_entities(store, "m")
+    with (
+        patch("propstore.heuristic.embed.require_litellm", return_value=litellm),
+        pytest.raises(RuntimeError, match="boom"),
+    ):
+        embed_entities(store, "m")
 
 
 def test_require_litellm_import_error_is_actionable() -> None:
     from propstore.heuristic import embed
 
-    with patch.object(embed.importlib, "import_module", side_effect=ImportError):
-        with pytest.raises(ImportError, match=r"propstore\[embeddings\]"):
-            embed.require_litellm()
+    with (
+        patch.object(embed.importlib, "import_module", side_effect=ImportError),
+        pytest.raises(ImportError, match=r"propstore\[embeddings\]"),
+    ):
+        embed.require_litellm()

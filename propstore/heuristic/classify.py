@@ -40,6 +40,8 @@ from propstore.heuristic.relatable import RelatableClaim
 from propstore.provenance import Provenance, ProvenanceStatus
 from propstore.stances import VALID_STANCE_TYPES, StanceType
 
+logger = logging.getLogger(__name__)
+
 _CLASSIFIER_ABSTAIN_BASE_RATE = 0.5
 _ENRICHMENT_THRESHOLD_DEFAULT = 0.75
 
@@ -464,7 +466,7 @@ async def _classify_one_direction(
                 response_format={"type": "json_object"},
             )
         except (ConnectionError, TimeoutError, OSError, ValueError) as exc:
-            logging.warning(
+            logger.warning(
                 "Stance classification failed for %s vs %s: %s",
                 source_claim.claim_id,
                 target_claim.claim_id,

@@ -516,19 +516,23 @@ def _revalidate_promoted_claims(
         [LoadedConcept(concept=concept) for concept in concepts],
         context=ConceptPipelineContext(form_registry=form_registry),
     )
-    if not isinstance(concept_result.output, ConceptCheckedRegistry):
+    if concept_result.output is None:
         message = "; ".join(
             diagnostic.message for diagnostic in concept_result.diagnostics
         )
         raise ValueError(f"concept validation failed during promotion: {message}")
+    if not isinstance(concept_result.output, ConceptCheckedRegistry):
+        raise TypeError("concept pipeline returned an unexpected output type")
     if not promoted:
         return {}
     form_result = run_form_pipeline(
         [LoadedForm(form=form) for form in form_registry.values()]
     )
-    if not isinstance(form_result.output, FormCheckedRegistry):
+    if form_result.output is None:
         detail = "; ".join(diagnostic.message for diagnostic in form_result.diagnostics)
         raise ValueError(f"form validation failed during promotion: {detail}")
+    if not isinstance(form_result.output, FormCheckedRegistry):
+        raise TypeError("form pipeline returned an unexpected output type")
     compilation_context = build_compilation_context(
         concept_result.output,
         form_registry=form_result.output,
@@ -707,14 +711,13 @@ def _commit_promote_time_trust_calibration(
         derived_from=tuple(firing.rule_id for firing in calibration.derived_from),
     )
     if updated_trust == source_doc.trust:
-        return None
+        return
     updated_source = msgspec.structs.replace(source_doc, trust=updated_trust)
     repo.families.source_documents.save(
         SourceRef(source_name),
         updated_source,
         message=f"Calibrate source trust for {source_paper_slug(source_name)}",
     )
-    return None
 
 
 def promote_source_branch(

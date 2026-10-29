@@ -76,7 +76,7 @@ def test_dispatch_iterated_revise_at_merge_point_raises_typed_merge_required_fai
                 formula=atom,
                 revision_operator="restrained",
                 max_candidates=None,
-                targets=tuple(()),
+                targets=(),
             ),
             policy=_POLICY,
         )

@@ -37,7 +37,7 @@ from propstore.grounding.bundle import GroundedRulesBundle
 from propstore.stances import StanceType
 
 
-def _claim(claim_id: str, **extra) -> ActiveClaim:  # noqa: ANN003 - typed field kwargs
+def _claim(claim_id: str, **extra) -> ActiveClaim:
     return ActiveClaim(claim_id=claim_id, concept_id="k", statement=claim_id, **extra)
 
 

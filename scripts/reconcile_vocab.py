@@ -37,16 +37,20 @@ MERGES = [
     (
         "belief_revision",
         "agm_belief_revision",
-        "AGM belief revision IS belief revision - the AGM prefix just names the framework authors. "
-        "Both refer to the same operation. Papers using 'agm_belief_revision' (Dixon, Shapiro) and "
-        "'belief_revision' (Martins, Reiter, Shapiro) discuss the same concept.",
+        (
+            "AGM belief revision IS belief revision - the AGM prefix just names the framework authors. "
+            "Both refer to the same operation. Papers using 'agm_belief_revision' (Dixon, Shapiro) and "
+            "'belief_revision' (Martins, Reiter, Shapiro) discuss the same concept."
+        ),
     ),
     # Paper-specific label vs general concept where same paper has both
     (
         "three_attack_types",
         "three_attack_types_full",
-        "Modgil 2014 uses 'three_attack_types', Modgil 2018 uses 'three_attack_types_full' - "
-        "same concept (undermining/rebutting/undercutting), the '_full' suffix is a paper-label artifact",
+        (
+            "Modgil 2014 uses 'three_attack_types', Modgil 2018 uses 'three_attack_types_full' - "
+            "same concept (undermining/rebutting/undercutting), the '_full' suffix is a paper-label artifact"
+        ),
     ),
     (
         "last_link_ordering",
@@ -67,8 +71,10 @@ MERGES = [
     (
         "rebutting_defeat",
         "rebutting_defeater",
-        "Same concept - 'defeat' and 'defeater' both refer to the rebutting defeat relation. "
-        "Prakken/Clark/Walton use 'defeat', Pollock uses 'defeater'",
+        (
+            "Same concept - 'defeat' and 'defeater' both refer to the rebutting defeat relation. "
+            "Prakken/Clark/Walton use 'defeat', Pollock uses 'defeater'"
+        ),
     ),
     (
         "undercutting_defeat",
@@ -79,23 +85,29 @@ MERGES = [
     (
         "aspic_plus",
         "aspic_plus_full_system",
-        "Both refer to the ASPIC+ framework - Odekerken uses 'aspic_plus', Modgil 2018 uses "
-        "'aspic_plus_full_system' as a label for the complete definition",
+        (
+            "Both refer to the ASPIC+ framework - Odekerken uses 'aspic_plus', Modgil 2018 uses "
+            "'aspic_plus_full_system' as a label for the complete definition"
+        ),
     ),
     # Fundamental lemma
     (
         "fundamental_lemma",
         "fundamental_lemma_holds",
-        "Same concept - Dung 1995 defines it as 'fundamental_lemma', "
-        "Modgil 2018 labels the claim that it holds for their system",
+        (
+            "Same concept - Dung 1995 defines it as 'fundamental_lemma', "
+            "Modgil 2018 labels the claim that it holds for their system"
+        ),
     ),
     # Context switching
     (
         "context_switching",
         "context_switching_elimination",
-        "Both discuss the same concept of context switching in TMS/ATMS. "
-        "Dixon uses 'context_switching', deKleer uses 'context_switching_elimination' to describe "
-        "how ATMS eliminates the need for it - but the concept referenced is the same",
+        (
+            "Both discuss the same concept of context switching in TMS/ATMS. "
+            "Dixon uses 'context_switching', deKleer uses 'context_switching_elimination' to describe "
+            "how ATMS eliminates the need for it - but the concept referenced is the same"
+        ),
     ),
     # TMS node types
     ("tms_node", "in_node", "NOT MERGING - in_node is a specific state of a tms_node"),
@@ -318,28 +330,35 @@ for claims_file in sorted(papers_dir.glob("*/claims.yaml")):
             claim["concepts"] = new_concepts
 
         # Fix label field
-        if "label" in claim and isinstance(claim["label"], str):
-            if claim["label"] in alias_to_canonical:
-                claim["label"] = alias_to_canonical[claim["label"]]
-                changed = True
+        if (
+            "label" in claim
+            and isinstance(claim["label"], str)
+            and claim["label"] in alias_to_canonical
+        ):
+            claim["label"] = alias_to_canonical[claim["label"]]
+            changed = True
 
         # Fix parameters/variables concept fields
         for param_field in ["parameters", "variables"]:
             if param_field in claim and isinstance(claim[param_field], list):
                 for param in claim[param_field]:
-                    if isinstance(param, dict) and "concept" in param:
-                        if (
-                            isinstance(param["concept"], str)
-                            and param["concept"] in alias_to_canonical
-                        ):
-                            param["concept"] = alias_to_canonical[param["concept"]]
-                            changed = True
+                    if (
+                        isinstance(param, dict)
+                        and "concept" in param
+                        and isinstance(param["concept"], str)
+                        and param["concept"] in alias_to_canonical
+                    ):
+                        param["concept"] = alias_to_canonical[param["concept"]]
+                        changed = True
 
         # Fix target_concept
-        if "target_concept" in claim and isinstance(claim["target_concept"], str):
-            if claim["target_concept"] in alias_to_canonical:
-                claim["target_concept"] = alias_to_canonical[claim["target_concept"]]
-                changed = True
+        if (
+            "target_concept" in claim
+            and isinstance(claim["target_concept"], str)
+            and claim["target_concept"] in alias_to_canonical
+        ):
+            claim["target_concept"] = alias_to_canonical[claim["target_concept"]]
+            changed = True
 
     if changed:
         # Write back with yaml

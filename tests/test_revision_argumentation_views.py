@@ -188,7 +188,7 @@ def _realized_ic_merge_state(
                 tuple(p) for p in [[accepted.atom_id], [rejected.atom_id]]
             ),
             integrity_constraint=LiteralsConstraint(
-                required=tuple([accepted.atom_id]), forbidden=tuple([rejected.atom_id])
+                required=(accepted.atom_id,), forbidden=(rejected.atom_id,)
             ),
             merge_operator="sigma",
             max_alphabet_size=8,

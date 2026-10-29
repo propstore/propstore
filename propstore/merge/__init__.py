@@ -55,8 +55,8 @@ __all__ = [
     "build_branch_structured_summary",
     "build_merge_framework",
     "build_repository_merge_framework",
-    "create_merge_commit",
     "build_structured_merge_candidates",
+    "create_merge_commit",
     "semantic_candidate_details",
     "summarize_merge_framework",
 ]

@@ -26,13 +26,12 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from itertools import combinations, product
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Protocol,
     TypeGuard,
     TypeVar,
@@ -1973,9 +1972,10 @@ class ATMSEngine:
                 return True
             for antecedent_id in justification.antecedent_ids:
                 antecedent = self._nodes[antecedent_id]
-                if not antecedent.label.environments:
-                    if self._was_pruned_by_nogood(antecedent_id, _visited):
-                        return True
+                if not antecedent.label.environments and self._was_pruned_by_nogood(
+                    antecedent_id, _visited
+                ):
+                    return True
         return False
 
     def _cycle_support_pruned_by_nogood(self, node_id: str) -> bool:

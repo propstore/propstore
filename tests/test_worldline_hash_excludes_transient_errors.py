@@ -56,7 +56,9 @@ class _FakeBound:
 
 class _FakeValueResult:
     status = "no_claims"
-    claims = []
+
+    def __init__(self) -> None:
+        self.claims = []
 
 
 def _argumentation_definition() -> WorldlineDefinition:

@@ -182,7 +182,7 @@ class InMemoryWorldStore:
         return name if self.get_claim(name) is not None else None
 
     def resolve_concept(self, name: str) -> str | None:
-        return name if self.get_concept(name) is not None else name
+        return name
 
     def all_parameterizations(self) -> Sequence[ParameterizationEdge]:
         return self.parameterizations

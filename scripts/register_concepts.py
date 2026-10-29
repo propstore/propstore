@@ -126,7 +126,7 @@ for name, definition in concepts:
         "--definition",
         definition,
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         print(f"FAIL: {name}: {result.stderr.strip()}", file=sys.stderr)
     else:

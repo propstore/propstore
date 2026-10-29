@@ -22,8 +22,8 @@ class CliContext(TypedDict, total=False):
     keys are optional because the two top-level flows populate different members.
     """
 
-    repo: "Repository"
-    start: "Path | None"
+    repo: Repository
+    start: Path | None
     traceback: bool
 
 
@@ -96,7 +96,7 @@ class PropstoreClickError(click.ClickException):
         self.exit_code = exit_code
 
 
-def require_repo(obj: CliContext) -> "Repository":
+def require_repo(obj: CliContext) -> Repository:
     """Return the repository handle attached to the Click context object.
 
     The root group stores the handle lazily, so this returns it untouched (a

@@ -117,13 +117,15 @@ def _concepts(repo: Repository) -> list[Concept]:
 
 def _embed_claims(repo: Repository, model: str, table: dict[str, list[float]]) -> None:
     claims = _claims(repo)
-    with patch(
-        "propstore.heuristic.embed.require_litellm",
-        return_value=_fake_litellm({model: table}),
+    with (
+        patch(
+            "propstore.heuristic.embed.require_litellm",
+            return_value=_fake_litellm({model: table}),
+        ),
+        emb.embedding_connection(_sidecar_path(repo), readonly=False) as conn,
     ):
-        with emb.embedding_connection(_sidecar_path(repo), readonly=False) as conn:
-            emb.ensure_embedding_tables(conn)
-            emb.embed_claims(conn, claims, model)
+        emb.ensure_embedding_tables(conn)
+        emb.embed_claims(conn, claims, model)
 
 
 def test_embed_then_find_similar_ranks_by_distance(repo: Repository) -> None:
@@ -145,12 +147,14 @@ def test_find_similar_unknown_claim_is_honest_empty(repo: Repository) -> None:
 def test_embed_skips_unchanged_on_reembed(repo: Repository) -> None:
     _embed_claims(repo, "model-a", _VEC_A)
     claims = _claims(repo)
-    with patch(
-        "propstore.heuristic.embed.require_litellm",
-        return_value=_fake_litellm({"model-a": _VEC_A}),
+    with (
+        patch(
+            "propstore.heuristic.embed.require_litellm",
+            return_value=_fake_litellm({"model-a": _VEC_A}),
+        ),
+        emb.embedding_connection(_sidecar_path(repo), readonly=False) as conn,
     ):
-        with emb.embedding_connection(_sidecar_path(repo), readonly=False) as conn:
-            result = emb.embed_claims(conn, claims, "model-a")
+        result = emb.embed_claims(conn, claims, "model-a")
     assert result == {"embedded": 0, "skipped": 7, "errors": 0}
 
 
@@ -171,13 +175,15 @@ def test_world_query_similar_claims_honest_empty_without_index(
 
 def test_concept_embeddings_and_similarity(repo: Repository) -> None:
     concepts = _concepts(repo)
-    with patch(
-        "propstore.heuristic.embed.require_litellm",
-        return_value=_fake_litellm({"model-a": _CONCEPT_VEC}),
+    with (
+        patch(
+            "propstore.heuristic.embed.require_litellm",
+            return_value=_fake_litellm({"model-a": _CONCEPT_VEC}),
+        ),
+        emb.embedding_connection(_sidecar_path(repo), readonly=False) as conn,
     ):
-        with emb.embedding_connection(_sidecar_path(repo), readonly=False) as conn:
-            emb.ensure_embedding_tables(conn)
-            emb.embed_concepts(conn, concepts, "model-a")
+        emb.ensure_embedding_tables(conn)
+        emb.embed_concepts(conn, concepts, "model-a")
     with WorldQuery(repo) as world:
         hits = world.similar_concepts("speed", model_name="model-a", top_k=2)
     ids = [str(hit.concept_id) for hit in hits]

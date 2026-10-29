@@ -200,7 +200,7 @@ def test_cli_modify_delete_renders_conflict_and_keeps_target(tmp_path, family):
 def test_selected_stance_edit_follows_only_its_own_rival_claim_version(
     tmp_path, reverse
 ):
-    repo, bound, ref, original, base = _seed(tmp_path, "stance")
+    repo, bound, ref, original, _base = _seed(tmp_path, "stance")
     author_param_claim(repo, "c", "x", 300.0, branch="master")
     author_param_claim(repo, "c", "x", 150.0, branch="peer")
     changed = _changed(original)

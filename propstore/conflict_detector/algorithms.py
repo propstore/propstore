@@ -28,7 +28,7 @@ _LOGGER = logging.getLogger(__name__)
 # ast-equiv is pinned at a rev whose ``compare`` types its symbol-binding
 # parameters as bare ``dict`` (a loose upstream surface). Narrow it once here
 # behind a fully-typed call-through; tests patch ``ast_compare`` on this module.
-_ast_equiv_compare: Any = getattr(ast_equiv, "compare")
+_ast_equiv_compare: Any = ast_equiv.compare
 
 
 def ast_compare(

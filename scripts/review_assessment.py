@@ -1,7 +1,10 @@
 """Assess the code review's recommendations against the live knowledge base."""
 
+import logging
 import sqlite3
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 db = Path("knowledge/sidecar/propstore.sqlite")
 conn = sqlite3.connect(db)
@@ -123,6 +126,7 @@ try:
                         f"  {s['id'][:40]} <-> {sim['id'][:40]} (dist={sim['distance']:.3f})"
                     )
 except Exception as e:
+    logger.exception("Embedding search unavailable")
     print(f"  (embedding search unavailable: {e})")
 
 conn.close()

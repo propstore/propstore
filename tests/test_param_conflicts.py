@@ -484,13 +484,15 @@ def test_runtime_error_from_sympy_parameterization_propagates() -> None:
     }
     parse_cached.cache_clear()
     try:
-        with patch(
-            "sympy.parsing.sympy_parser.parse_expr",
-            side_effect=RuntimeError("boom"),
+        with (
+            patch(
+                "sympy.parsing.sympy_parser.parse_expr",
+                side_effect=RuntimeError("boom"),
+            ),
+            pytest.raises(RuntimeError, match="boom"),
         ):
-            with pytest.raises(RuntimeError, match="boom"):
-                detect_parameterization_conflicts(
-                    by_concept, *_inputs(concept_registry), []
-                )
+            detect_parameterization_conflicts(
+                by_concept, *_inputs(concept_registry), []
+            )
     finally:
         parse_cached.cache_clear()

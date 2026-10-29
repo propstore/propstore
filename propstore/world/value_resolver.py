@@ -30,6 +30,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 import ast_equiv
+import msgspec
 from ast_equiv import AlgorithmParseError, ComparisonResult
 
 from propstore.core.active_claims import ActiveClaim
@@ -49,6 +50,9 @@ from propstore.world.types import (
     ValueResultReason,
     ValueStatus,
 )
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class _AstCompare(Protocol):
@@ -72,7 +76,7 @@ class _AstCompare(Protocol):
     ) -> ComparisonResult: ...
 
 
-ast_compare: _AstCompare = getattr(ast_equiv, "compare")
+ast_compare: _AstCompare = ast_equiv.compare
 
 
 @dataclass(frozen=True)
@@ -552,13 +556,12 @@ class ActiveClaimResolver:
         override_value = override_values[override_key]
         if override_value is None:
             return None
-        if isinstance(override_value, bool) or not isinstance(
-            override_value, int | float
-        ):
+        try:
+            return msgspec.convert(override_value, float)
+        except msgspec.ValidationError as exc:
             raise ValueError(
                 f"Invalid override value for {override_key!r}: {override_value!r}"
-            )
-        return float(override_value)
+            ) from exc
 
     def _algorithm_matches_direct_value(
         self,
@@ -595,7 +598,7 @@ class ActiveClaimResolver:
                 },
             )
         except (ValueError, SyntaxError, AlgorithmParseError, RecursionError) as exc:
-            logging.warning(
+            _LOGGER.warning(
                 "ast_compare failed for algorithm-vs-direct comparison %s: %s",
                 claim.claim_id,
                 exc,
@@ -641,7 +644,7 @@ class ActiveClaimResolver:
                     AlgorithmParseError,
                     RecursionError,
                 ) as exc:
-                    logging.warning(
+                    _LOGGER.warning(
                         "ast_compare failed in algorithm equivalence check: %s", exc
                     )
                     return _PARSE_FAILED

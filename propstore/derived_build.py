@@ -343,7 +343,7 @@ def _project_documents(
 
     field_names = [field.name for field in schema.schema_object(family_name).fields]
     identity_field = schema.identity_field(family_name)
-    add_family = getattr(session, "add_family")
+    add_family = session.add_family
     seen_identities: set[object] = set()
     for document in documents:
         values = {

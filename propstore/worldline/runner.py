@@ -10,7 +10,7 @@ explicit error indicator rather than fabricating or silently dropping a result.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from propstore.core.id_types import ConceptId, ContextId, to_concept_id
@@ -180,7 +180,7 @@ def run_worldline(
     )
 
     return WorldlineResult(
-        computed=datetime.now(timezone.utc).isoformat(),
+        computed=datetime.now(UTC).isoformat(),
         content_hash=content_hash,
         values=values,
         steps=tuple(trace.steps),

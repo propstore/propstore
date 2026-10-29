@@ -260,7 +260,7 @@ def _merge_contexts_for_derivation(
     ]
     if not candidates:
         return _INCOHERENT_CONTEXT
-    return sorted(candidates)[0]
+    return min(candidates)
 
 
 def _merge_conditions(*groups: Iterable[CelExpr]) -> tuple[CelExpr, ...]:

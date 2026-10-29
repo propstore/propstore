@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import msgspec
@@ -51,7 +51,7 @@ def is_stale_branch_error(exc: ValueError) -> bool:
 def utc_now() -> str:
     """Return the current UTC time as an ISO-8601 ``...Z`` timestamp."""
 
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def normalize_source_slug(name: str) -> str:

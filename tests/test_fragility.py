@@ -369,7 +369,8 @@ class TestUtilityScores:
             seen.append((graph, base_scores, support_weights))
 
             class Result:
-                strengths = {"A": 1.0, "B": 0.25 if len(seen) == 1 else 0.75}
+                def __init__(self) -> None:
+                    self.strengths = {"A": 1.0, "B": 0.25 if len(seen) == 1 else 0.75}
 
             return Result()
 

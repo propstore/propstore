@@ -5,6 +5,14 @@ Add the existing package typing and architecture contracts plus Python and
 workflow quality checks to PR CI.
 
 ## State
+All fourteen issue PRs (#339 through #352) are merged into master and this
+branch. PR #353 initially passed typing, import contracts, workflow lint/security,
+and tests; Ruff lint and formatting failed. The authorized repair now includes
+import sorting via scripts/sort_imports.py (pinned isort), formatting, and the
+remaining production/test/script findings. Hosted verification of these edits
+is next; no rule was disabled.
+
+Initial implementation plan:
 Plan before implementation: about 45 workflow lines plus three development
 dependencies and their generated lock entries. Keep the existing Python 3.13
 job and logged pytest invocation. Add locked Pyright, import-linter, Ruff lint
@@ -13,8 +21,9 @@ zizmor. Each check runs after another check fails; failures remain failures.
 Pin existing actions, disable persisted checkout credentials, and bound runtime.
 
 ## Decisions and why
-- Ruff is already invoked by scripts/rope_delete_functions.py; use its default
-  lint/format policy without adding ignores or formatting source in this task.
+- Ruff is already invoked by scripts/rope_delete_functions.py; preserve the
+  existing lint policy without adding ignores. Q subsequently authorized all
+  source formatting and lint repairs after the issue merges.
 - Keep checks together to share checkout and the locked Python environment.
 - Actionlint v1.7.12 is the upstream latest release and requires Go 1.25;
   `go run` resolves its pinned module using the runner's Go toolchain support.
@@ -27,10 +36,10 @@ Pin existing actions, disable persisted checkout credentials, and bound runtime.
 Pyright has strict configuration but is absent from development dependencies.
 
 ## Next step
-Workflow and dependency lock are implemented. Locked tools are Pyright
-1.1.414, Ruff 0.17.0, zizmor 1.30.1, and nodeenv 1.11.0. Existing age policy
-also resolves certifi from 2026.10.19 to 2026.7.22. No local CI steps were run.
-Commit locally and hand the branch to the parent for publication and hosted CI.
+Publish the complete fixes, await PR #353 CI, repair every remaining failure,
+then normal-merge and integrate master. Locked tools are Pyright 1.1.414,
+Ruff 0.17.0, zizmor 1.30.1, and nodeenv 1.11.0. Existing age policy also
+resolves certifi from 2026.10.19 to 2026.7.22.
 
 ## PR draft
 Title: Enforce package and workflow quality checks in CI
@@ -143,3 +152,41 @@ formatter and import changes move lines; not a fresh local lint result):
 - tests/test_worldline_hash_excludes_transient_errors.py: RUF012:55
 - tests/test_worldline_hash_repr_typed_failure.py: PLR0402:81, PLR0402:82, PLR0402:83, PLR0402:84
 - tests/test_worldline_ic_merge.py: C409:80
+
+## Tests and scripts lint repair
+
+Repaired the tests/scripts portion of the hosted Ruff findings without disabling
+rules. Changes group into context-manager flattening, explicit string grouping,
+direct import syntax, scalar annotation simplification, Self return annotation,
+unused binding and redundant expression cleanup, and instance-owned mutable
+fixture state. Removed the stale ANN003 suppression in the ASPIC fixture.
+
+The claim enum rejection test now expects Quire DocumentSchemaError:
+DocumentCodec.convert delegates to its conversion callable, and installed Quire
+documents/schema.py convert_document_value wraps msgspec validation/type failures
+in that exception. Script concept extraction catches only file IO, UTF-8 decode,
+and YAML parser failures. The optional embedding assessment retains its existing
+tolerant boundary but logs its traceback through a module logger. Concept
+registration explicitly uses check=False because its following branch inspects
+and reports the subprocess return code.
+
+Applied Ruff lint and formatter diff proposals using apply_patch; no local test,
+typecheck, or final quality gate was run. Initial Ruff diagnostics and repeated
+read-only --diff proposal generation were run to locate and edit the findings.
+Hosted CI must establish the result. No commit, push, or publication by this
+worker. scripts/sort_imports.py remains parent-owned and untouched here.
+
+## Production repair dispositions
+
+Validation uses existing msgspec conversion at input boundaries while retaining
+caller-visible ValueError diagnostics. Dispatch handles the actual realization
+EnumerationExceeded exception. Existing tolerant boundaries retain their policy
+and now log tracebacks. Context.parameters remains a stored field with an
+instance-owned default. Public exports are explicit rather than suppressed.
+
+The scoring opinion_sensitivity reexport was an already-owned capability:
+fragility.py now imports directly from Doxa, preserving its public export and
+deleting the intermediate scoring export. Cleanup-refactor controlled that
+bounded deletion; PR CI verifies the production path. The seed_tags script's
+shebang requires the executable bit in Git, which is corrected without a lint
+exception.

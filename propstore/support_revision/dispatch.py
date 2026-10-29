@@ -5,6 +5,7 @@ from typing import Any, NoReturn
 
 from quire.documents import convert_document_value
 
+from propstore.core.anytime import EnumerationExceeded
 from propstore.support_revision.belief_set_adapter import (
     DEFAULT_MAX_ALPHABET_SIZE,
     decide_contract,
@@ -130,7 +131,7 @@ def dispatch(
                 extra_atoms=(atom,),
                 accepted_reason="expanded",
             )
-        except Exception as exc:
+        except EnumerationExceeded as exc:
             _raise_realization_failure(
                 state,
                 operation=op.value,
@@ -170,7 +171,7 @@ def dispatch(
                 support_entrenchment=entrenchment,
                 max_candidates=operator_input.max_candidates,
             )
-        except Exception as exc:
+        except EnumerationExceeded as exc:
             _raise_realization_failure(
                 state,
                 operation=op.value,
@@ -207,7 +208,7 @@ def dispatch(
             support_entrenchment=entrenchment,
             max_candidates=operator_input.max_candidates,
         )
-    except Exception as exc:
+    except EnumerationExceeded as exc:
         _raise_realization_failure(
             state,
             operation=op.value,

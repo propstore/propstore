@@ -105,7 +105,8 @@ class _FakeWorld:
 class _FakeBound:
     """Minimal stand-in for a bound WorldQuery."""
 
-    _bindings: dict = {}
+    def __init__(self) -> None:
+        self._bindings: dict = {}
 
     def value_of(self, concept_id: str) -> _FakeValueResult:
         return _FakeValueResult()

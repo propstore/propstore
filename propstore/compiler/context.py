@@ -99,16 +99,20 @@ def build_compilation_context_from_repo(
     form_result = run_form_pipeline(
         [LoadedForm(form=form) for form in form_registry.values()]
     )
-    if not isinstance(form_result.output, FormCheckedRegistry):
+    if form_result.output is None:
         detail = "; ".join(diagnostic.message for diagnostic in form_result.diagnostics)
         raise ValueError(f"form validation failed: {detail}")
+    if not isinstance(form_result.output, FormCheckedRegistry):
+        raise TypeError("form pipeline returned an unexpected output type")
     result = run_concept_pipeline(
         [LoadedConcept(concept=concept) for concept in concepts],
         context=ConceptPipelineContext(form_registry=form_registry),
     )
-    if not isinstance(result.output, ConceptCheckedRegistry):
+    if result.output is None:
         detail = "; ".join(diagnostic.message for diagnostic in result.diagnostics)
         raise ValueError(f"concept validation failed: {detail}")
+    if not isinstance(result.output, ConceptCheckedRegistry):
+        raise TypeError("concept pipeline returned an unexpected output type")
     return build_compilation_context(
         result.output,
         form_registry=form_result.output,

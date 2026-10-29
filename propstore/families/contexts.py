@@ -32,6 +32,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Protocol
 
+from msgspec import field
 from quire.charter_class import CharterDoc, charter, charter_field
 from quire.charters import charter_catalog
 from quire.family_store import DocumentFamilyStore
@@ -109,7 +110,9 @@ class Context(CharterDoc):
     status: ContextStatus = ContextStatus.AUTHORED
     description: str | None = None
     assumptions: Annotated[tuple[str, ...], charter_field(json=True)] = ()
-    parameters: Annotated[dict[str, str], charter_field(json=True)] = {}
+    parameters: Annotated[dict[str, str], charter_field(json=True)] = field(
+        default_factory=dict
+    )
     perspective: str | None = None
 
 

@@ -95,9 +95,8 @@ def test_concept_view_include_blocked_split(tmp_path: Path) -> None:
 
 def test_unknown_concept_raises(tmp_path: Path) -> None:
     repo = build_demo_repo(tmp_path)
-    with WorldQuery(repo) as world:
-        with pytest.raises(ConceptViewUnknownConceptError):
-            build_concept_view(world, "nope", policy=_default_policy())
+    with WorldQuery(repo) as world, pytest.raises(ConceptViewUnknownConceptError):
+        build_concept_view(world, "nope", policy=_default_policy())
 
 
 def test_list_concepts_hides_drafts_by_default(tmp_path: Path) -> None:

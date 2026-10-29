@@ -54,7 +54,9 @@ class GradedEntailment(msgspec.Struct, frozen=True, forbid_unknown_fields=True):
             raise ValueError("graded entailment requires a property")
         object.__setattr__(self, "property", str(self.property))
         if isinstance(self.value, bool):
-            raise ValueError("graded entailment value must be numeric, not bool")
+            raise msgspec.ValidationError(
+                "graded entailment value must be numeric, not bool"
+            )
         validate_scalar_value(self.value)
         if self.value < 0.0 or self.value > 1.0:
             raise ValueError("graded entailment value must be in [0, 1]")
