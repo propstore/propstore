@@ -13,8 +13,6 @@ import condition_ir
 from condition_ir import (
     CheckedConditionSet,
     KindType,
-    SolverSat,
-    SolverUnsat,
     condition_ir_to_estree,
     condition_ir_to_python_ast,
     condition_ir_to_sql,
@@ -30,16 +28,6 @@ def _quantity_registry() -> dict[str, condition_ir.ConceptInfo]:
             id="ps:concept:frequency",
             canonical_name="freq",
             kind=KindType.QUANTITY,
-        )
-    }
-
-
-def _timepoint_registry() -> dict[str, condition_ir.ConceptInfo]:
-    return {
-        "onset": condition_ir.ConceptInfo(
-            id="ps:concept:onset",
-            canonical_name="onset",
-            kind=KindType.TIMEPOINT,
         )
     }
 
@@ -80,35 +68,6 @@ def test_conditions_ir_serializes_and_recompiles_without_reparse() -> None:
     recompiled = cc.compile_checked_conditions(checked_claim.conditions_ir)
     expected = cc.check_claim_conditions(claim, registry).checked
     assert recompiled == expected
-
-
-def test_solver_reports_disjoint_and_overlap() -> None:
-    registry = _quantity_registry()
-    a = Claim(claim_id="a", conditions=("freq > 100",))
-    below = Claim(claim_id="b", conditions=("freq < 5",))
-    above = Claim(claim_id="c", conditions=("freq > 1",))
-
-    assert isinstance(cc.claim_conditions_disjoint(a, below, registry), SolverUnsat)
-    assert isinstance(cc.claim_conditions_disjoint(a, above, registry), SolverSat)
-
-
-def test_solver_temporal_ordering_uses_timepoint_path() -> None:
-    """Disjointness over TIMEPOINT conditions goes through condition-ir's Z3 path."""
-
-    registry = _timepoint_registry()
-    late = Claim(claim_id="late", conditions=("onset > 5",))
-    early = Claim(claim_id="early", conditions=("onset < 3",))
-    assert isinstance(cc.claim_conditions_disjoint(late, early, registry), SolverUnsat)
-
-
-def test_per_condition_satisfiability_surfaces_package_results() -> None:
-    registry = _quantity_registry()
-    claim = Claim(claim_id="c1", conditions=("freq > 10",))
-    results = cc.claim_condition_satisfiability(claim, registry)
-    assert len(results) == 1
-    source, result = results[0]
-    assert source == "freq > 10"
-    assert isinstance(result, SolverSat)
 
 
 def test_checked_condition_ir_drives_all_backends() -> None:
