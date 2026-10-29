@@ -21,6 +21,8 @@ from propstore.app.claim_views import claim_display_id, claim_type_text
 from propstore.app.rendering import RenderPolicySummary, summarize_render_policy
 from propstore.app.view_state import ViewState
 from propstore.families.claims import Claim
+from propstore.families.claim_quantitative import AbsentValue, IntervalValue
+from propstore.value_comparison import value_str
 from propstore.families.concepts import Concept
 from propstore.reporting import JsonReportMixin
 from propstore.world import RenderPolicy, WorldQuery
@@ -156,7 +158,7 @@ def build_concept_view(
 
 
 def _single_unit(claims: Sequence[Claim]) -> str | None:
-    units = sorted({claim.unit for claim in claims if claim.unit})
+    units = sorted({claim.quantitative.unit for claim in claims if claim.quantitative.unit})
     return units[0] if len(units) == 1 else None
 
 
@@ -275,7 +277,7 @@ def _concept_claim_entry(claim: Claim) -> ConceptClaimEntry:
 
 
 def _value_summary(visible_claims: Sequence[Claim]) -> ConceptValueSummary:
-    value_claims = [claim for claim in visible_claims if claim.value is not None]
+    value_claims = [claim for claim in visible_claims if not isinstance(claim.quantitative.value, AbsentValue)]
     if not value_claims:
         return ConceptValueSummary(
             state=ViewState.MISSING,
@@ -347,17 +349,17 @@ def _related_claim_links(
 
 
 def _value_display(claim: Claim) -> str:
-    if claim.value is None:
+    if isinstance(claim.quantitative.value, AbsentValue):
         return "(missing)"
-    return f"{claim.value} {claim.unit or ''}".rstrip()
+    return value_str(claim.quantitative.point, claim.quantitative, with_unit=True)
 
 
 def _has_uncertainty(claim: Claim) -> bool:
     return (
-        claim.uncertainty is not None
-        or claim.lower_bound is not None
-        or claim.upper_bound is not None
-        or claim.sample_size is not None
+        claim.quantitative.uncertainty is not None
+        or isinstance(claim.quantitative.value, IntervalValue)
+        or claim.quantitative.sample_size is not None
+        or claim.quantitative.confidence is not None
     )
 
 

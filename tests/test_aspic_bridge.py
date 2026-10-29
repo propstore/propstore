@@ -33,12 +33,14 @@ from propstore.aspic_bridge.translate import StanceInput
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.literal_keys import claim_key
 from propstore.families.justifications import Justification
+from propstore.families.claim_quantitative import AbsentValue, QuantitativeEvidence
 from propstore.grounding.bundle import GroundedRulesBundle
 from propstore.stances import StanceType
 
 
-def _claim(claim_id: str, **extra) -> ActiveClaim:
-    return ActiveClaim(claim_id=claim_id, concept_id="k", statement=claim_id, **extra)
+def _claim(claim_id: str, *, sample_size=None, confidence=None, **extra) -> ActiveClaim:
+    return ActiveClaim(claim_id=claim_id, concept_id="k", statement=claim_id,
+        quantitative=QuantitativeEvidence(AbsentValue(), None, None, sample_size=sample_size, confidence=confidence), **extra)
 
 
 def _reported(claim_id: str) -> Justification:

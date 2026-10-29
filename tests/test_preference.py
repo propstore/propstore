@@ -1,138 +1,71 @@
-"""Tests for propstore-owned metadata preference heuristics."""
-
-from __future__ import annotations
+"""Preference reads checked evidence and keeps measurement uncertainty separate."""
 
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
+from hypothesis import given, settings, strategies as st
 
-from propstore import preference
-from propstore.families.claims import Claim
-from propstore.preference import claim_strength
+from propstore.core.active_claims import ActiveClaim
+from propstore.families.claim_quantitative import (
+    AbsentValue, PointValue, QuantitativeEvidence, RelativeUncertainty,
+)
+from propstore.preference import claim_strength, metadata_strength_vector
 from propstore.provenance import ProvenanceStatus
 
-_PROP_SETTINGS = settings(deadline=None)
+
+def test_named_heuristic_matches_claim_strength() -> None:
+    claim = ActiveClaim(claim_id="sample", quantitative=QuantitativeEvidence(
+        PointValue(1), None, None, RelativeUncertainty(2), 0.8, 25))
+    assert metadata_strength_vector(claim) == claim_strength(claim)
 
 
-class TestClaimStrengthConcrete:
-    def test_metadata_strength_vector_is_honest_name_for_heuristic(self) -> None:
-        claim = Claim(claim_id="claim", sample_size=25, uncertainty=0.2, confidence=0.8)
-        assert preference.metadata_strength_vector(claim) == claim_strength(claim)
-
-    def test_larger_sample_stronger(self) -> None:
-        a = claim_strength(
-            Claim(claim_id="a", sample_size=1000, uncertainty=0.2, confidence=0.8)
-        )
-        b = claim_strength(
-            Claim(claim_id="b", sample_size=10, uncertainty=0.2, confidence=0.8)
-        )
-        assert a.dimensions[0] > b.dimensions[0]
-
-    def test_lower_uncertainty_stronger(self) -> None:
-        a = claim_strength(
-            Claim(claim_id="a", sample_size=10, uncertainty=0.01, confidence=0.8)
-        )
-        b = claim_strength(
-            Claim(claim_id="b", sample_size=10, uncertainty=0.5, confidence=0.8)
-        )
-        assert a.dimensions[1] > b.dimensions[1]
-
-    def test_higher_confidence_stronger(self) -> None:
-        a = claim_strength(
-            Claim(claim_id="a", confidence=0.95, sample_size=100, uncertainty=0.2)
-        )
-        b = claim_strength(
-            Claim(claim_id="b", confidence=0.55, sample_size=100, uncertainty=0.2)
-        )
-        assert sum(a.dimensions) / len(a.dimensions) > sum(b.dimensions) / len(
-            b.dimensions
-        )
-
-    def test_empty_claim_is_vacuous(self) -> None:
-        strength = claim_strength(Claim(claim_id="empty"))
-        assert strength.dimensions == (0.0, 0.0, 0.0)
-        assert strength.uncertainty > 0.99
-        assert strength.provenance is not None
-        assert strength.provenance.status is ProvenanceStatus.VACUOUS
-
-    def test_boolean_metadata_is_not_numeric_evidence(self) -> None:
-        assert preference._positive_float(True) is None
-        assert preference._unit_float(True, lower_inclusive=False) is None
-        assert preference._unit_float(True, lower_inclusive=True) is None
+def test_larger_sample_is_stronger() -> None:
+    small = ActiveClaim(claim_id="small", quantitative=QuantitativeEvidence(
+        AbsentValue(), None, None, confidence=0.8, sample_size=10))
+    large = ActiveClaim(claim_id="large", quantitative=QuantitativeEvidence(
+        AbsentValue(), None, None, confidence=0.8, sample_size=1000))
+    assert claim_strength(large).dimensions[0] > claim_strength(small).dimensions[0]
+    assert claim_strength(large).dimensions[1] > claim_strength(small).dimensions[1]
 
 
-class TestClaimStrengthFixedLength:
-    def test_claim_strength_fixed_length_all_fields(self) -> None:
-        claim = Claim(
-            claim_id="claim", sample_size=100, uncertainty=0.2, confidence=0.9
-        )
-        assert len(claim_strength(claim).dimensions) == 3
-
-    def test_claim_strength_fixed_length_partial(self) -> None:
-        result = claim_strength(Claim(claim_id="claim", sample_size=500))
-        assert len(result.dimensions) == 3
-        assert result.is_vacuous
-
-    def test_claim_strength_fixed_length_different_partials(self) -> None:
-        a = claim_strength(Claim(claim_id="a", sample_size=100))
-        b = claim_strength(Claim(claim_id="b", confidence=0.8))
-        assert len(a.dimensions) == len(b.dimensions) == 3
-
-    def test_single_signal_vectors_are_commensurable(self) -> None:
-        sample_only = claim_strength(Claim(claim_id="sample", sample_size=50))
-        confidence_only = claim_strength(Claim(claim_id="confidence", confidence=0.7))
-        assert len(sample_only.dimensions) == len(confidence_only.dimensions) == 3
+def test_confidence_coordinate_retains_its_declared_probability() -> None:
+    for confidence in (0, 0.55, 0.95, 1):
+        claim = ActiveClaim(claim_id="confidence", quantitative=QuantitativeEvidence(
+            AbsentValue(), None, None, confidence=confidence, sample_size=100))
+        assert claim_strength(claim).dimensions[2] == confidence
 
 
-class TestClaimStrengthNormalization:
-    def test_multi_signal_not_inflated(self) -> None:
-        dims_unc = claim_strength(
-            Claim(claim_id="unc", sample_size=10, uncertainty=0.01, confidence=0.5)
-        )
-        dims_both = claim_strength(
-            Claim(claim_id="both", uncertainty=0.01, confidence=0.9)
-        )
-        assert dims_unc.dimensions[1] == dims_both.dimensions[1]
-        assert dims_both.dimensions[2] > dims_unc.dimensions[2]
-
-    def test_same_signals_preserve_ordering(self) -> None:
-        a = claim_strength(
-            Claim(claim_id="a", sample_size=1000, uncertainty=0.1, confidence=0.8)
-        )
-        b = claim_strength(
-            Claim(claim_id="b", sample_size=100, uncertainty=0.5, confidence=0.8)
-        )
-        assert sum(a.dimensions) / len(a.dimensions) > sum(b.dimensions) / len(
-            b.dimensions
-        )
+def test_measurement_uncertainty_is_not_subjective_ignorance() -> None:
+    vectors = [claim_strength(ActiveClaim(claim_id=str(magnitude), quantitative=QuantitativeEvidence(
+        PointValue(10), None, None, RelativeUncertainty(magnitude), 0.8, 10)))
+        for magnitude in (0, 0.01, 0.5, 2)]
+    assert all(vector == vectors[0] for vector in vectors)
 
 
-class TestClaimStrengthProperties:
-    pytestmark = pytest.mark.property
+def test_absent_evidence_is_vacuous() -> None:
+    vector = claim_strength(ActiveClaim(claim_id="empty"))
+    assert vector.dimensions == (0, 0, 0)
+    assert vector.is_vacuous
+    assert vector.provenance.status is ProvenanceStatus.VACUOUS
 
-    @pytest.mark.property
-    @given(
-        st.fixed_dictionaries(
-            {},
-            optional={
-                "sample_size": st.integers(min_value=1, max_value=100000),
-                "uncertainty": st.floats(
-                    min_value=0.001,
-                    max_value=10.0,
-                    allow_nan=False,
-                    allow_infinity=False,
-                ),
-                "confidence": st.floats(
-                    min_value=0.0,
-                    max_value=1.0,
-                    allow_nan=False,
-                    allow_infinity=False,
-                ),
-            },
-        )
-    )
-    @_PROP_SETTINGS
-    def test_claim_strength_always_three_non_negative_elements(self, claim) -> None:
-        dims = claim_strength(Claim(claim_id="property", **claim)).dimensions
-        assert len(dims) == 3
-        assert all(d >= 0.0 for d in dims)
+
+@pytest.mark.parametrize("sample,confidence", [(None, None), (50, None), (None, 0.7)])
+def test_partial_evidence_has_commensurable_dimensions_and_vacuous_opinion(sample, confidence) -> None:
+    vector = claim_strength(ActiveClaim(claim_id="partial", quantitative=QuantitativeEvidence(
+        AbsentValue(), None, None, confidence=confidence, sample_size=sample)))
+    assert len(vector.dimensions) == 3
+    assert vector.is_vacuous
+
+
+@pytest.mark.parametrize("sample", [True, 0, -7])
+def test_invalid_sample_is_rejected_at_checked_owner(sample) -> None:
+    with pytest.raises(ValueError, match="positive integer"):
+        QuantitativeEvidence(AbsentValue(), None, None, sample_size=sample)
+
+
+@given(sample=st.one_of(st.none(), st.integers(min_value=1, max_value=100000)),
+       confidence=st.one_of(st.none(), st.floats(min_value=0, max_value=1, allow_nan=False, allow_infinity=False)))
+@settings(deadline=None)
+def test_strength_always_has_three_nonnegative_coordinates(sample, confidence) -> None:
+    vector = claim_strength(ActiveClaim(claim_id="property", quantitative=QuantitativeEvidence(
+        AbsentValue(), None, None, confidence=confidence, sample_size=sample)))
+    assert len(vector.dimensions) == 3
+    assert all(value >= 0 for value in vector.dimensions)

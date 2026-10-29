@@ -17,17 +17,15 @@ same canonical charters and value types every other ``WorldStore`` does.
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from condition_ir import (
-    ConditionSolver,
-    check_condition_ir,
-    checked_condition_set,
-    checked_condition_set_to_json,
-)
+import msgspec
 
+from condition_ir import ConditionSolver
+
+from propstore.compiler.context import CompilationContext
+from propstore.compiler.ir import CheckedClaim, ClaimCheckedBundle
 from propstore.conflict_detector import ConflictRecord
 from propstore.core.activation import activate_compiled_world_graph
 from propstore.core.active_claims import ActiveClaim
@@ -37,8 +35,11 @@ from propstore.core.graph_types import CompiledWorldGraph
 from propstore.core.id_types import ConceptId, to_concept_id
 from propstore.core.scalars import ScalarValue
 from propstore.families.claims import Claim, ClaimType
+from propstore.families.claim_admission import ClaimAdmission
+from propstore.families.claims_passes import ClaimFiles, LoadedClaim, run_claim_pipeline
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
+from propstore.families.forms_passes import FormCheckedRegistry, LoadedForm
 from propstore.families.justifications import Justification
 from propstore.families.relations import Stance
 from propstore.world.bound import BoundWorld, recomputed_conflicts
@@ -93,12 +94,17 @@ class _GraphOverlayStore:
         claims: Sequence[Claim],
         stances: Sequence[Stance],
         conflicts: Sequence[ConflictRecord],
+        admissions: Mapping[str, ClaimAdmission],
     ) -> None:
         self._base = base_store
         self._claims = tuple(claims)
         self._claims_by_id = {str(claim.claim_id): claim for claim in self._claims}
         self._stances = tuple(stances)
         self._conflicts = tuple(conflicts)
+        self._admissions = dict(admissions)
+
+    def claim_admissions(self) -> Mapping[str, ClaimAdmission]:
+        return self._admissions
 
     # -- overlaid reads -----------------------------------------------------
 
@@ -256,21 +262,23 @@ class OverlayWorld(BeliefSpace):
                 conditions=list(synthetic.conditions),
                 sample_size=synthetic.sample_size,
                 confidence=synthetic.confidence,
+                unit=synthetic.unit,
             )
             for synthetic in (add or [])
         ]
         synthetics_by_id = {synthetic.id: synthetic for synthetic in self._synthetics}
 
         overlay_claims: list[Claim] = []
+        admissions = dict(base_store.claim_admissions())
         for claim in base_store.claims_for(None):
             claim_id = str(claim.claim_id)
             replacement = synthetics_by_id.get(claim_id)
             if claim_id in self._removed_ids and replacement is None:
                 continue
             if replacement is not None:
-                overlay_claims.append(
-                    _synthetic_claim(replacement, existing=claim, solver=solver)
-                )
+                checked = _synthetic_claim(replacement, existing=claim, solver=solver, store=base_store)
+                overlay_claims.append(checked.claim)
+                admissions[checked.claim.claim_id] = checked.admission
             else:
                 overlay_claims.append(claim)
 
@@ -278,9 +286,9 @@ class OverlayWorld(BeliefSpace):
         for synthetic in self._synthetics:
             if synthetic.id in existing_ids:
                 continue
-            overlay_claims.append(
-                _synthetic_claim(synthetic, existing=None, solver=solver)
-            )
+            checked = _synthetic_claim(synthetic, existing=None, solver=solver, store=base_store)
+            overlay_claims.append(checked.claim)
+            admissions[checked.claim.claim_id] = checked.admission
 
         overlay_claim_ids = {str(claim.claim_id) for claim in overlay_claims}
         overlay_stances = list(base_store.stances_between(overlay_claim_ids))
@@ -296,6 +304,7 @@ class OverlayWorld(BeliefSpace):
             base_store,
             overlay_claims,
             lifting_system=base.lifting_system,
+            admissions=admissions,
         ):
             key = _conflict_key(record)
             if key in seen:
@@ -308,6 +317,7 @@ class OverlayWorld(BeliefSpace):
             claims=overlay_claims,
             stances=overlay_stances,
             conflicts=overlay_conflicts,
+            admissions=admissions,
         )
         self._compiled: CompiledWorldGraph = build_compiled_world_graph(
             self._overlay_store
@@ -413,13 +423,14 @@ def _synthetic_claim(
     *,
     existing: Claim | None,
     solver: ConditionSolver,
-) -> Claim:
+    store: WorldStore,
+) -> CheckedClaim:
     """Materialize a synthetic overlay claim as a ``Claim`` charter."""
 
     is_measurement = synthetic.type is ClaimType.MEASUREMENT
     conditions = tuple(str(condition) for condition in synthetic.conditions)
-    conditions_ir = _conditions_ir(conditions, solver)
-    return Claim(
+    authored = msgspec.structs.replace(
+        Claim(claim_id=synthetic.id) if existing is None else existing,
         claim_id=synthetic.id,
         context_id=existing.context_id if existing is not None else None,
         claim_type=synthetic.type,
@@ -430,29 +441,32 @@ def _synthetic_claim(
             else (existing.target_concept if existing is not None else None)
         ),
         value=synthetic.value,
+        quantitative_ir=None,
+        conditions_ir=None,
         conditions=conditions,
-        conditions_ir=conditions_ir,
         sample_size=(
             synthetic.sample_size
             if synthetic.sample_size is not None
-            else (existing.sample_size if existing is not None else None)
+            else (existing.quantitative.sample_size if existing is not None else None)
         ),
         confidence=synthetic.confidence,
+        unit=synthetic.unit if synthetic.unit is not None else None if existing is None else existing.quantitative.unit,
     )
-
-
-def _conditions_ir(conditions: Sequence[str], solver: ConditionSolver) -> str | None:
-    if not conditions:
-        return None
-    registry = solver.registry
-    return json.dumps(
-        checked_condition_set_to_json(
-            checked_condition_set(
-                check_condition_ir(source, registry) for source in conditions
-            )
-        ),
-        sort_keys=True,
+    forms = tuple(store.all_forms())
+    context = CompilationContext(
+        form_registry=FormCheckedRegistry(tuple(LoadedForm(form) for form in forms), {form.name:form for form in forms}),
+        context_ids=frozenset(() if authored.context_id is None else (authored.context_id,)),
+        concepts_by_id={concept.concept_id:concept for concept in store.all_concepts()},
+        claim_index={authored.claim_id:authored},
+        condition_registry=solver.registry,
     )
+    result = run_claim_pipeline(ClaimFiles((LoadedClaim(authored),), context))
+    if not isinstance(result.output, ClaimCheckedBundle):
+        raise TypeError("synthetic claim pipeline returned no checked bundle")
+    checked, = result.output.claims
+    if checked.blocked:
+        raise ValueError("invalid synthetic claim: " + "; ".join(problem.message for problem in checked.diagnostics))
+    return checked
 
 
 def _value_set(result: ValueResult) -> set[object]:

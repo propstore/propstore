@@ -34,6 +34,8 @@ from quire.git_store import AmbiguousMergeBaseError
 from quire.tree_merge import TreeMergeConflict, iter_merged_tree_entries
 
 from propstore.families.claims import Claim
+from propstore.compiler.workflows import compile_repository_checked_bundle
+from propstore.compiler.ir import CheckedClaim
 from propstore.families.merge_manifests import (
     MergeManifest,
     MergeManifestArgument,
@@ -87,6 +89,22 @@ def _is_claim_path(path: str) -> bool:
     return path == _CLAIM_STORAGE_ROOT or path.startswith(f"{_CLAIM_STORAGE_ROOT}/")
 
 
+@dataclass
+class QuarantinedMergeClaimsError(ValueError):
+    """An exact branch cannot supply semantic candidates until repaired."""
+
+    branch: str
+    artifacts: tuple[CheckedClaim, ...]
+
+    def __str__(self) -> str:
+        return f"branch {self.branch!r} contains quarantined claims: " + "; ".join(
+            f"{artifact.claim.claim_id}: " + ", ".join(
+                f"{diagnostic.code}: {diagnostic.message}"
+                for diagnostic in artifact.diagnostics
+            ) for artifact in self.artifacts
+        )
+
+
 def _read_branch_merge_claims(
     repo: Repository, branch: str, commit_sha: str
 ) -> list[MergeClaim]:
@@ -97,11 +115,15 @@ def _read_branch_merge_claims(
     (the comparison source the conflict detector needs), never folded into identity.
     """
 
+    checked = compile_repository_checked_bundle(repo, commit=commit_sha)
+    if checked is None:
+        if any(repo.families.claim.iter_handles(commit=commit_sha)):
+            raise ValueError(f"branch {branch!r} has claims but no checked concept owner")
+        return []
+    if checked.claim_bundle.blocked_claims:
+        raise QuarantinedMergeClaimsError(branch, checked.claim_bundle.blocked_claims)
     merge_claims: list[MergeClaim] = []
-    for handle in repo.families.claim.iter_handles(commit=commit_sha):
-        document = handle.document
-        if not isinstance(document, Claim):
-            continue
+    for document in checked.admitted_claims:
         merge_claim = MergeClaim.from_claim(document, paper=branch)
         if merge_claim is not None:
             merge_claims.append(merge_claim)

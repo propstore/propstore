@@ -227,8 +227,8 @@ def _linked_concept_labels(world: WorldQuery, claim: Claim) -> tuple[str, ...]:
 
 
 def _value_display(claim: Claim) -> str:
-    if claim.value is not None:
-        return f"{claim.value} {claim.unit or ''}".rstrip()
+    if claim.quantitative.point is not None:
+        return f"{claim.quantitative.point} {claim.quantitative.unit or ''}".rstrip()
     interval = _interval_display(claim)
     if interval is not None:
         return interval
@@ -248,14 +248,16 @@ def _value_display(claim: Claim) -> str:
 
 
 def _interval_display(claim: Claim) -> str | None:
-    if claim.lower_bound is None and claim.upper_bound is None:
+    from propstore.families.claim_quantitative import IntervalValue
+    value = claim.quantitative.value
+    if not isinstance(value, IntervalValue):
         return None
-    suffix = f" {claim.unit}" if claim.unit else ""
-    if claim.lower_bound is not None and claim.upper_bound is not None:
-        return f"{claim.lower_bound} to {claim.upper_bound}{suffix}"
-    if claim.lower_bound is not None:
-        return f">= {claim.lower_bound}{suffix}"
-    return f"<= {claim.upper_bound}{suffix}"
+    suffix = f" {claim.quantitative.unit}" if claim.quantitative.unit else ""
+    if value.lower is not None and value.upper is not None:
+        return f"{value.lower} to {value.upper}{suffix}"
+    if value.lower is not None:
+        return f">= {value.lower}{suffix}"
+    return f"<= {value.upper}{suffix}"
 
 
 def _text_display(claim: Claim) -> str | None:

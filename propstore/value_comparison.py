@@ -1,160 +1,100 @@
-"""Unit-aware numeric value comparison for claims.
-
-Compares claim values as intervals. When a form is supplied and the claims carry
-``unit`` fields, both intervals are normalized to SI (via
-``propstore.dimensions``) before comparison, so ``200 Hz`` and ``0.2 kHz`` read as
-equal. A claim is anything exposing ``value`` / ``lower_bound`` / ``upper_bound``
-/ ``unit`` as attributes (``ConflictClaim`` and ``DerivedConflictValue`` both
-do), so this stays usable across the entity layers without a DTO.
-"""
+"""Compare checked quantitative evidence without reinterpreting authored IO."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from fractions import Fraction
 
+from bridgman import canonicalize_dims
 from condition_ir import KindType
 
+from propstore.core.scalars import ScalarValue
 from propstore.dimensions import normalize_to_si
+from propstore.families.claim_quantitative import (
+    IntervalValue, PointValue, QuantitativeEvidence,
+)
 from propstore.families.forms import FormDefinition
 
 DEFAULT_TOLERANCE = 1e-9
-
-Interval = tuple[float, float, float]
-
-
-def _claim_field(claim: object, key: str) -> object:
-    """Read ``key`` off a claim-shaped object by attribute access."""
-
-    return getattr(claim, key, None)
+type Interval = tuple[int | float, int | float, int | float]
 
 
-def _as_float(value: object) -> float | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    return None
+def extract_interval(evidence: QuantitativeEvidence) -> Interval | None:
+    """Return numeric comparison bounds; missing endpoints remain unbounded."""
+    match evidence.value:
+        case PointValue(value=value) if isinstance(value, int | float) and not isinstance(value, bool):
+            return value, value, value
+        case IntervalValue(lower=lower, upper=upper, point=point):
+            lo = float("-inf") if lower is None else lower
+            hi = float("inf") if upper is None else upper
+            center = point if point is not None else (
+                (lo / 2 + hi / 2) if lower is not None and upper is not None
+                else lower if lower is not None else upper
+            )
+            assert center is not None
+            return center, lo, hi
+        case _:
+            return None
 
 
-def _as_unit(value: object) -> str | None:
-    return value if isinstance(value, str) else None
-
-
-def extract_interval(claim: object) -> Interval | None:
-    """Extract ``(center, lower, upper)`` from a claim's named value fields."""
-
-    value = _as_float(_claim_field(claim, "value"))
-    lower = _as_float(_claim_field(claim, "lower_bound"))
-    upper = _as_float(_claim_field(claim, "upper_bound"))
-
-    if value is not None and lower is not None and upper is not None:
-        return (value, lower, upper)
-    if value is not None:
-        return (value, value, value)
-    if lower is not None and upper is not None:
-        return ((lower + upper) / 2, lower, upper)
-    return None
-
-
-def intervals_compatible(
-    interval_a: Interval,
-    interval_b: Interval,
-    tolerance: float = DEFAULT_TOLERANCE,
-) -> bool:
-    """Whether two ``(center, lower, upper)`` intervals are compatible.
-
-    Two points: equal within tolerance. Otherwise: the ranges overlap.
-    """
-
-    _, lo_a, hi_a = interval_a
-    _, lo_b, hi_b = interval_b
-    is_point_a = abs(hi_a - lo_a) < tolerance
-    is_point_b = abs(hi_b - lo_b) < tolerance
-    if is_point_a and is_point_b:
+def intervals_compatible(a: Interval, b: Interval, tolerance: float = DEFAULT_TOLERANCE) -> bool:
+    _, lo_a, hi_a = a
+    _, lo_b, hi_b = b
+    if abs(hi_a - lo_a) < tolerance and abs(hi_b - lo_b) < tolerance:
         return abs(lo_a - lo_b) < tolerance
     return lo_a <= hi_b + tolerance and lo_b <= hi_a + tolerance
 
 
-def _normalize_interval(
-    interval: Interval, unit: str | None, form: FormDefinition
-) -> Interval:
-    center, lo, hi = interval
-    center = normalize_to_si(center, unit, form)
-    lo = normalize_to_si(lo, unit, form)
-    hi = normalize_to_si(hi, unit, form)
-    return center, min(lo, hi), max(lo, hi)
+def _normalized(evidence: QuantitativeEvidence, interval: Interval, target: FormDefinition | None) -> Interval:
+    form = evidence.form
+    if form is None or evidence.unit is None:
+        return interval
+    center, lower, upper = interval
+    center = normalize_to_si(center, evidence.unit, form)
+    # Open endpoints are comparison sentinels, never authored numeric evidence.
+    lower = normalize_to_si(lower, evidence.unit, form) if lower != float("-inf") else lower
+    upper = normalize_to_si(upper, evidence.unit, form) if upper != float("inf") else upper
+    if target is not None and target != form:
+        source_unit = form.unit_symbol or ("1" if form.is_dimensionless else None)
+        center = normalize_to_si(center, source_unit, target)
+        lower = normalize_to_si(lower, source_unit, target) if lower != float("-inf") else lower
+        upper = normalize_to_si(upper, source_unit, target) if upper != float("inf") else upper
+    return center, min(lower, upper), max(lower, upper)
 
 
 def values_compatible(
-    value_a: object,
-    value_b: object,
+    value_a: ScalarValue | None,
+    value_b: ScalarValue | None,
     tolerance: float = DEFAULT_TOLERANCE,
     *,
-    claim_a: object | None = None,
-    claim_b: object | None = None,
-    forms: Mapping[str, FormDefinition] | None = None,
-    concept_form: str | None = None,
+    claim_a: QuantitativeEvidence | None = None,
+    claim_b: QuantitativeEvidence | None = None,
 ) -> bool:
-    """Whether two claim values are compatible.
-
-    With ``claim_a`` / ``claim_b``, values are extracted as intervals; if ``forms``
-    and ``concept_form`` resolve a form and the claims carry units, the intervals
-    are normalized to SI first. Otherwise scalars are compared directly.
-    """
-
+    """Compare the checked interval or exact categorical/boolean scalar types."""
     if claim_a is not None and claim_b is not None:
-        interval_a = extract_interval(claim_a)
-        interval_b = extract_interval(claim_b)
-        if interval_a is not None and interval_b is not None:
-            if forms is not None and concept_form is not None and concept_form in forms:
-                form_def = forms[concept_form]
-                unit_a = _as_unit(_claim_field(claim_a, "unit"))
-                unit_b = _as_unit(_claim_field(claim_b, "unit"))
-                if (
-                    form_def.kind is KindType.QUANTITY
-                    and (unit_a is not None or unit_b is not None)
-                    and (form_def.unit_symbol is not None or form_def.is_dimensionless)
-                ):
-                    interval_a = _normalize_interval(interval_a, unit_a, form_def)
-                    interval_b = _normalize_interval(interval_b, unit_b, form_def)
-            return intervals_compatible(interval_a, interval_b, tolerance)
-
-    float_a = _as_float(value_a)
-    float_b = _as_float(value_b)
-    if float_a is not None and float_b is not None:
-        return abs(float_a - float_b) < tolerance
+        form_a, form_b = claim_a.form, claim_b.form
+        if form_a is not None and form_b is not None:
+            if form_a.kind is not form_b.kind:
+                return False
+            if form_a.kind is KindType.QUANTITY and canonicalize_dims(form_a.dimensions or {}) != canonicalize_dims(form_b.dimensions or {}):
+                return False
+        if isinstance(claim_a.value, PointValue) and isinstance(claim_b.value, PointValue) and claim_a.unit == claim_b.unit and form_a == form_b:
+            return values_compatible(claim_a.point, claim_b.point, tolerance)
+        a, b = extract_interval(claim_a), extract_interval(claim_b)
+        if a is not None and b is not None:
+            return intervals_compatible(_normalized(claim_a, a, form_a), _normalized(claim_b, b, form_a), tolerance)
+        value_a, value_b = claim_a.point, claim_b.point
+    if isinstance(value_a, int | float) and not isinstance(value_a, bool) and isinstance(value_b, int | float) and not isinstance(value_b, bool):
+        return abs(Fraction(value_a) - Fraction(value_b)) < tolerance
     return type(value_a) is type(value_b) and value_a == value_b
 
 
-def value_str(
-    value: object, claim: object | None = None, *, with_unit: bool = False
-) -> str:
-    """Render a claim's value as a string.
-
-    With ``with_unit``, the claim's unit is appended when it carries one. Use it
-    wherever the two rendered sides are not in the same unit system — a
-    parameterization record compares an authored value against an SI-normalized
-    derived one, so unlabelled numbers there read as disagreeing when they do
-    not. Comparisons between two authored claims are already symmetric and pass
-    the default.
-    """
-
-    rendered = _value_str(value, claim)
-    if not with_unit or claim is None:
-        return rendered
-    unit = _as_unit(_claim_field(claim, "unit"))
-    return f"{rendered} {unit}" if unit else rendered
-
-
-def _value_str(value: object, claim: object | None) -> str:
-    if claim is not None:
-        interval = extract_interval(claim)
-        if interval is not None:
-            center, lo, hi = interval
-            if abs(hi - lo) < DEFAULT_TOLERANCE:
-                return str(center)
-            raw = _claim_field(claim, "value")
-            if _as_float(raw) is not None:
-                return f"{raw} [{lo}, {hi}]"
-            return f"[{lo}, {hi}]"
-    return str(value)
+def value_str(value: ScalarValue | None, claim: QuantitativeEvidence | None = None, *, with_unit: bool = False) -> str:
+    if claim is None:
+        return str(value)
+    match claim.value:
+        case IntervalValue(lower=lower, upper=upper, point=point):
+            bounds = f"[{lower if lower is not None else '-inf'}, {upper if upper is not None else 'inf'}]"
+            rendered = bounds if point is None else f"{point} {bounds}"
+        case _:
+            rendered = str(claim.point)
+    return f"{rendered} {claim.unit}" if with_unit and claim.unit else rendered

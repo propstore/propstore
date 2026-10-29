@@ -89,7 +89,7 @@ def build_demo_repo(tmp_path: Path) -> Repository:
             value=3.0,
             unit="m/s",
             uncertainty=0.1,
-            uncertainty_type="std",
+            uncertainty_type="absolute",
             sample_size=5,
             conditions=("speed > 0",),
         ),

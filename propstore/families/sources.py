@@ -258,6 +258,7 @@ class SourceClaimDocument(_Struct):
     concept: str | None = None
     concepts: tuple[str, ...] = ()
     conditions: tuple[str, ...] = ()
+    confidence: float | None = None
     context: str | None = None
     equations: tuple[str, ...] = ()
     exactness: Exactness | None = None
@@ -390,7 +391,7 @@ class SourceConceptsDocument(CharterDoc):
 @charter(
     key="source_claims",
     name="source_claims",
-    contract_version=_SOURCE_CONTRACT_VERSION,
+    contract_version="2026.10.29",
     placement=FixedFilePlacement("claims.yaml", branch=SOURCE_BRANCH),
 )
 class SourceClaimsDocument(CharterDoc):
