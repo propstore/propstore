@@ -47,6 +47,7 @@ from propstore.core.lemon import (
     OntologyReference,
 )
 from propstore.dimensions import UnitConversion
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
@@ -78,19 +79,8 @@ def test_conflict_claim_from_claim_maps_charter_fields() -> None:
     )
 
 
-def test_conflict_claim_from_claim_folds_source_condition() -> None:
-    view = ConflictClaim.from_claim(
-        Claim(claim_id="c1", value=1.0), source_paper="paperA"
-    ).with_source_condition()
-    assert view.source_paper == "paperA"
-    assert "source == 'paperA'" in [str(condition) for condition in view.conditions]
-
-
-def test_conflict_claim_without_source_adds_no_condition() -> None:
-    view = ConflictClaim.from_claim(
-        Claim(claim_id="c1", value=1.0)
-    ).with_source_condition()
-    assert view.source_paper is None
+def test_conflict_claim_preserves_absence_of_authored_conditions() -> None:
+    view = ConflictClaim.from_claim(Claim(claim_id="c1", value=1.0))
     assert view.conditions == ()
 
 
@@ -446,6 +436,7 @@ def test_detect_conflicts_unit_aware_same_value_no_conflict() -> None:
         {"c1": _frequency_concept()},
         {},
         forms={"frequency": _frequency_form()},
+        provenance=ClaimProvenanceIndex.from_micropublications(()),
     )
     assert records == []
 
@@ -456,19 +447,23 @@ def test_detect_conflicts_unit_aware_real_difference_reports_conflict() -> None:
         {"c1": _frequency_concept()},
         {},
         forms={"frequency": _frequency_form()},
+        provenance=ClaimProvenanceIndex.from_micropublications(()),
     )
     assert len(records) == 1
     assert isinstance(records[0], ConflictRecord)
     assert records[0].warning_class == ConflictClass.CONFLICT
 
 
-def test_detect_conflicts_synthetic_source_collision_is_loud() -> None:
-    with pytest.raises(orchestrator.SyntheticConceptCollision):
+def test_detect_conflicts_preserves_authored_source_concept() -> None:
+    assert (
         detect_conflicts(
             [],
             {},
             {"source": ConceptInfo("real-source", "source", KindType.CATEGORY)},
+            provenance=ClaimProvenanceIndex.from_micropublications(()),
         )
+        == []
+    )
 
 
 def test_orchestrator_lifting_decision_cache_is_explicit() -> None:

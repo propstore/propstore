@@ -33,6 +33,7 @@ from propstore.conflict_detector.models import (
 from propstore.core.graph_types import ParameterizationEdge
 from propstore.core.id_types import to_claim_id, to_concept_id, to_concept_ids
 from propstore.core.store_results import ConceptSearchHit
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Claim, ClaimType
 from propstore.families.concepts import Concept
 from propstore.families.contexts import Context, LiftingRule
@@ -356,6 +357,9 @@ def select_conflicts(session: DerivedSession) -> list[ConflictRecord]:
     """
 
     model = session.schema.model("conflict")
+    provenance = ClaimProvenanceIndex.from_micropublications(
+        select_micropublications(session)
+    )
     records: list[ConflictRecord] = []
     for row in session.scalars(select(model)):
         records.append(
@@ -370,6 +374,8 @@ def select_conflicts(session: DerivedSession) -> list[ConflictRecord]:
                 value_a=str(row.value_a),
                 value_b=str(row.value_b),
                 derivation_chain=row.derivation_chain,
+                provenance_a=provenance.for_claim(str(row.claim_a_id)),
+                provenance_b=provenance.for_claim(str(row.claim_b_id)),
             )
         )
     return records

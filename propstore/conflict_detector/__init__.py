@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
     from propstore.context_lifting import LiftingSystem
     from propstore.core.graph_types import ParameterizationEdge
+    from propstore.families.claim_provenance import ClaimProvenanceIndex
     from propstore.families.concepts import Concept
     from propstore.families.forms import FormDefinition
 
@@ -36,6 +37,7 @@ def detect_conflicts(
     cel_registry: Mapping[str, ConceptInfo],
     lifting_system: LiftingSystem | None = None,
     *,
+    provenance: ClaimProvenanceIndex,
     forms: Mapping[str, FormDefinition] | None = None,
     parameterizations: Mapping[str, Sequence[ParameterizationEdge]] | None = None,
 ) -> list[ConflictRecord]:
@@ -46,6 +48,7 @@ def detect_conflicts(
         concepts,
         cel_registry,
         lifting_system=lifting_system,
+        provenance=provenance,
         forms=forms,
         parameterizations=parameterizations,
     )
@@ -56,6 +59,7 @@ def detect_transitive_conflicts(
     concepts: Mapping[str, Concept],
     parameterizations: Mapping[str, Sequence[ParameterizationEdge]],
     *,
+    provenance: ClaimProvenanceIndex,
     lifting_system: LiftingSystem | None = None,
     forms: Mapping[str, FormDefinition] | None = None,
 ) -> list[ConflictRecord]:
@@ -67,6 +71,7 @@ def detect_transitive_conflicts(
         claims,
         concepts,
         parameterizations,
+        provenance=provenance,
         lifting_system=lifting_system,
         forms=forms,
     )

@@ -14,8 +14,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from enum import Enum
 
-from condition_ir import CelExpr, to_cel_expr, to_cel_exprs
+from condition_ir import CelExpr, to_cel_exprs
 
+from propstore.families.claim_provenance import (
+    BundledClaim,
+    ClaimProvenanceIndex,
+    UnbundledClaim,
+)
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
 
 
@@ -33,21 +38,13 @@ class ConflictClaim:
     expression: str | None = None
     sympy: str | None = None
     body: str | None = None
-    source_paper: str | None = None
     context_id: str | None = None
     conditions: tuple[CelExpr, ...] = field(default_factory=tuple)
     variables: tuple[ClaimVariable, ...] = ()
 
     @classmethod
-    def from_claim(
-        cls, claim: Claim, *, source_paper: str | None = None
-    ) -> ConflictClaim:
-        """The detector view of *claim*.
-
-        ``source_paper`` is supplied by the caller because the charter is
-        provenance-free: the sidecar build derives it from the micropublication
-        bundling the claim; the merge boundary carries it on ``MergeClaim``.
-        """
+    def from_claim(cls, claim: Claim) -> ConflictClaim:
+        """The detector view of the claim's authored semantics."""
 
         return cls(
             claim_id=claim.claim_id,
@@ -67,19 +64,10 @@ class ConflictClaim:
             expression=claim.expression,
             sympy=claim.sympy,
             body=claim.body,
-            source_paper=source_paper,
             context_id=claim.context_id,
             conditions=to_cel_exprs(claim.conditions),
             variables=claim.variables,
         )
-
-    def with_source_condition(self) -> ConflictClaim:
-        if not self.source_paper:
-            return self
-        source_condition = to_cel_expr(f"source == '{self.source_paper}'")
-        if source_condition in self.conditions:
-            return self
-        return replace(self, conditions=(*self.conditions, source_condition))
 
 
 class ConflictClass(Enum):
@@ -115,3 +103,14 @@ class ConflictRecord:
     value_a: str
     value_b: str
     derivation_chain: str | None = None
+    provenance_a: BundledClaim | UnbundledClaim | None = None
+    provenance_b: BundledClaim | UnbundledClaim | None = None
+
+    def with_provenance(self, provenance: ClaimProvenanceIndex) -> ConflictRecord:
+        """Attach canonical membership without changing comparison semantics."""
+
+        return replace(
+            self,
+            provenance_a=provenance.for_claim(self.claim_a_id),
+            provenance_b=provenance.for_claim(self.claim_b_id),
+        )

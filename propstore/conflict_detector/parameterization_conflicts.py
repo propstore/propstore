@@ -40,6 +40,7 @@ from human_to_sympy import (
 
 from propstore.core.graph_types import ParameterizationEdge
 from propstore.dimensions import normalize_to_si
+from propstore.families.claim_provenance import ClaimProvenanceIndex
 from propstore.families.claims import Exactness
 from propstore.families.concepts import Concept
 from propstore.parameterization import build_parameterization_groups
@@ -677,6 +678,7 @@ def detect_transitive_conflicts(
     concepts: ConceptIndex,
     parameterizations: ParameterizationIndex,
     *,
+    provenance: ClaimProvenanceIndex,
     lifting_system: LiftingSystem | None = None,
     forms: Mapping[str, FormDefinition] | None = None,
 ) -> list[ConflictRecord]:
@@ -689,7 +691,7 @@ def detect_transitive_conflicts(
     """
 
     by_concept = collect_parameter_claims(claims)
-    return _detect_transitive_conflicts_for_claims(
+    records = _detect_transitive_conflicts_for_claims(
         claims,
         concepts,
         parameterizations,
@@ -697,3 +699,4 @@ def detect_transitive_conflicts(
         lifting_system=lifting_system,
         forms=forms,
     )
+    return [record.with_provenance(provenance) for record in records]
