@@ -46,7 +46,7 @@ alias lets contract consumers read the registry version from the manifest module
 without importing the registry directly.
 """
 
-CLAIM_TYPE_CONTRACT_VERSION = contract_version("2026.06.30")
+CLAIM_TYPE_CONTRACT_VERSION = contract_version("2026.10.29")
 """Wire-contract version stamped on every claim-type authoring contract entry."""
 
 SEMANTIC_PASS_CONTRACT_VERSION = contract_version("2026.06.30")

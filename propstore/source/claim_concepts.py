@@ -138,4 +138,5 @@ def build_promoted_claim(
         uncertainty_type=lowered.uncertainty_type,
         unit=lowered.unit,
         sample_size=lowered.sample_size,
+        confidence=lowered.confidence,
     )

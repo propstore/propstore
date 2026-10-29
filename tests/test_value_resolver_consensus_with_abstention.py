@@ -14,13 +14,14 @@ absorbed.
 from __future__ import annotations
 
 from propstore.core.active_claims import ActiveClaim
+from propstore.families.claim_quantitative import PointValue, QuantitativeEvidence
 from propstore.families.claims import ClaimType
 from propstore.world.types import ValueResultReason, ValueStatus
 from propstore.world.value_resolver import ActiveClaimResolver
 
 
 def _param(claim_id: str, value: float) -> ActiveClaim:
-    return ActiveClaim(claim_id=claim_id, claim_type=ClaimType.PARAMETER, value=value)
+    return ActiveClaim(claim_id=claim_id, claim_type=ClaimType.PARAMETER, quantitative=QuantitativeEvidence(PointValue(value), None, None))
 
 
 def _algo(claim_id: str, body: str) -> ActiveClaim:

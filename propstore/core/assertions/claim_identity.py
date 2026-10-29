@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import msgspec
 
 from propstore.core.id_types import ContextId, to_context_id
 from propstore.families.claims import Claim
@@ -16,8 +17,8 @@ def content_digest(value: object) -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def semantic_content(claim: Claim) -> dict[str, object]:
-    """Return propositional content, excluding identity and lifecycle fields."""
+def _semantic_fields(claim: Claim) -> dict[str, object]:
+    """Hash serialization boundary for nonquantitative propositional content."""
 
     return {
         "claim_type": None if claim.claim_type is None else claim.claim_type.value,
@@ -33,15 +34,12 @@ def semantic_content(claim: Claim) -> dict[str, object]:
         "target_concept": claim.target_concept,
         "concepts": list(claim.concepts),
         "equations": list(claim.equations),
-        "value": claim.value,
-        "lower_bound": claim.lower_bound,
-        "upper_bound": claim.upper_bound,
-        "uncertainty": claim.uncertainty,
-        "uncertainty_type": claim.uncertainty_type,
-        "confidence": claim.confidence,
-        "unit": claim.unit,
-        "sample_size": claim.sample_size,
     }
+
+
+def semantic_content(claim: Claim) -> dict[str, object]:
+    """Runtime identity consumes the same checked value as semantic reasoning."""
+    return {**_semantic_fields(claim), "quantitative": msgspec.to_builtins(claim.quantitative)}
 
 
 def claim_assertion_id(

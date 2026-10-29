@@ -521,21 +521,25 @@ def _check_quantitative(
     def problem(field: str, code: str, message: str) -> None:
         problems.append(ClaimValidationDiagnostic(field, message, code))
 
-    numeric = isinstance(claim.value, int | float) and not isinstance(claim.value, bool)
+    numeric_point = claim.value if isinstance(claim.value, int | float) and not isinstance(claim.value, bool) else None
+    numeric = numeric_point is not None
     for field, value in (("value", claim.value), ("lower_bound", claim.lower_bound),
                          ("upper_bound", claim.upper_bound)):
         if isinstance(value, float) and not isfinite(value):
             problem(field, "claim.quantitative.finite", f"{field} must be finite")
     lower, upper = claim.lower_bound, claim.upper_bound
+    for field, bound in (("lower_bound", lower), ("upper_bound", upper)):
+        if isinstance(bound, bool):
+            problem(field, "claim.quantitative.bound.numeric", f"{field} must be numeric, excluding boolean")
     has_interval = lower is not None or upper is not None
     if lower is not None and upper is not None and lower > upper:
         problem("lower_bound", "claim.quantitative.interval.order", "lower_bound must not exceed upper_bound")
     if has_interval and claim.value is not None and not numeric:
         problem("value", "claim.quantitative.interval.numeric", "an interval requires a numeric point when value is present")
-    if numeric:
-        if lower is not None and claim.value < lower:
+    if numeric_point is not None:
+        if lower is not None and numeric_point < lower:
             problem("value", "claim.quantitative.point.lower", "value must be at least lower_bound")
-        if upper is not None and claim.value > upper:
+        if upper is not None and numeric_point > upper:
             problem("value", "claim.quantitative.point.upper", "value must be at most upper_bound")
     if claim.sample_size is not None and (
         isinstance(claim.sample_size, bool) or not isinstance(claim.sample_size, int)
@@ -560,30 +564,34 @@ def _check_quantitative(
         problem("uncertainty", "claim.quantitative.uncertainty.numeric", "measurement uncertainty requires a numeric point or interval")
 
     unit = claim.unit
-    if claim.claim_type in (ClaimType.PARAMETER, ClaimType.MEASUREMENT):
-        concept_id = claim.output_concept if claim.claim_type is ClaimType.PARAMETER else claim.target_concept
-        if context is not None:
-            concept = context.concepts_by_id.get(concept_id or "")
-            if concept is None:
+    contract = claim_type_contract_for(claim.claim_type)
+    policy = None if contract is None else contract.unit_policy
+    requires_form = (policy is not None and policy.required) or unit is not None or claim.uncertainty_type == "absolute"
+    concept_id = claim.output_concept or claim.target_concept
+    if context is not None and concept_id is not None and (requires_form or claim.value is not None or has_interval):
+        concept = context.concepts_by_id.get(concept_id)
+        if concept is None:
+            if requires_form:
                 problem("unit", "claim.unit.concept.missing", f"unit evidence unavailable: concept {concept_id!r} is missing")
-            else:
-                entry = concept.lexical_entry
-                form_name = None if entry is None else entry.physical_dimension_form
-                form = context.form_registry.registry.get(form_name or "")
-                concept_info = context.condition_registry.get(concept.canonical_name)
-        if form is None:
+        else:
+            entry = concept.lexical_entry
+            form_name = None if entry is None else entry.physical_dimension_form
+            form = context.form_registry.registry.get(form_name or "")
+            concept_info = context.condition_registry.get(concept.canonical_name)
+    if requires_form and form is None:
+        if context is None:
+            problem("unit", "claim.unit.context.missing", "unit evidence unavailable: no checked compilation context or supplied form")
+        else:
             problem("unit", "claim.unit.form.missing", f"unit evidence unavailable: concept {concept_id!r} has no resolved form")
     if form is not None:
         problems.extend(validate_claim_value_fields(value=claim.value, lower_bound=lower,
             upper_bound=upper, form=form, concept_info=concept_info))
         if form.kind is KindType.QUANTITY:
-            policy = CLAIM_TYPE_CONTRACTS[ClaimType.PARAMETER].unit_policy
-            assert policy is not None
-            if unit is None and form.is_dimensionless:
+            if unit is None and form.is_dimensionless and policy is not None:
                 unit = policy.dimensionless_default_unit
-            if not unit:
+            if not unit and policy is not None and policy.required:
                 problem("unit", "claim.unit.required", f"unit is required for form {form.name!r}")
-            else:
+            elif unit is not None:
                 try:
                     if not unit_compatible_with_form(unit, form):
                         problem("unit", "claim.unit.incompatible", f"unit {unit!r} is not compatible with form {form.name!r}")
@@ -598,12 +606,13 @@ def _check_quantitative(
         problem("uncertainty", "claim.quantitative.uncertainty.unit", "absolute uncertainty requires a resolved measurement unit")
     if problems:
         return None, tuple(problems)
+    checked_value: AbsentValue | PointValue | IntervalValue
     if has_interval:
-        value = IntervalValue(lower, upper, claim.value if numeric else None)
+        checked_value = IntervalValue(lower, upper, numeric_point)
     elif claim.value is None:
-        value = AbsentValue()
+        checked_value = AbsentValue()
     else:
-        value = PointValue(claim.value)
+        checked_value = PointValue(claim.value)
     uncertainty = None
     if claim.uncertainty is not None:
         if claim.uncertainty_type == "absolute":
@@ -611,7 +620,7 @@ def _check_quantitative(
             uncertainty = AbsoluteUncertainty(claim.uncertainty, unit)
         else:
             uncertainty = RelativeUncertainty(claim.uncertainty)
-    return QuantitativeEvidence(value, form, unit, uncertainty, claim.confidence, claim.sample_size), ()
+    return QuantitativeEvidence(checked_value, form, unit, uncertainty, claim.confidence, claim.sample_size), ()
 
 
 def validate_claim(

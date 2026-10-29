@@ -17,6 +17,7 @@ from doxa import Opinion
 
 from propstore.core.scalars import ScalarValue
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
+from propstore.families.claim_quantitative import AbsentValue, QuantitativeEvidence
 
 _DOGMATIC_TOL = 1e-12
 
@@ -36,20 +37,19 @@ class ActiveClaim(
     """One claim as the resolution and argumentation layers see it."""
 
     claim_id: str
+    quantitative: QuantitativeEvidence = msgspec.field(
+        default_factory=lambda: QuantitativeEvidence(AbsentValue(), None, None)
+    )
     context_id: str | None = None
     premise_kind: str = "ordinary"
     concept_id: str | None = None
     canonical_name: str | None = None
     statement: str | None = None
     claim_type: ClaimType | None = None
-    value: ScalarValue | None = None
     body: str | None = None
     expression: str | None = None
     variables: tuple[ClaimVariable, ...] = ()
     conditions: tuple[str, ...] = ()
-    sample_size: float | None = None
-    uncertainty: float | None = None
-    confidence: float | None = None
     branch: str | None = None
     source_assertion_ids: tuple[str, ...] = ()
     date: str | None = None
@@ -86,18 +86,19 @@ class ActiveClaim(
             canonical_name=claim.name,
             statement=claim.statement,
             claim_type=claim.claim_type,
-            value=claim.value,
+            quantitative=claim.quantitative,
             body=claim.body,
             expression=claim.expression,
             variables=claim.variables,
             conditions=claim.conditions,
-            sample_size=None if claim.sample_size is None else float(claim.sample_size),
-            uncertainty=claim.uncertainty,
-            confidence=claim.confidence,
             branch=branch,
             source_assertion_ids=source_assertion_ids,
             source_paper=source_paper,
         )
+
+    @property
+    def value(self) -> ScalarValue | None:
+        return self.quantitative.point
 
     def opinion(self) -> Opinion | None:
         """Rebuild the attached opinion as ``doxa.Opinion``, or ``None``.

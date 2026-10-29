@@ -6,14 +6,14 @@ Implement issue #145: one typed checked quantitative owner, precise blocking dia
 
 ## State
 
-Initial vertical slice complete: typed quantitative variants, compiler projection, canonical JSON sidecar persistence, admission version, and independent malformed diagnostics. Active control surface: protocols:cleanup-refactor, read from its installed SKILL.md. Integrated the coherent first local #144 slice from campaign/209-checked-conflicts. No publication authority for this worker.
+Typed quantitative owner and production consumers implemented. Active control surface: protocols:cleanup-refactor, read from its installed SKILL.md. Integrated the first local #144 slice from campaign/209-checked-conflicts. Parent selected one combined #145/#209 delivery because the old detector mirror cannot carry the new owner without recreating the forbidden surface. This branch deliberately awaits the canonical detector cutover and WorldStore admission accessor owned by the #209 worker; it must not merge independently. No publication authority for this worker.
 
 ## Decisions and why
 
 - Smallest complete change: add `Claim.quantitative_ir` beside existing `conditions_ir`, with tagged typed value/uncertainty variants, evidence metadata, and resolved form/unit. The compiler creates it once and admission binds its persisted bytes. Existing canonical checked condition projection establishes the placement. Estimated 700-1100 production lines and 250-400 focused test lines including consumer changes.
 - Scalar variants preserve int/float/string/bool exactly. Interval bounds are finite and inclusive, with an optional point constrained to the interval. One-sided intervals retain their absent bound.
 - Absolute uncertainty is a finite nonnegative distance in the resolved measurement unit. Relative uncertainty is a finite nonnegative dimensionless ratio, without a fabricated upper bound. Neither is a subjective-logic ignorance mass. Confidence is a finite probability in [0,1]; sample size is a positive integer excluding bool.
-- Raw charter scalar fields remain authoring/IO only. Source authoring identity excludes derived checked fields as it excludes conditions_ir; runtime identity consumes checked evidence when available. Malformed authored identity remains inspectable and never supplies runtime values.
+- Raw charter scalar fields remain authoring/IO only. Semantic identity always requires checked evidence; merge branch loading compiles the exact pinned branch through the existing compiler before computing semantic fingerprints. A typed quarantined-branch error carries retained artifacts and exact diagnostics and prevents target mutation. There is no authored semantic fingerprint fallback.
 - Existing `_check_parameter_unit` owns resolved form lookup, compatibility, conversion, and dimensionless default; consolidate it into the quantitative check rather than duplicate it.
 
 ## Classification and disposition
@@ -35,6 +35,22 @@ Forbidden searches: semantic independent reads of value/bounds/uncertainty/confi
 
 Initial focused proof: logged `tests/test_claim_quantitative.py`, 19 passed, `logs/test-runs/pytest-20261028-234901.log`. It exercises exact scalar codec types, intervals, dimensionless/physical units, evidence invariants, and real repository compiler/admission/snapshot roundtrip. Earlier runs exposed a test attempting an already-forbidden nonfinite scalar and an empty-concept repository compilation short-circuit; tests now use real boundary conditions.
 
+Second slice dispositions: rewrote ActiveClaim to one quantitative object, deleted value-comparison getattr/scalar-bag helpers, rewrote views/worldline/ATMS/export consumers, and deleted measurement-uncertainty-to-opinion reinterpretation. Raw source IO lowering now preserves confidence. Overlay uses the existing claim pipeline and stores fresh checked admission for changed/new bytes, and supplies that inventory explicitly to recomputed conflicts. Unchanged overlay claims retain base admission.
+
+The required unit/default policy remains the declared PARAMETER policy. MEASUREMENT measure-only and optional-unit observations retain their existing contracts; no new mandatory form/unit was added to those types. Explicit supplied units and absolute uncertainty still require resolved form evidence. Relative ratios may exceed one.
+
+Root found a real precision defect in the first comparison rewrite: float interval extraction would collapse adjacent canonical integers above the float exact range. The implementation now keeps integer interval components and uses exact Fraction subtraction for point comparison when conversion is unnecessary. Different physical dimensions reject comparison; compatible forms with different canonical unit symbols normalize through the existing unit owner into one common form unit.
+
+Latest authored focused proof: `tests/test_claim_quantitative.py`, 31 passed, `logs/test-runs/pytest-20261029-000836.log`; includes large integers, common-unit normalization, source lowering, measure-only/optional-unit contracts, no-target-mutation merge failure, and fresh overlay admission. `tests/test_preference.py`, 12 passed, `logs/test-runs/pytest-20261028-235908.log`. No CI/typecheck/suite gate run locally. Parent owns the combined PR's CI and final acceptance.
+
+Remaining forbidden raw readers in conflict_detector belong to the #209 worker and are not accepted as final state. The existing test constructors were migrated to typed quantitative input; full fixture/source compatibility remains for combined CI. The contract manifest and claim/source-claims versions were updated for the new projection/source confidence field.
+
+## Draft PR description
+
+Claims currently admit incompatible quantitative scalar bags and consumers assign their fields different meanings. This change projects authored fields once into checked point/interval/absence, measurement-uncertainty, and evidence variants, binds them to compiler admission, and makes runtime values, preference, views, promotion, overlays, worldlines, and identity consume that owner. Invalid independent invariants remain precise blocking diagnostics; scalar types and large integer point comparisons retain their exact values. The final combined change also removes the detector input mirror in the #209 worker's branch.
+
+Validation: focused authored quantitative and preference tests pass as recorded above. Combined PR CI and canonical detector integration remain outstanding; this is not a ready-to-merge claim.
+
 ## Next step
 
-Commit the initial slice, then rewrite dependent consumers and expand focused tests. No commit identifiers belong in this note.
+Commit the consumer slice for the #209 worker to integrate, then support combined CI repairs. Parent merges latest master/#144/#208 and resolves their shared merge-loader/manifest edits. No commit identifiers belong in this note.

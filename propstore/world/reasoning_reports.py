@@ -83,9 +83,9 @@ def _concept_canonical_name(world: WorldQuery, concept_id: str) -> str | None:
 
 
 def _claim_value_display(claim: Claim) -> str:
-    if claim.unit:
-        return f"value={claim.value} {claim.unit}"
-    return f"value={claim.value}"
+    if claim.quantitative.unit:
+        return f"value={claim.quantitative.point} {claim.quantitative.unit}"
+    return f"value={claim.quantitative.point}"
 
 
 def _active_value_display(active: ActiveClaim, claim: Claim | None) -> str:
@@ -340,7 +340,7 @@ def explain_world_claim(
         concept_display_id=(
             None if concept_id is None else _concept_display_id(world, concept_id)
         ),
-        value=claim.value,
+        value=claim.quantitative.point,
         stances=tuple(stances),
     )
 

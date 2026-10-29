@@ -119,7 +119,7 @@ class ClaimVariable(msgspec.Struct, frozen=True, forbid_unknown_fields=True):
 @charter(
     key="claim",
     name="claim",
-    contract_version="2026.07.21",
+    contract_version="2026.10.29",
     placement="claim",
     identity_field="claim_id",
     semantic="propstore.claim",

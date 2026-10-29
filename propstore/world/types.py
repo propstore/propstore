@@ -503,15 +503,12 @@ class SyntheticClaim:
     conditions: list[CelExpr] = field(default_factory=list[CelExpr])
     sample_size: int | None = None
     confidence: float | None = None
+    unit: str | None = None
 
     def __post_init__(self) -> None:
         self.concept_id = to_concept_id(self.concept_id)
         self.type = _coerce_claim_type(self.type)
         self.conditions = list(to_cel_exprs(self.conditions))
-        if self.sample_size is not None:
-            self.sample_size = int(self.sample_size)
-        if self.confidence is not None:
-            self.confidence = float(self.confidence)
 
 
 @dataclass(frozen=True)
