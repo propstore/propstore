@@ -14,7 +14,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from propstore.algorithm_bindings import algorithm_bindings, algorithm_known_values
-
 from propstore.app.claim_views import (
     claim_condition_expression,
     claim_focus_concept,

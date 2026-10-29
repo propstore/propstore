@@ -114,5 +114,3 @@ def detect_algorithm_conflicts(
                 )
 
     return records
-
-

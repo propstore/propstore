@@ -34,7 +34,6 @@ from condition_ir import (
 )
 
 from propstore.algorithm_bindings import algorithm_bindings
-
 from propstore.conflict_detector import ConflictRecord, detect_conflicts
 from propstore.conflict_detector.models import ConflictClaim
 from propstore.core.activation import is_claim_active

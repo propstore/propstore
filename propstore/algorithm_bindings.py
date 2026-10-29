@@ -14,9 +14,7 @@ class AlgorithmBindingError(ValueError):
     """An algorithm cannot be grounded unambiguously in canonical concepts."""
 
 
-def algorithm_bindings(
-    variables: Sequence[ClaimVariable], body: str
-) -> dict[str, str]:
+def algorithm_bindings(variables: Sequence[ClaimVariable], body: str) -> dict[str, str]:
     """Project bindings, using the authored name when supplied, else symbol.
 
     Every parameter must have a canonical concept. Constant algorithms need no
@@ -32,11 +30,15 @@ def algorithm_bindings(
         ):
             if value is not None:
                 if not value.strip() or value in seen:
-                    raise AlgorithmBindingError(f"Duplicate or empty algorithm {label}: {value!r}")
+                    raise AlgorithmBindingError(
+                        f"Duplicate or empty algorithm {label}: {value!r}"
+                    )
                 seen.add(value)
         key = variable.name if variable.name is not None else variable.symbol
         if not key or not key.isidentifier() or not variable.concept.strip():
-            raise AlgorithmBindingError("Algorithm bindings require a name/symbol and canonical concept.")
+            raise AlgorithmBindingError(
+                "Algorithm bindings require a name/symbol and canonical concept."
+            )
         if key in bindings:
             raise AlgorithmBindingError(f"Duplicate algorithm binding: {key!r}")
         bindings[key] = variable.concept
@@ -44,15 +46,22 @@ def algorithm_bindings(
     parameters = extract_free_variables(tree)
     for node in tree.body:
         if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-            parameters.update(arg.arg for arg in (
-                *node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs
-            ))
+            parameters.update(
+                arg.arg
+                for arg in (
+                    *node.args.posonlyargs,
+                    *node.args.args,
+                    *node.args.kwonlyargs,
+                )
+            )
             for arg in (node.args.vararg, node.args.kwarg):
                 if arg is not None:
                     parameters.add(arg.arg)
     missing = parameters - bindings.keys()
     if missing:
-        raise AlgorithmBindingError(f"Missing algorithm bindings: {', '.join(sorted(missing))}")
+        raise AlgorithmBindingError(
+            f"Missing algorithm bindings: {', '.join(sorted(missing))}"
+        )
     return bindings
 
 
