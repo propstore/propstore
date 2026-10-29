@@ -11,8 +11,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from propstore.families.claims import Claim, ClaimType
-from propstore.families.concepts import Concept
 from propstore.repository import Repository
+from tests.canonical_claim_fixtures import concept_with_form
+from tests.merge_helpers import temperature_form
 
 
 def init_repo(root: Path) -> Repository:
@@ -26,9 +27,15 @@ def author_concept(
     branch: str | None = None,
     name: str | None = None,
 ) -> str:
+    repo.families.form.save(
+        "temperature",
+        temperature_form(),
+        message="author temperature form",
+        branch=branch,
+    )
     return repo.families.concept.save(
         concept_id,
-        Concept(concept_id=concept_id, canonical_name=name or concept_id),
+        concept_with_form(concept_id, name or concept_id, "temperature"),
         message=f"author concept {concept_id}",
         branch=branch,
     )

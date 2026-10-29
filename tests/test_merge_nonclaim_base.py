@@ -337,11 +337,11 @@ def test_repeated_public_merges_use_only_the_best_base(
     git = repo.require_git()
     for attempt in range(128):
         clock = 2_000_000_000 + timestamps[0]
-        p2 = author_concept(repo, "x", name=f"P2 {attempt}")
+        p2 = author_concept(repo, "x", name=f"P2_{attempt}")
         clock = 2_000_000_000 + timestamps[1]
-        p1 = author_concept(repo, "x", name=f"P1 {attempt}")
+        p1 = author_concept(repo, "x", name=f"P1_{attempt}")
         clock = 2_000_000_000 + timestamps[2]
-        q = author_concept(repo, "x", name=f"Q {attempt}")
+        q = author_concept(repo, "x", name=f"Q_{attempt}")
         if p2 < q < p1:
             break
     else:
@@ -379,7 +379,7 @@ def test_repeated_public_merges_use_only_the_best_base(
         merged = yaml.safe_load(result.output)["commit_sha"]
     assert (
         repo.families.concept.require("x", commit=merged).canonical_name
-        == f"Q {attempt}"
+        == f"Q_{attempt}"
     )
     assert (git.branch_sha("master"), git.branch_sha("feature")) == (q, p2)
     assert (git.branch_sha("left"), git.branch_sha("right")) == (left, right)

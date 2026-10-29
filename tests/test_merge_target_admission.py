@@ -41,7 +41,7 @@ def test_divergent_target_preserves_its_head_and_data(
     repo, base, left, right = _branches(tmp_path)
     git = repo.require_git()
     git.create_branch("target", source_commit=base)
-    target = author_concept(repo, "target-only", branch="target")
+    target = author_concept(repo, "target-only", name="target_only", branch="target")
 
     def unexpected_write(*args, **kwargs):
         pytest.fail("Divergent target admission must precede blob storage/publication")
@@ -176,7 +176,7 @@ def test_cli_refuses_divergent_target_without_mutating_it(
     repo, base, left, right = _branches(tmp_path)
     git = repo.require_git()
     git.create_branch("target", source_commit=base)
-    target = author_concept(repo, "target-only", branch="target")
+    target = author_concept(repo, "target-only", name="target_only", branch="target")
     result = CliRunner().invoke(
         cli,
         [
