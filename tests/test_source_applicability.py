@@ -223,6 +223,7 @@ def test_build_world_and_merge_read_actual_raw_membership(tmp_path: Path) -> Non
     merge_claims = _read_branch_merge_claims(
         repo, "master", str(repo.require_git().head_sha())
     )
-    assert next(
-        claim.provenance for claim in merge_claims if claim.claim_id == "a"
-    ) == membership
+    assert (
+        next(claim.provenance for claim in merge_claims if claim.claim_id == "a")
+        == membership
+    )
