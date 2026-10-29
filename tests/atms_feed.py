@@ -261,6 +261,8 @@ class InMemoryWorldStore:
 def build_bound(
     *,
     claims: Sequence[ClaimSpec],
+    concepts: Sequence[Concept] = (),
+    forms: Sequence[FormDefinition] | None = None,
     parameterizations: Sequence[ParamSpec] = (),
     conflicts: Sequence[ConflictSpec] = (),
     micropublications: Sequence[MicropubSpec] = (),
@@ -290,10 +292,13 @@ def build_bound(
     for param in parameterizations:
         concept_ids.add(param.output)
         concept_ids.update(param.inputs)
-    concept_objs = tuple(
-        concept_with_form(concept_id, concept_id, "quantity")
-        for concept_id in sorted(concept_ids)
-    )
+    concept_catalog = {concept.concept_id: concept for concept in concepts}
+    for concept_id in sorted(concept_ids):
+        if concept_id not in concept_catalog:
+            concept_catalog[concept_id] = concept_with_form(
+                concept_id, concept_id, "quantity"
+            )
+    concept_objs = tuple(concept_catalog[name] for name in sorted(concept_catalog))
 
     claim_objs = tuple(
         Claim(
@@ -311,6 +316,7 @@ def build_bound(
     bundle, compilation_context = check_claims(
         claim_objs,
         concept_objs,
+        forms=forms,
         condition_registry=registry,
         context_ids=tuple(
             sorted({spec.context_id for spec in claims if spec.context_id is not None})
