@@ -16,7 +16,11 @@ Cleanup-refactor is the active control surface. Smallest change: delete one fiel
 - Advance the changed family and assembled registry contract versions. Registry manifests derive family contracts from their charter owner; the registry body embeds those versions. Regenerated the checked-in manifest from `build_propstore_contract_manifest().to_yaml()` and applied its output through the editing tool.
 
 ## Surprises
-None affecting the requested design.
+PR #359 CI exposed the frozen pre-PR-321 worldline fixture carrying `created`.
+The test-to-worldline-decoder edge depended on the deleted old surface; disposition:
+rewrite that assertion to the existing strict decoder rejection required by #226.
+Keep the immutable fixture and snapshot/journal compatibility assertions unchanged.
+The first hosted run had one failure and 2214 passing tests; repair awaits new CI.
 
 ## Publication draft
 Title: Remove inert worldline creation field
