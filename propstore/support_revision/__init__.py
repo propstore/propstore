@@ -7,11 +7,6 @@ is :mod:`propstore.support_revision.belief_set_adapter`; every other module in
 this package composes propstore-scoped types.
 """
 
-from propstore.support_revision.af_adapter import (
-    RevisionArgumentationStore,
-    RevisionArgumentationView,
-    project_epistemic_state_argumentation_view,
-)
 from propstore.support_revision.entrenchment import (
     EntrenchmentReport,
     compute_entrenchment,
@@ -46,8 +41,6 @@ __all__ = [
     "BeliefBase",
     "EntrenchmentReport",
     "EpistemicState",
-    "RevisionArgumentationStore",
-    "RevisionArgumentationView",
     "RevisionEpisode",
     "RevisionEvent",
     "RevisionMergeRequiredFailure",
@@ -63,6 +56,5 @@ __all__ = [
     "normalize_revision_input",
     "parse_revision_atom_payload",
     "project_belief_base",
-    "project_epistemic_state_argumentation_view",
     "stabilize_belief_base",
 ]
