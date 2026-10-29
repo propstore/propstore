@@ -27,9 +27,17 @@ owner; no caller obtains a capability from this harness.
 ## Surprises
 `reports/ward-shell-parser-report.md` is absent from this branch's base. No
 generated Ward report is tracked. Other pre-existing scripts (`extract_concepts`,
-`find_collisions`, `reconcile_vocab`) have absolute checkout paths; they are
-outside the issue's named Ward harness removal, so the broad acceptance sentence
-about every tracked command is not established by this scoped deletion.
+`find_collisions`, `reconcile_vocab`) have six absolute checkout paths. Parent
+authorized path-only repairs to satisfy the explicit acceptance criterion.
+
+## Iteration 2: checkout path ownership
+Read all three scripts completely and inspected existing `__file__` conventions
+in scripts. Smallest additional change: six path expressions, approximately six
+changed lines. The dependency edges obtain paper/input/output file locations;
+classification: valid capability with wrong representation. Disposition: rewrite
+each location directly relative to its existing script owner using `Path` and
+`__file__`, without moving algorithms or adding a helper. This is path-only work,
+not a representation cleanup of the scripts' semantic algorithms.
 
 ## Fixed-point result
 Deleted the complete 378-line harness. A tracked-content search for its filename,
@@ -40,10 +48,18 @@ No runtime behavior remains to exercise in this deleted scaffold; no new guard
 or regression test was added. Normal test and typing results remain unverified
 until PR CI runs.
 
+The six script paths now resolve from `__file__`; algorithms are unchanged. A
+tracked search across Python, shell, PowerShell, batch, and YAML command/config
+files (excluding paper and knowledge data) found no user-home absolute paths or
+global Ward directory references. The six-line path diff and whitespace check
+pass. The scripts were not executed because extraction/reconciliation writes
+paper and report data; normal checks remain assigned to PR CI.
+
 ## Next step
 Parent publishes the scoped commit, reads PR CI, and performs authorized normal
 merge after successful required checks. Draft PR title: Delete obsolete Ward
 harness. Draft body: Delete the machine-specific global Ward rule harness and
-its report-writing lifecycle. No tracked callers or generated reports remain.
-Closes #228. Verification: tracked-reference search and diff whitespace check
-pass; normal tests and typing await PR CI.
+its report-writing lifecycle. Resolve the remaining concept utility paths from
+their script locations instead of one user's checkout. Closes #228.
+Verification: tracked-reference and user-home path searches plus diff whitespace
+check pass; normal tests and typing await PR CI.

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-papers_dir = Path("C:/Users/Q/code/propstore/papers")
+papers_dir = Path(__file__).resolve().parent.parent / "papers"
 concept_papers = defaultdict(set)  # concept_name -> set of papers
 concept_count = defaultdict(int)  # concept_name -> total occurrences
 concept_sources = defaultdict(list)  # concept_name -> list of (paper, claim_id, field)
@@ -79,7 +79,7 @@ for c in sorted_concepts:
         "sources": concept_sources[c],
     }
 
-out_path = Path("C:/Users/Q/code/propstore/scripts/concept_inventory.json")
+out_path = Path(__file__).resolve().parent / "concept_inventory.json"
 out_path.write_text(json.dumps(output, indent=2), encoding="utf-8")
 print(f"Wrote inventory to {out_path}")
 
