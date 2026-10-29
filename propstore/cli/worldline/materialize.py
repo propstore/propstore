@@ -11,11 +11,9 @@ from propstore.app.worldlines import (
     WorldlineRevisionOptions,
     WorldlineRunRequest,
     WorldlineValidationError,
-    materialize_worldline,
 )
-from propstore.app.worldlines import (
-    create_worldline as run_create_worldline,
-)
+from propstore.app.worldlines import create_worldline as run_create_worldline
+from propstore.app.worldlines import materialize_worldline
 from propstore.cli.helpers import CliContext, fail, require_repo
 from propstore.cli.output import emit_section, emit_success
 from propstore.cli.worldline import (

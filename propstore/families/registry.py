@@ -38,14 +38,15 @@ from propstore.families.grounding import GroundingBuildConfiguration
 from propstore.families.justifications import Justification
 from propstore.families.merge_manifests import MergeManifest
 from propstore.families.micropublications import Micropublication
-from propstore.families.predicates import Predicate, PredicateProposal
 
 # Re-exported so the proposal subsystem and tests can use
 # ``propstore.families.registry`` as the one import site for proposal refs.
+from propstore.families.predicates import Predicate, PredicateProposal
 from propstore.families.predicates import PredicateProposalRef as PredicateProposalRef
 from propstore.families.relations import Stance, StanceProposal
-from propstore.families.rules import DefeasibleRule, RuleProposal, RuleSuperiority
+from propstore.families.rules import DefeasibleRule, RuleProposal
 from propstore.families.rules import RuleProposalRef as RuleProposalRef
+from propstore.families.rules import RuleSuperiority
 from propstore.families.sameas import SameAs
 
 # Re-exported here so the source subsystem can use ``propstore.families.registry``
@@ -59,18 +60,18 @@ from propstore.families.sources import (
     SourceFinalizeReportDocument,
     SourceJustificationsDocument,
     SourceMicropublicationsDocument,
-    SourceStancesDocument,
 )
 from propstore.families.sources import SourceRef as SourceRef
+from propstore.families.sources import SourceStancesDocument
 from propstore.families.temporal import (
     DescriptionTemporalAnchorDoc,
     HappensBeforeEdgeDoc,
     TemporalFrameDoc,
 )
-from propstore.worldline.definition import WorldlineDefinition
 
 # Re-exported so the worldline owner/CLI subsystem can use
 # ``propstore.families.registry`` as the one import site for the worldline ref.
+from propstore.worldline.definition import WorldlineDefinition
 from propstore.worldline.definition import WorldlineRef as WorldlineRef
 
 PROPSTORE_FAMILY_REGISTRY_CONTRACT_VERSION = contract_version("2026.10.20.3")

@@ -55,15 +55,9 @@ from .common import (
     source_paper_slug,
     source_tag_uri,
 )
-from .reference_indexes import (
-    primary_claim_index as build_primary_claim_index,
-)
-from .reference_indexes import (
-    resolve_source_or_primary_claim_id,
-)
-from .reference_indexes import (
-    source_claim_index as build_source_claim_index,
-)
+from .reference_indexes import primary_claim_index as build_primary_claim_index
+from .reference_indexes import resolve_source_or_primary_claim_id
+from .reference_indexes import source_claim_index as build_source_claim_index
 
 
 def _with_micropub_identity(

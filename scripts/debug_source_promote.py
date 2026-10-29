@@ -5,9 +5,9 @@ from pathlib import Path
 
 import yaml
 from click.testing import CliRunner
-from propstore.cli.repository import Repository
 
 from propstore.cli import cli
+from propstore.cli.repository import Repository
 
 
 def main() -> None:

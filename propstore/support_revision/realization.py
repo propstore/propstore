@@ -9,7 +9,6 @@ from propstore.core.anytime import EnumerationExceeded
 from propstore.core.id_types import AssumptionId
 from propstore.support_revision.belief_set_adapter import (
     FormalDecision,
-    selected_world_atom_ids,
 )
 from propstore.support_revision.belief_set_adapter import (
     accepted_atom_ids as formal_accepted_atom_ids,
@@ -17,6 +16,7 @@ from propstore.support_revision.belief_set_adapter import (
 from propstore.support_revision.belief_set_adapter import (
     rejected_atom_ids as formal_rejected_atom_ids,
 )
+from propstore.support_revision.belief_set_adapter import selected_world_atom_ids
 from propstore.support_revision.decision_trace import ICMergeTrace
 from propstore.support_revision.entrenchment import EntrenchmentReport
 from propstore.support_revision.explanation_types import RevisionAtomDetail

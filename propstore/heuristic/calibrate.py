@@ -24,18 +24,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
-from calibration import (
-    TemperatureScaler as TemperatureScaler,
-)
-from calibration import (
-    brier_score as brier_score,
-)
-from calibration import (
-    expected_calibration_error as expected_calibration_error,
-)
-from calibration import (
-    log_loss as log_loss,
-)
+from calibration import TemperatureScaler as TemperatureScaler
+from calibration import brier_score as brier_score
+from calibration import expected_calibration_error as expected_calibration_error
+from calibration import log_loss as log_loss
 from doxa import Opinion
 
 from propstore.core.base_rates import BaseRateUnresolved

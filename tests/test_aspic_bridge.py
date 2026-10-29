@@ -16,7 +16,9 @@ from argumentation.structured.aspic.aspic import (
     Literal,
     conc,
 )
-from argumentation.structured.aspic.datalog_grounding import GroundRuleOrigin  # noqa: F401
+from argumentation.structured.aspic.datalog_grounding import (  # noqa: F401
+    GroundRuleOrigin,
+)
 
 from propstore.aspic_bridge import (
     build_bridge_csaf,

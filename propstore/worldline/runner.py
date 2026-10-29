@@ -28,21 +28,13 @@ from propstore.worldline.query import WorldlineResult
 from propstore.worldline.resolution import (
     ResolutionContext,
 )
-from propstore.worldline.resolution import (
-    concept_name as _concept_name,
-)
-from propstore.worldline.resolution import (
-    display_claim_id as _display_claim_id,
-)
+from propstore.worldline.resolution import concept_name as _concept_name
+from propstore.worldline.resolution import display_claim_id as _display_claim_id
 from propstore.worldline.resolution import (
     pre_resolve_conflicts as _pre_resolve_conflicts,
 )
-from propstore.worldline.resolution import (
-    resolve_concept_name as _resolve_concept_name,
-)
-from propstore.worldline.resolution import (
-    resolve_target as _resolve_target,
-)
+from propstore.worldline.resolution import resolve_concept_name as _resolve_concept_name
+from propstore.worldline.resolution import resolve_target as _resolve_target
 from propstore.worldline.result_types import (
     WorldlineArgumentationState,
     WorldlineCaptureError,

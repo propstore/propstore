@@ -10,9 +10,7 @@ from propstore.app.worldlines import (
     WorldlineValidationError,
     build_worldline_journal,
 )
-from propstore.app.worldlines import (
-    worldline_at_step as run_worldline_at_step,
-)
+from propstore.app.worldlines import worldline_at_step as run_worldline_at_step
 from propstore.cli.helpers import CliContext, fail, require_repo
 from propstore.cli.output import emit, emit_success
 from propstore.cli.worldline import worldline
