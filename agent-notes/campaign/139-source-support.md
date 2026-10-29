@@ -40,3 +40,6 @@ Complete focused regression validation and commit the slice. Parent owns publica
 - Final semantic run: 46 passed across the authored source-support file and migrated bound-world/history/worldline files; log logs/test-runs/source-support-139-final-20261028-234231.log.
 - Search gate: no source_claims or primary_source_claim remains in propstore/support_revision. The af_adapter remains deleted. Applied formatting through apply_patch; package typing and remaining full checks belong to parent PR CI.
 - No implementation prerequisite remains. Parent should inspect the local branch, publish it, read CI and handle normal merge/issue closure under existing campaign authority.
+- Parent removed the source-shape AST test: the issue requests a static search,
+  not a new persistent guard. Behavioral regressions remain; hosted CI validates
+  the final tree. Earlier 46-test evidence includes the now-removed guard.

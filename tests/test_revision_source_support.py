@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import ast
-from pathlib import Path
-
 import pytest
 from msgspec.structs import replace
 
@@ -160,22 +157,6 @@ def test_witness_and_current_support_round_trip_hash_and_semantic_diff():
         apply_epistemic_diff(source, diff_epistemic_snapshots(source, target)) == target
     )
     assert snapshot_to_claim_ids(restored) == {"claim_b"}
-
-
-def test_assertion_atom_has_no_primary_source_or_parallel_label_fields():
-    tree = ast.parse(Path("propstore/support_revision/state.py").read_text("utf-8"))
-    atom = next(
-        node
-        for node in tree.body
-        if isinstance(node, ast.ClassDef) and node.name == "AssertionAtom"
-    )
-    names = {node.name for node in atom.body if isinstance(node, ast.FunctionDef)}
-    names.update(
-        node.target.id
-        for node in atom.body
-        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
-    )
-    assert names.isdisjoint({"source_claims", "label", "primary_source_claim"})
 
 
 def _contraction_bound(*, reverse=False):
