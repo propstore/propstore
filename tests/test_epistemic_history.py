@@ -17,7 +17,11 @@ from propstore.support_revision.iterated import iterated_revise, make_epistemic_
 from propstore.support_revision.operator_inputs import (
     IteratedReviseInput,
 )
-from propstore.support_revision.state import BeliefBase, EpistemicState, SourceSupportWitness
+from propstore.support_revision.state import (
+    BeliefBase,
+    EpistemicState,
+    SourceSupportWitness,
+)
 from tests.support_revision.revision_assertion_helpers import make_assertion_atom
 from tests.test_revision_iterated import _history_sensitive_base
 

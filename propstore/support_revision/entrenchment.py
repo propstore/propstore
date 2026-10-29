@@ -14,6 +14,7 @@ from propstore.support_revision.explanation_types import (
     coerce_override_priority,
 )
 from propstore.support_revision.state import (
+    AssertionAtom,
     BeliefAtom,
     BeliefBase,
     is_assertion_atom,
@@ -70,7 +71,7 @@ def compute_entrenchment(
 
         support_count = (
             len(base.support_sets.get(atom.atom_id, ()))
-            if is_assertion_atom(atom)
+            if isinstance(atom, AssertionAtom)
             else len(atom.label.environments)
             if atom.label is not None
             else 0

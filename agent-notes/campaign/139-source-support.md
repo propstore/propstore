@@ -43,3 +43,6 @@ Complete focused regression validation and commit the slice. Parent owns publica
 - Parent removed the source-shape AST test: the issue requests a static search,
   not a new persistent guard. Behavioral regressions remain; hosted CI validates
   the final tree. Earlier 46-test evidence includes the now-removed guard.
+- PR #373 full tests passed on first hosted run. Corrected union dispatch to use
+  isinstance so both branches narrow, and expanded one import per hosted lint.
+  Parent is following updated checks before normal merge.
