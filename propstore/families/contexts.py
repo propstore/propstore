@@ -111,7 +111,7 @@ class Context(CharterDoc):
     description: str | None = None
     assumptions: Annotated[tuple[str, ...], charter_field(json=True)] = ()
     parameters: Annotated[dict[str, str], charter_field(json=True)] = field(
-        default_factory=dict
+        default_factory=dict[str, str]
     )
     perspective: str | None = None
 

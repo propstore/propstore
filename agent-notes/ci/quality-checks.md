@@ -190,3 +190,14 @@ deleting the intermediate scoring export. Cleanup-refactor controlled that
 bounded deletion; PR CI verifies the production path. The seed_tags script's
 shebang requires the executable bit in Git, which is corrected without a lint
 exception.
+
+## Hosted follow-up
+
+Run 40813980782 passed 2219 tests (4 skipped), formatting, import contracts,
+actionlint and Zizmor. Eight typing diagnostics and six lint diagnostics remained.
+Repairs use Quire's actual DerivedSession, type the context default factory,
+and explicitly type the existing ast-equiv callable boundaries from its real
+signature. The contravariant type variable has its required suffix. Import
+grouping is corrected. Structured enumeration now branches on the successful
+list result first, retaining RuntimeError for the incomplete-enumeration result.
+Publish these fixes and await the complete hosted result before merging.

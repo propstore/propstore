@@ -324,9 +324,10 @@ def build_structured_merge_candidates(
 def _require_candidates(
     result: list[ArgumentationFramework] | EnumerationExceeded,
 ) -> list[ArgumentationFramework]:
-    if isinstance(result, EnumerationExceeded):
-        raise RuntimeError(str(result))
-    return result
+    if isinstance(result, list):
+        return result
+    # The remaining result reports incomplete enumeration, not an invalid input type.
+    raise RuntimeError(str(result))
 
 
 __all__ = [

@@ -18,7 +18,6 @@ from propstore.worldline.result_types import (
 )
 from propstore.worldline.trace import ResolutionTrace
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
