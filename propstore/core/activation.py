@@ -18,7 +18,6 @@ from condition_ir import (
     ConceptInfo,
     ConditionSolver,
     KindType,
-    Z3TranslationError,
     check_condition_ir,
     checked_condition_set,
     to_cel_exprs,
@@ -134,14 +133,6 @@ def _binding_kind(value: object) -> KindType:
     return KindType.CATEGORY
 
 
-def _retry_with_standard_bindings(solver: ConditionSolver) -> ConditionSolver:
-    base_registry = solver.registry
-    augmented_registry = with_standard_synthetic_bindings(base_registry)
-    if augmented_registry == dict(base_registry):
-        return solver
-    return ConditionSolver(augmented_registry)
-
-
 def _solver_with_environment_bindings(
     solver: ConditionSolver,
     environment: Environment,
@@ -205,23 +196,6 @@ def is_claim_active(
     except ValueError as exc:
         _raise_unknown_concept_if_present(exc, source_artifact=claim.claim_id)
         raise
-    except Z3TranslationError:
-        retry_solver = _retry_with_standard_bindings(query_solver)
-        retry_registry = retry_solver.registry
-        try:
-            return not retry_solver.are_disjoint(
-                checked_condition_set(
-                    check_condition_ir(str(condition), retry_registry)
-                    for condition in binding_conditions
-                ),
-                checked_condition_set(
-                    check_condition_ir(source, retry_registry)
-                    for source in claim_conditions.sources
-                ),
-            )
-        except ValueError as exc:
-            _raise_unknown_concept_if_present(exc, source_artifact=claim.claim_id)
-            raise
 
 
 def activate_compiled_world_graph(
