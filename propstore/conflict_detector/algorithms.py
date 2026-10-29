@@ -8,10 +8,11 @@ partial-eval tier) never conflict; a proven non-equivalence is condition-classif
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, cast
+from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING
 
-from ast_equiv import AlgorithmParseError, ComparisonResult, compare
+from ast_equiv import AlgorithmParseError
+from ast_equiv import compare as ast_compare
 from condition_ir import ConceptInfo, ConditionSolver
 
 from .collectors import collect_algorithm_claims
@@ -23,30 +24,6 @@ if TYPE_CHECKING:
     from propstore.context_lifting import LiftingSystem
 
 _LOGGER = logging.getLogger(__name__)
-
-# ast-equiv is pinned at a rev whose ``compare`` types its symbol-binding
-# parameters as bare ``dict`` (a loose upstream surface). Narrow it once here
-# behind a fully-typed call-through; tests patch ``ast_compare`` on this module.
-_ast_equiv_compare = cast(
-    Callable[
-        [str, dict[str, str], str, dict[str, str], dict[str, float] | None],
-        ComparisonResult,
-    ],
-    compare,
-)
-
-
-def ast_compare(
-    body_a: str,
-    bindings_a: dict[str, str],
-    body_b: str,
-    bindings_b: dict[str, str],
-    known_values: dict[str, float] | None = None,
-) -> ComparisonResult:
-    result: ComparisonResult = _ast_equiv_compare(
-        body_a, bindings_a, body_b, bindings_b, known_values
-    )
-    return result
 
 
 def detect_algorithm_conflicts(

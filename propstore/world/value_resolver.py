@@ -27,10 +27,10 @@ import logging
 import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Protocol, cast
 
 import msgspec
-from ast_equiv import AlgorithmParseError, ComparisonResult, compare
+from ast_equiv import AlgorithmParseError, ComparisonResult
+from ast_equiv import compare as ast_compare
 
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.graph_types import ParameterizationEdge
@@ -51,30 +51,6 @@ from propstore.world.types import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class _AstCompare(Protocol):
-    """Fully-typed surface for ``ast_equiv.compare``.
-
-    ``ast_equiv`` annotates the two ``bindings`` arguments as a bare ``dict``,
-    leaving the imported function partially unknown. We own the call site, not
-    the pinned package git rev, so the canonical function is narrowed here to a
-    fully-typed Protocol with an explicit cast at this dependency boundary.
-    Tests patch the ``ast_compare``
-    module attribute to inject comparison behavior.
-    """
-
-    def __call__(
-        self,
-        body_a: str,
-        bindings_a: dict[str, str],
-        body_b: str,
-        bindings_b: dict[str, str],
-        known_values: dict[str, float] | None = None,
-    ) -> ComparisonResult: ...
-
-
-ast_compare = cast(_AstCompare, compare)
 
 
 @dataclass(frozen=True)

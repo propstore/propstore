@@ -201,3 +201,22 @@ signature. The contravariant type variable has its required suffix. Import
 grouping is corrected. Structured enumeration now branches on the successful
 list result first, retaining RuntimeError for the incomplete-enumeration result.
 Publish these fixes and await the complete hosted result before merging.
+
+## Dependency signature repair
+
+Run 40814440982 passes tests and lint, but importing compare still exposes
+ast-equiv's unparameterized binding dictionaries. The actual owner already
+requires string-to-string bindings internally. Upstream ast-equiv PR #6 fixes
+four annotations; its hosted checks must pass and it must merge before this
+dependency is pinned. One remaining derived_build formatting edit is applied.
+
+Cleanup-refactor slice: algorithms.py's call-through and value_resolver.py's
+Protocol/cast only compensate for this missing owner signature. Classification:
+already-owned comparison capability; disposition: import the true typed owner
+directly. Delete _ast_equiv_compare, the local ast_compare function, _AstCompare
+and its cast. Keep the existing imported call-site name for tests. Search those
+deleted definitions and use PR CI to verify all callers; no replacement shim.
+
+Ast-equiv PR #6 passed package typing, 249 tests and distribution build, then
+merged normally with two parents. Pin its merged revision and let Propstore's
+full hosted checks validate the direct imports and all integration callers.

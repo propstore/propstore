@@ -363,7 +363,10 @@ def _project_documents(
 
 
 def _project_authored_families(
-    session: DerivedSession, schema: SqlAlchemySchema, repo: Repository, commit: str | None
+    session: DerivedSession,
+    schema: SqlAlchemySchema,
+    repo: Repository,
+    commit: str | None,
 ) -> None:
     """Generic charter projection of every master-resident authored family.
 
