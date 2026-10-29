@@ -1,10 +1,16 @@
 """Parameterization derivation over canonical compiler-admitted claims."""
 
 import warnings
+from collections.abc import Mapping
 from unittest.mock import patch
 
 import pytest
-from condition_ir import synthetic_category_concept, to_cel_exprs
+from condition_ir import (
+    ConceptInfo,
+    check_condition_ir,
+    checked_condition_set,
+    synthetic_category_concept,
+)
 from human_to_sympy import parse_cached
 
 from propstore.conflict_detector import (
@@ -51,13 +57,17 @@ def _edge(
     expression: str,
     *,
     conditions: tuple[str, ...] = (),
+    registry: Mapping[str, ConceptInfo] | None = None,
 ) -> ParameterizationEdge:
     return ParameterizationEdge(
         output_concept_id=to_concept_id(output),
         input_concept_ids=to_concept_ids(inputs),
         sympy=expression,
         exactness=Exactness.EXACT,
-        conditions=to_cel_exprs(conditions),
+        checked_conditions=checked_condition_set(
+            check_condition_ir(condition, registry if registry is not None else {})
+            for condition in conditions
+        ),
     )
 
 
@@ -187,6 +197,7 @@ def test_single_hop_conflict_carries_derived_conditions() -> None:
                     ("concept_in",),
                     "Eq(concept_out, concept_in * 2)",
                     conditions=("mode == 'normal'",),
+                    registry=context.condition_registry,
                 ),
             )
         },
