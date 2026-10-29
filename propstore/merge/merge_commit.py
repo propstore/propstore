@@ -129,14 +129,16 @@ def _read_branch_merge_claims(
     if checked.claim_bundle.blocked_claims:
         raise QuarantinedMergeClaimsError(branch, checked.claim_bundle.blocked_claims)
     merge_claims: list[MergeClaim] = []
-    for document in checked.admitted_claims:
+    for entry in checked.claim_bundle.checked_claims:
+        document = entry.claim
         merge_claim = MergeClaim.from_claim(
             document,
             provenance=provenance.for_claim(document.claim_id),
+            admission=entry.admission,
+            condition_registry=checked.compilation_context.condition_registry,
             paper=branch,
         )
-        if merge_claim is not None:
-            merge_claims.append(merge_claim)
+        merge_claims.append(merge_claim)
     return merge_claims
 
 

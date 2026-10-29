@@ -35,7 +35,6 @@ from propstore.compiler.context import CompilationContext
 from propstore.compiler.ir import ClaimCheckedBundle
 from propstore.conflict_detector import detect_conflicts
 from propstore.conflict_detector.models import (
-    ConflictClaim,
     ConflictClass,
     ConflictRecord,
 )
@@ -115,14 +114,6 @@ class SidecarBuildPlan:
         )
 
 
-def _conflict_claims(claims: tuple[Claim, ...]) -> list[ConflictClaim]:
-    return [
-        ConflictClaim.from_claim(claim)
-        for claim in claims
-        if claim.claim_id
-    ]
-
-
 def _parameterizations_by_output(
     claims: tuple[Claim, ...],
 ) -> dict[str, tuple[ParameterizationEdge, ...]]:
@@ -152,17 +143,17 @@ def _compile_conflicts(
     micropubs: tuple[Micropublication, ...],
 ) -> tuple[ConflictProjection, ...]:
     admitted = checked.admitted_claims
-    conflict_claims = _conflict_claims(admitted)
-    if not conflict_claims:
+    if not admitted:
         return ()
     lifting_system = LiftingSystem(
         contexts=checked.loaded_contexts,
         lifting_rules=checked.loaded_lifting_rules,
     )
     records = detect_conflicts(
-        conflict_claims,
+        admitted,
         {str(concept.concept_id): concept for concept in checked.concepts},
         checked.compilation_context.condition_registry,
+        admissions=tuple(entry.admission for entry in checked.claim_bundle.checked_claims),
         lifting_system=lifting_system,
         provenance=ClaimProvenanceIndex.from_micropublications(micropubs),
         forms=dict(checked.form_registry),

@@ -13,7 +13,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from propstore.conflict_detector.models import ConflictClaim
 from propstore.core.environment import Environment, WorldStore
 from propstore.reporting import JsonReportMixin
 from propstore.world import model
@@ -73,12 +72,12 @@ def _check_transitive_consistency(store: WorldStore) -> WorldConsistencyReport:
     from propstore.conflict_detector import detect_transitive_conflicts
 
     compiled = model.compiled_graph(store)
-    conflict_claims = [ConflictClaim.from_claim(claim) for claim in compiled.claims]
     inputs = conflict_inputs_for_store(store)
     records = detect_transitive_conflicts(
-        conflict_claims,
+        compiled.claims,
         inputs.concepts,
         inputs.parameterizations,
+        admissions=tuple(store.claim_admissions().values()),
         provenance=inputs.provenance,
         forms=inputs.forms,
     )

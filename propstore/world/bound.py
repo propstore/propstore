@@ -35,7 +35,6 @@ from condition_ir import (
 
 from propstore.algorithm_bindings import algorithm_bindings
 from propstore.conflict_detector import ConflictRecord, detect_conflicts
-from propstore.conflict_detector.models import ConflictClaim
 from propstore.core.activation import is_claim_active
 from propstore.core.active_claims import ActiveClaim
 from propstore.core.environment import AssumptionRef, Environment, WorldStore
@@ -54,6 +53,7 @@ from propstore.core.labels import (
 )
 from propstore.core.scalars import ScalarValue
 from propstore.families.claim_provenance import ClaimProvenanceIndex
+from propstore.families.claim_admission import ClaimAdmission
 from propstore.families.claims import Claim, ClaimType, ClaimVariable
 from propstore.families.concepts import Concept
 from propstore.families.forms import FormDefinition
@@ -155,21 +155,20 @@ def recomputed_conflicts(
     *,
     lifting_system: LiftingSystem | None = None,
     precomputed_inputs: _ConflictInputs | None = None,
+    admissions: Mapping[str, ClaimAdmission] | None = None,
 ) -> list[ConflictRecord]:
     """Revalidate active conflicts against the live belief space."""
 
-    if len(claims) < 2:
-        return []
-    conflict_claims = [ConflictClaim.from_claim(claim) for claim in claims]
     inputs = (
         precomputed_inputs
         if precomputed_inputs is not None
         else conflict_inputs_for_store(store)
     )
     return detect_conflicts(
-        conflict_claims,
+        claims,
         inputs.concepts,
         inputs.cel_registry,
+        admissions=tuple((store.claim_admissions() if admissions is None else admissions).values()),
         lifting_system=lifting_system,
         provenance=inputs.provenance,
         forms=inputs.forms,
