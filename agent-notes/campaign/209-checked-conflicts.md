@@ -1,5 +1,11 @@
 # Checked conflict inputs and admission prerequisite
 
+Parent CI repair: PR #374 updated run passed 2215 tests with two failures.
+Adjusted overview count for the newly valid duration concept and gave CLI
+algorithm fixtures resolved forms. The latter failure also exposed an unmapped
+typed quarantine exception; existing claim CLI world-opening boundary now renders
+its diagnostics with validation exit status, covered by a real CLI regression.
+
 ## Goal
 
 Deliver #144 checked-admission execution first, then #209 canonical admitted conflict inputs, including the remaining checked-condition consumption in #220. Parent owns publication, PR CI, and normal merge. No publication from this worktree.

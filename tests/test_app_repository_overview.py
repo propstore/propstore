@@ -20,7 +20,7 @@ def test_inventory_rows_count_concepts_and_claims(tmp_path: Path) -> None:
             world, policy=build_render_policy(AppRenderPolicyRequest())
         )
     counts = {row.kind: row.count for row in report.inventory_rows}
-    assert counts["concepts"] == 3
+    assert counts["concepts"] == 4
     assert counts["claims"] == 7
     assert "conflicts" in counts
     assert all(row.state is OverviewState.KNOWN for row in report.inventory_rows)
