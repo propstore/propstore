@@ -194,6 +194,38 @@ def test_bind_with_target_reports_status(repo: Repository) -> None:
     assert "A: determined" in result.output
 
 
+@pytest.mark.parametrize(
+    ("command", "tokens", "message"),
+    [
+        (["export-graph"], ["ignored"], "ignored"),
+        (["sensitivity", "A"], ["ignored"], "ignored"),
+        (["check-consistency"], ["x=1", "ignored"], "ignored"),
+        (["derive", "A"], ["ignored"], "ignored"),
+        (["resolve", "A"], ["ignored"], "ignored"),
+        (["chain", "A"], ["ignored"], "ignored"),
+        (["hypothetical"], ["ignored"], "ignored"),
+        (["revision", "base"], ["ignored"], "ignored"),
+        (["bind"], ["x=1", "ignored-a", "ignored-b"], "ignored-a"),
+        (["fragility"], ["ignored-a", "ignored-b"], "ignored-a"),
+        (["bind"], ["x=1", "x=2"], "duplicate binding 'x'"),
+        (["revision", "base"], ["x=1", "x=2"], "duplicate binding 'x'"),
+        (["derive", "A"], ["=1"], "non-empty key"),
+    ],
+)
+def test_invalid_world_arguments_fail_before_world_access(command, tokens, message):
+    result = CliRunner().invoke(world, [*command, *tokens], obj={})
+    assert result.exit_code == 2
+    assert message in result.output
+
+
+@pytest.mark.parametrize(
+    "command", [["bind", "domain=test", "A"], ["fragility", "domain=test", "ctx1"]]
+)
+def test_bindings_with_optional_trailing_coordinate(repo, command):
+    result = _invoke(repo, command)
+    assert result.exit_code == 0, result.output
+
+
 def test_explain_shows_stance_chain(repo: Repository) -> None:
     result = _invoke(repo, ["explain", "s1"])
     assert result.exit_code == 0, result.output

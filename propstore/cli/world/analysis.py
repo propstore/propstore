@@ -19,7 +19,8 @@ from propstore.cli.world import (
     emit_report_json,
     format_option,
     open_world,
-    parse_world_binding_args,
+    bindings_with_target,
+    world_bindings,
     world,
     world_repo,
 )
@@ -33,7 +34,7 @@ from propstore.world.consistency import (
 
 
 @world.command("export-graph")
-@click.argument("args", nargs=-1)
+@world_bindings
 @click.option(
     "--group-id",
     "group_id",
@@ -51,7 +52,7 @@ from propstore.world.consistency import (
 @click.pass_obj
 def world_export_graph(
     obj: CliContext,
-    args: tuple[str, ...],
+    bindings: dict[str, str],
     group_id: int | None,
     fmt: str,
 ) -> None:
@@ -61,7 +62,6 @@ def world_export_graph(
     """
 
     repo = world_repo(obj)
-    bindings, _ = parse_world_binding_args(args)
     with open_world(repo) as world_query:
         report = export_knowledge_graph(
             world_query,
@@ -75,13 +75,13 @@ def world_export_graph(
 
 @world.command("sensitivity")
 @click.argument("concept_id")
-@click.argument("args", nargs=-1)
+@world_bindings
 @format_option
 @click.pass_obj
 def world_sensitivity(
     obj: CliContext,
     concept_id: str,
-    args: tuple[str, ...],
+    bindings: dict[str, str],
     fmt: str,
 ) -> None:
     """Analyze which input most influences a derived quantity.
@@ -90,7 +90,6 @@ def world_sensitivity(
     """
 
     repo = world_repo(obj)
-    bindings, _ = parse_world_binding_args(args)
     with open_world(repo) as world_query:
         report = query_sensitivity(
             world_query, SensitivityRequest(concept_id=concept_id, bindings=bindings)
@@ -124,7 +123,7 @@ def world_sensitivity(
 
 
 @world.command("check-consistency")
-@click.argument("args", nargs=-1)
+@world_bindings
 @click.option(
     "--transitive", is_flag=True, help="Check multi-hop transitive conflicts."
 )
@@ -132,7 +131,7 @@ def world_sensitivity(
 @click.pass_obj
 def world_check_consistency(
     obj: CliContext,
-    args: tuple[str, ...],
+    bindings: dict[str, str],
     transitive: bool,
     fmt: str,
 ) -> None:
@@ -142,7 +141,6 @@ def world_check_consistency(
     """
 
     repo = world_repo(obj)
-    bindings, _ = parse_world_binding_args(args)
     with open_world(repo) as world_query:
         report = check_world_consistency(
             world_query,
@@ -175,7 +173,8 @@ def world_check_consistency(
 
 
 @world.command("fragility")
-@click.argument("args", nargs=-1)
+@click.argument("args", nargs=-1, metavar="[KEY=VALUE]...")
+@click.argument("context_id", required=False)
 @click.option("--concept", "concept_id", default=None, help="Focus on one concept.")
 @click.option("--top-k", "top_k", type=int, default=20, help="Number of results.")
 @click.option("--skip-atms", is_flag=True, default=False)
@@ -194,6 +193,7 @@ def world_check_consistency(
 def world_fragility(
     obj: CliContext,
     args: tuple[str, ...],
+    context_id: str | None,
     concept_id: str | None,
     top_k: int,
     skip_atms: bool,
@@ -206,8 +206,8 @@ def world_fragility(
 ) -> None:
     """Rank intervention targets by fragility — what to inspect next."""
 
+    bindings, context_id = bindings_with_target(args, context_id)
     repo = world_repo(obj)
-    bindings, context_id = parse_world_binding_args(args)
     with open_world(repo) as world_query:
         report = query_fragility(
             world_query,
