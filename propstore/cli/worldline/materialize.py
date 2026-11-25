@@ -9,6 +9,7 @@ from propstore.app.worldlines import (
     WorldlineCreateRequest,
     WorldlinePolicyOptions,
     WorldlineRevisionOptions,
+    WorldlineRunReport,
     WorldlineRunRequest,
     WorldlineValidationError,
     materialize_worldline,
@@ -258,23 +259,13 @@ def worldline_run(
     except WorldlineValidationError as exc:
         fail(exc)
 
-    result = report.result
-    emit_success(f"Worldline '{name}' materialized ({len(result.values)} targets)")
-    emit_section("", target_value_lines(result.values, include_details=False))
+    _emit_run_report(report)
 
 
-def _worldline_run_option_defaults() -> dict[str, object]:
-    defaults: dict[str, object] = {}
-    for param in worldline_run.params:
-        if not isinstance(param, click.Option):
-            continue
-        if param.name is None:
-            continue
-        default = param.default
-        if param.multiple and not isinstance(default, tuple):
-            default = ()
-        defaults[param.name] = default
-    return defaults
+def _emit_run_report(report: WorldlineRunReport) -> None:
+    values = report.result.values
+    emit_success(f"Worldline '{report.name}' materialized ({len(values)} targets)")
+    emit_section("", target_value_lines(values, include_details=False))
 
 
 @worldline.command("refresh")
@@ -282,5 +273,9 @@ def _worldline_run_option_defaults() -> dict[str, object]:
 @click.pass_obj
 def worldline_refresh(obj: CliContext, name: str) -> None:
     """Re-run a worldline with current knowledge."""
-    ctx = click.get_current_context()
-    ctx.invoke(worldline_run, name=name, **_worldline_run_option_defaults())
+    repo = require_repo(obj)
+    try:
+        report = materialize_worldline(repo, WorldlineRunRequest(name=name))
+    except WorldlineValidationError as exc:
+        fail(exc)
+    _emit_run_report(report)

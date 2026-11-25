@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import msgspec
 from click.testing import CliRunner, Result
 
 from propstore.cli import cli
@@ -187,6 +188,62 @@ def test_run_new_without_target_fails(tmp_path: Path) -> None:
     result = _invoke(repo, ["run", "wl"])
     assert result.exit_code != 0
     assert "target" in result.output.lower()
+
+
+def test_refresh_uses_saved_definition_without_invoking_run(tmp_path, monkeypatch):
+    from propstore.cli.worldline.materialize import worldline_run
+
+    repo, atom_id = _repo_with_one_atom(tmp_path)
+    ref = WorldlineRef("refresh_me")
+    first = _invoke(
+        repo,
+        [
+            "run",
+            ref.name,
+            "--target",
+            "Speed",
+            "--context",
+            "ctx1",
+            "--strategy",
+            "sample_size",
+            "--revision-operation",
+            "revise",
+            "--revision-atom",
+            json.dumps({"kind": "assertion", "id": atom_id}),
+        ],
+    )
+    assert first.exit_code == 0, first.output
+    saved = repo.families.worldlines.require(ref)
+    assert saved.results is not None
+    assert saved.results.values["Speed"].value == 10.0
+    claim = repo.families.claim.require("cl1")
+    repo.families.claim.save(
+        "cl1", msgspec.structs.replace(claim, value=12.0), message="update speed"
+    )
+
+    # An independent command must work even when the run handler is unavailable.
+    def unexpected_run(*args, **kwargs):
+        raise AssertionError("refresh invoked the run command")
+
+    monkeypatch.setattr(worldline_run, "callback", unexpected_run)
+    refreshed = _invoke(repo, ["refresh", ref.name])
+    assert refreshed.exit_code == 0, refreshed.output
+    assert "materialized" in refreshed.output
+    current = repo.families.worldlines.require(ref)
+    assert current.results is not None
+    assert current.results.values["Speed"].value == 12.0
+    assert current.inputs == saved.inputs
+    assert current.targets == saved.targets
+    assert current.policy == saved.policy
+    assert current.revision == saved.revision
+
+
+def test_refresh_missing_reports_owner_error(tmp_path):
+    repo = build_demo_repo(tmp_path)
+    result = _invoke(repo, ["refresh", "absent"])
+    assert result.exit_code != 0
+    assert "targets are required" in result.output
+    assert not repo.families.worldlines.exists(WorldlineRef("absent"))
 
 
 # ── diff ────────────────────────────────────────────────────────────────────────
