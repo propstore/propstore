@@ -60,6 +60,7 @@ from condition_ir import (
 )
 from condition_ir.solver import SolverUnknown
 
+from propstore.core.scalars import ScalarValue, validate_scalar_value
 from propstore.provenance import Provenance
 
 
@@ -109,6 +110,34 @@ class TemporalFrame(msgspec.Struct, frozen=True, forbid_unknown_fields=True):
     provenance: Provenance
 
 
+class InvalidTemporalBounds(ValueError):
+    """An endpoint cannot represent a timepoint or the interval is reversed."""
+
+
+def _validate_timepoint(name: str, value: ScalarValue | None) -> None:
+    if value is None:
+        return
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise InvalidTemporalBounds(f"{name} must be a numeric timepoint")
+    try:
+        validate_scalar_value(value)
+    except ValueError as exc:
+        raise InvalidTemporalBounds(f"{name}: {exc}") from exc
+    if isinstance(value, int) and float(value) != value:
+        raise InvalidTemporalBounds(f"{name} cannot be stored exactly as a timepoint")
+
+
+def validate_temporal_bounds(
+    valid_from: float | None, valid_until: float | None
+) -> None:
+    _validate_timepoint("valid_from", valid_from)
+    _validate_timepoint("valid_until", valid_until)
+    if valid_from is not None and valid_until is not None and valid_from > valid_until:
+        raise InvalidTemporalBounds(
+            "description temporal anchor requires valid_from <= valid_until"
+        )
+
+
 class DescriptionTemporalAnchor(
     msgspec.Struct, frozen=True, forbid_unknown_fields=True
 ):
@@ -127,14 +156,7 @@ class DescriptionTemporalAnchor(
     valid_until: float | None = None
 
     def __post_init__(self) -> None:
-        if (
-            self.valid_from is not None
-            and self.valid_until is not None
-            and self.valid_from > self.valid_until
-        ):
-            raise ValueError(
-                "description temporal anchor requires valid_from <= valid_until"
-            )
+        validate_temporal_bounds(self.valid_from, self.valid_until)
 
 
 class HappensBeforeAccount(StrEnum):
