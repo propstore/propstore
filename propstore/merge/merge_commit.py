@@ -154,14 +154,16 @@ def _require_merge_base(
     git: GitStore, branch_a: str, left_sha: str, branch_b: str, right_sha: str
 ) -> str:
     bases = tuple(git.iter_merge_bases(left_sha, right_sha))
-    if not bases:
-        raise MergeAncestryError(
-            f"No common ancestor between {branch_a!r} at {left_sha} and "
-            f"{branch_b!r} at {right_sha}"
-        )
-    if len(bases) > 1:
-        raise AmbiguousMergeBaseError(left_sha, right_sha, bases)
-    return bases[0]
+    match bases:
+        case (base,):
+            return base
+        case ():
+            raise MergeAncestryError(
+                f"No common ancestor between {branch_a!r} at {left_sha} and "
+                f"{branch_b!r} at {right_sha}"
+            )
+        case _:
+            raise AmbiguousMergeBaseError(left_sha, right_sha, bases)
 
 
 def build_repository_merge_framework(
