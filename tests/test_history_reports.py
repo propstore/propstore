@@ -1,7 +1,6 @@
 """Owner-layer repository history cores: log / diff / show / checkout.
 
-These exercise :mod:`propstore.history` directly (no Click); the ``pks log`` /
-``diff`` / ``show`` / ``checkout`` Click adapters are Phase 10.
+These exercise the history owner and the CLI mapping for an unknown revision.
 """
 
 from __future__ import annotations
@@ -9,7 +8,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
+from quire.refs import RefName
 
+from propstore.cli import cli
 from propstore.history import (
     BranchNotFoundError,
     CommitNotFoundError,
@@ -51,6 +53,52 @@ def test_build_commit_show_report_rejects_missing_commit(tmp_path: Path) -> None
     repo = Repository.init(tmp_path / "knowledge")
     with pytest.raises(CommitNotFoundError, match="Commit not found: missing"):
         build_commit_show_report(repo, "missing")
+
+
+def test_diff_reports_missing_commit_to_owner_and_cli(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path / "knowledge")
+    with pytest.raises(CommitNotFoundError, match="deadbeef"):
+        build_diff_report(repo, "deadbeef")
+    result = CliRunner().invoke(cli, ["-C", str(repo.root), "diff", "deadbeef"])
+    assert result.exit_code == 2
+    assert "Commit not found: deadbeef" in result.output
+
+
+def test_diff_uses_captured_ref_after_it_moves(tmp_path: Path, monkeypatch) -> None:
+    repo = init_repo(tmp_path / "knowledge")
+    git = repo.require_git()
+    first = author_obs_claim(repo, "first", "first observation")
+    git.create_branch("selected", source_commit=first)
+    expected = build_diff_report(repo, first)
+    diff = git.diff_commits
+
+    def advance_then_diff(commit1=None, commit2=None):
+        author_obs_claim(repo, "second", "second observation", branch="selected")
+        assert commit1 == first
+        return diff(commit1, commit2)
+
+    monkeypatch.setattr(git, "diff_commits", advance_then_diff)
+    assert build_diff_report(repo, "refs/heads/selected") == expected
+
+
+def test_history_preserves_broken_ref_storage_error(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path / "knowledge")
+    repo.require_git().write_ref(RefName("refs/heads/broken"), "a" * 40)
+    with pytest.raises(KeyError):
+        build_diff_report(repo, "refs/heads/broken")
+
+
+def test_diff_and_show_resolve_a_root_commit(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path / "knowledge")
+    git = repo.require_git()
+    root = git.commit_flat_tree(
+        {"first": git.store_blob(b"first")}, "root", parents=(), branch="root"
+    )
+    for revision in (root, root[:12], "refs/heads/root"):
+        assert build_diff_report(repo, revision).added == ("first",)
+        assert build_commit_show_report(repo, revision).sha == root
+    git.create_branch(root, source_commit=git.head_sha())
+    assert build_commit_show_report(repo, root).sha == root
 
 
 def test_build_diff_report_against_explicit_commit(tmp_path: Path) -> None:

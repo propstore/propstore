@@ -107,7 +107,10 @@ def log_cmd(
 def diff_cmd(obj: CliContext, commit: str | None) -> None:
     """Show files changed in COMMIT vs its parent (defaults to HEAD)."""
     repo = require_repo(obj)
-    report = build_diff_report(repo, commit)
+    try:
+        report = build_diff_report(repo, commit)
+    except CommitNotFoundError as exc:
+        fail(exc, exit_code=2)
     for path in report.added:
         emit(f"  Added: {path}")
     for path in report.modified:
@@ -158,6 +161,6 @@ def checkout_cmd(obj: CliContext, commit: str) -> None:
     except (CommitNotFoundError, CommitHasNoConceptsError) as exc:
         fail(exc, exit_code=2)
     if report.rebuilt:
-        emit(f"Sidecar built from commit {commit[:8]}.")
+        emit(f"Sidecar built from commit {report.commit[:8]}.")
     else:
-        emit(f"Sidecar already at commit {commit[:8]}.")
+        emit(f"Sidecar already at commit {report.commit[:8]}.")
