@@ -956,16 +956,16 @@ Show all claims for a concept.
 uv run pks world query speech.pitch
 ```
 
-#### `pks world bind [ARGS]...`
+#### `pks world bind [KEY=VALUE]... [CONCEPT_ID]`
 
-Show active claims under condition bindings. Arguments with `=` are bindings; the last argument without `=` is a concept filter.
+Show active claims under condition bindings. Give each key once. To filter by concept, supply its ID after all bindings.
 
 ```bash
 uv run pks world bind domain=speech
 uv run pks world bind domain=speech speech.pitch
 ```
 
-#### `pks world derive CONCEPT_ID [ARGS]...`
+#### `pks world derive CONCEPT_ID [KEY=VALUE]...`
 
 Derive a value for a concept via parameterization relationships.
 
@@ -973,7 +973,7 @@ Derive a value for a concept via parameterization relationships.
 uv run pks world derive speech.formant_ratio domain=speech
 ```
 
-#### `pks world chain CONCEPT_ID [ARGS]...`
+#### `pks world chain CONCEPT_ID [KEY=VALUE]...`
 
 Traverse the parameter space to derive a target concept.
 
@@ -985,7 +985,7 @@ Traverse the parameter space to derive a target concept.
 uv run pks world chain speech.formant_ratio domain=speech --strategy sample_size
 ```
 
-#### `pks world resolve CONCEPT_ID [ARGS]...`
+#### `pks world resolve CONCEPT_ID [KEY=VALUE]...`
 
 Resolve a conflicted concept using a strategy. Supports [Argumentation options](#argumentation-options), [PrAF options](#praf-options), and [Decision criterion options](#decision-criterion-options).
 
@@ -1006,7 +1006,7 @@ Show the stance chain for a claim.
 uv run pks world explain speech.pitch.claim_01
 ```
 
-#### `pks world hypothetical [ARGS]...`
+#### `pks world hypothetical [KEY=VALUE]...`
 
 Show what changes if claims are removed or added.
 
@@ -1019,7 +1019,7 @@ Show what changes if claims are removed or added.
 uv run pks world hypothetical domain=speech --remove speech.pitch.claim_02
 ```
 
-#### `pks world revision base [ARGS]...`
+#### `pks world revision base [KEY=VALUE]...`
 
 Show the current finite revision belief base for a scoped world.
 
@@ -1027,7 +1027,7 @@ Show the current finite revision belief base for a scoped world.
 uv run pks world revision base speaker_sex=male
 ```
 
-#### `pks world revision entrenchment [ARGS]...`
+#### `pks world revision entrenchment [KEY=VALUE]...`
 
 Show the current deterministic entrenchment ordering for that scoped revision base.
 
@@ -1035,7 +1035,7 @@ Show the current deterministic entrenchment ordering for that scoped revision ba
 uv run pks world revision entrenchment speaker_sex=male
 ```
 
-#### `pks world revision expand [ARGS]...`
+#### `pks world revision expand [KEY=VALUE]...`
 
 Run one-shot expansion over the derived revision base. Does not mutate source YAML.
 
@@ -1047,7 +1047,7 @@ Run one-shot expansion over the derived revision base. Does not mutate source YA
 uv run pks world revision expand speaker_sex=male --atom '{"kind":"claim","id":"synthetic_freq","value":123.0}'
 ```
 
-#### `pks world revision contract [ARGS]...`
+#### `pks world revision contract [KEY=VALUE]...`
 
 Run one-shot contraction over the derived revision base. Does not mutate source YAML.
 
@@ -1059,7 +1059,7 @@ Run one-shot contraction over the derived revision base. Does not mutate source 
 uv run pks world revision contract speaker_sex=male --target freq_claim1
 ```
 
-#### `pks world revision revise [ARGS]...`
+#### `pks world revision revise [KEY=VALUE]...`
 
 Run one-shot revision over the derived revision base. Does not mutate source YAML.
 
@@ -1072,7 +1072,7 @@ Run one-shot revision over the derived revision base. Does not mutate source YAM
 uv run pks world revision revise speaker_sex=male --atom '{"kind":"claim","id":"synthetic_freq","value":123.0}' --conflict freq_claim1
 ```
 
-#### `pks world revision explain [ARGS]...`
+#### `pks world revision explain [KEY=VALUE]...`
 
 Explain one one-shot revision operation over the current scoped world.
 
@@ -1087,7 +1087,7 @@ Explain one one-shot revision operation over the current scoped world.
 uv run pks world revision explain speaker_sex=male --operation contract --target freq_claim1
 ```
 
-#### `pks world revision iterated-state [ARGS]...`
+#### `pks world revision iterated-state [KEY=VALUE]...`
 
 Inspect the current explicit iterated revision state for a scoped world.
 
@@ -1095,7 +1095,7 @@ Inspect the current explicit iterated revision state for a scoped world.
 uv run pks world revision iterated-state speaker_sex=male
 ```
 
-#### `pks world revision iterated-revise [ARGS]...`
+#### `pks world revision iterated-revise [KEY=VALUE]...`
 
 Run one iterated revision episode and print the next explicit epistemic state. This remains a revision-state transform, not a worldline.
 
@@ -1109,7 +1109,7 @@ Run one iterated revision episode and print the next explicit epistemic state. T
 uv run pks world revision iterated-revise speaker_sex=male --atom '{"kind":"claim","id":"synthetic_freq","value":123.0}' --conflict freq_claim1 --operator lexicographic
 ```
 
-#### `pks world sensitivity CONCEPT_ID [ARGS]...`
+#### `pks world sensitivity CONCEPT_ID [KEY=VALUE]...`
 
 Analyze which input most influences a derived quantity.
 
@@ -1121,7 +1121,7 @@ Analyze which input most influences a derived quantity.
 uv run pks world sensitivity speech.formant_ratio domain=speech
 ```
 
-#### `pks world export-graph [ARGS]...`
+#### `pks world export-graph [KEY=VALUE]...`
 
 Export the knowledge graph as DOT or JSON.
 
@@ -1135,7 +1135,7 @@ Export the knowledge graph as DOT or JSON.
 uv run pks world export-graph domain=speech --format dot --output graph.dot
 ```
 
-#### `pks world check-consistency [ARGS]...`
+#### `pks world check-consistency [KEY=VALUE]...`
 
 Check for conflicts, optionally including transitive (multi-hop) ones.
 
@@ -1160,7 +1160,7 @@ List algorithm claims in the world model.
 uv run pks world algorithms --stage preprocessing
 ```
 
-#### `pks world fragility [ARGS]...`
+#### `pks world fragility [KEY=VALUE]... [CONTEXT_ID]`
 
 Rank intervention targets by fragility -- what to inspect next.
 

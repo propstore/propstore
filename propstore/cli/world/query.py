@@ -12,12 +12,12 @@ import click
 from propstore.cli.helpers import CliContext, fail
 from propstore.cli.output import emit, emit_table
 from propstore.cli.world import (
+    bindings_with_target,
     emit_report_json,
     format_option,
     lifecycle_options,
     lifecycle_policy,
     open_world,
-    parse_world_binding_args,
     world,
     world_repo,
 )
@@ -123,18 +123,21 @@ def world_query(
 
 
 @world.command("bind")
-@click.argument("args", nargs=-1)
+@click.argument("args", nargs=-1, metavar="[KEY=VALUE]...")
+@click.argument("target", required=False)
 @format_option
 @click.pass_obj
-def world_bind(obj: CliContext, args: tuple[str, ...], fmt: str) -> None:
+def world_bind(
+    obj: CliContext, args: tuple[str, ...], target: str | None, fmt: str
+) -> None:
     """Show active claims under condition bindings.
 
     Usage: ``pks world bind domain=example [concept_id]`` — tokens with ``=`` are
     bindings; a trailing token without ``=`` is a concept filter.
     """
 
+    bindings, target = bindings_with_target(args, target)
     repo = world_repo(obj)
-    bindings, target = parse_world_binding_args(args)
     with open_world(repo) as world_query:
         report = query_bound_world(
             world_query,

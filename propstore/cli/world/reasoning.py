@@ -23,8 +23,8 @@ from propstore.cli.world import (
     lifecycle_options,
     lifecycle_policy,
     open_world,
-    parse_world_binding_args,
     world,
+    world_bindings,
     world_repo,
 )
 from propstore.world.reasoning_reports import (
@@ -44,14 +44,14 @@ from propstore.world.reasoning_reports import (
 
 @world.command("derive")
 @click.argument("concept_id")
-@click.argument("args", nargs=-1)
+@world_bindings
 @lifecycle_options
 @format_option
 @click.pass_obj
 def world_derive(
     obj: CliContext,
     concept_id: str,
-    args: tuple[str, ...],
+    bindings: dict[str, str],
     include_drafts: bool,
     include_blocked: bool,
     show_quarantined: bool,
@@ -63,7 +63,6 @@ def world_derive(
     """
 
     repo = world_repo(obj)
-    bindings, _ = parse_world_binding_args(args)
     policy = lifecycle_policy(
         include_drafts=include_drafts,
         include_blocked=include_blocked,
@@ -91,7 +90,7 @@ def world_derive(
 
 @world.command("resolve")
 @click.argument("concept_id")
-@click.argument("args", nargs=-1)
+@world_bindings
 @click.option(
     "--strategy",
     required=True,
@@ -155,7 +154,7 @@ def world_derive(
 def world_resolve(
     obj: CliContext,
     concept_id: str,
-    args: tuple[str, ...],
+    bindings: dict[str, str],
     strategy: str,
     semantics: str,
     set_comparison: str,
@@ -177,7 +176,6 @@ def world_resolve(
     """
 
     repo = world_repo(obj)
-    bindings, _ = parse_world_binding_args(args)
     policy = build_policy(
         AppRenderPolicyRequest(
             reasoning_backend=reasoning_backend,
@@ -232,7 +230,7 @@ def world_resolve(
 
 @world.command("chain")
 @click.argument("concept_id")
-@click.argument("args", nargs=-1)
+@world_bindings
 @click.option(
     "--strategy",
     default=None,
@@ -243,7 +241,7 @@ def world_resolve(
 def world_chain(
     obj: CliContext,
     concept_id: str,
-    args: tuple[str, ...],
+    bindings: dict[str, str],
     strategy: str | None,
     fmt: str,
 ) -> None:
@@ -253,7 +251,6 @@ def world_chain(
     """
 
     repo = world_repo(obj)
-    bindings, _ = parse_world_binding_args(args)
     with open_world(repo) as world_query:
         report = query_world_chain(
             world_query,
@@ -286,14 +283,14 @@ def _format_chain_concept(display_id: str, canonical_name: str | None) -> str:
 
 
 @world.command("hypothetical")
-@click.argument("args", nargs=-1)
+@world_bindings
 @click.option("--remove", "remove", multiple=True, help="Claim id to remove.")
 @click.option("--add", "add_json", default=None, help="JSON synthetic claim(s).")
 @format_option
 @click.pass_obj
 def world_hypothetical(
     obj: CliContext,
-    args: tuple[str, ...],
+    bindings: dict[str, str],
     remove: tuple[str, ...],
     add_json: str | None,
     fmt: str,
@@ -304,7 +301,6 @@ def world_hypothetical(
     """
 
     repo = world_repo(obj)
-    bindings, _ = parse_world_binding_args(args)
     with open_world(repo) as world_query:
         report = diff_hypothetical_world(
             world_query,

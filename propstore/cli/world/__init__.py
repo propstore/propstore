@@ -43,27 +43,41 @@ def world() -> None:
 # ── binding parsing ───────────────────────────────────────────────────────────
 
 
-def parse_world_binding_args(
-    args: Sequence[str],
-) -> tuple[dict[str, str], str | None]:
-    """Split ``key=value`` binding tokens from a trailing concept/context token.
-
-    Returns ``(bindings, target)`` where *target* is the last argument without an
-    ``=`` (a concept or context filter), or ``None`` when every token is a
-    binding.
-    """
-
+def _parse_bindings(args: Sequence[str]) -> dict[str, str]:
     parsed: dict[str, str] = {}
-    remaining: list[str] = []
     for arg in args:
-        if "=" not in arg:
-            remaining.append(arg)
-            continue
-        key, _, value = arg.partition("=")
-        if not key:
-            raise click.ClickException("world bindings require a non-empty key")
+        key, separator, value = arg.partition("=")
+        if not separator:
+            raise click.BadParameter(f"expected KEY=VALUE, got {arg!r}")
+        if not key.strip():
+            raise click.BadParameter("world bindings require a non-empty key")
+        if key in parsed:
+            raise click.BadParameter(f"duplicate binding {key!r}")
         parsed[key] = value
-    return parsed, remaining[-1] if remaining else None
+    return parsed
+
+
+def world_bindings(func: FC) -> FC:
+    def parse(
+        _ctx: click.Context, _param: click.Parameter, value: tuple[str, ...]
+    ) -> dict[str, str]:
+        return _parse_bindings(value)
+
+    return click.argument(
+        "bindings",
+        nargs=-1,
+        metavar="[KEY=VALUE]...",
+        callback=parse,
+    )(func)
+
+
+def bindings_with_target(
+    args: tuple[str, ...], target: str | None
+) -> tuple[dict[str, str], str | None]:
+    """Click assigns the last token to the optional trailing argument even when it is a binding."""
+    if target is not None and "=" in target:
+        return _parse_bindings((*args, target)), None
+    return _parse_bindings(args), target
 
 
 def format_assumption_ids(assumption_ids: Sequence[str]) -> str:
@@ -189,6 +203,7 @@ from propstore.cli.world import analysis, query, reasoning, revision
 
 __all__ = [
     "analysis",
+    "bindings_with_target",
     "build_policy",
     "emit_report_json",
     "format_assumption_ids",
@@ -198,10 +213,10 @@ __all__ = [
     "lifecycle_options",
     "lifecycle_policy",
     "open_world",
-    "parse_world_binding_args",
     "query",
     "reasoning",
     "revision",
     "world",
+    "world_bindings",
     "world_repo",
 ]
