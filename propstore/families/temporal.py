@@ -44,7 +44,7 @@ from quire.references import ForeignKeySpec
 from quire.sqlalchemy_schema import SqlAlchemySchema, build_sqlalchemy_schema
 from quire.sqlalchemy_store import create_sqlalchemy_store, writable_session
 
-from propstore.core.lemon.temporal import HappensBeforeAccount
+from propstore.core.lemon.temporal import HappensBeforeAccount, validate_temporal_bounds
 from propstore.families import SEMANTIC_FOREIGN_KEY_CONTRACT_VERSION
 from propstore.provenance import Provenance, ProvenanceStatus
 
@@ -142,14 +142,7 @@ class DescriptionTemporalAnchorDoc(CharterDoc):
     valid_until: float | None = None
 
     def __post_init__(self) -> None:
-        if (
-            self.valid_from is not None
-            and self.valid_until is not None
-            and self.valid_from > self.valid_until
-        ):
-            raise ValueError(
-                "description temporal anchor requires valid_from <= valid_until"
-            )
+        validate_temporal_bounds(self.valid_from, self.valid_until)
 
 
 @charter(
