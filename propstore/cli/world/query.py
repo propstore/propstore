@@ -12,12 +12,12 @@ import click
 from propstore.cli.helpers import CliContext, fail
 from propstore.cli.output import emit, emit_table
 from propstore.cli.world import (
+    bindings_with_target,
     emit_report_json,
     format_option,
     lifecycle_options,
     lifecycle_policy,
     open_world,
-    bindings_with_target,
     world,
     world_repo,
 )

@@ -23,8 +23,8 @@ from propstore.cli.world import (
     lifecycle_options,
     lifecycle_policy,
     open_world,
-    world_bindings,
     world,
+    world_bindings,
     world_repo,
 )
 from propstore.world.reasoning_reports import (

@@ -58,11 +58,16 @@ def _parse_bindings(args: Sequence[str]) -> dict[str, str]:
 
 
 def world_bindings(func: FC) -> FC:
+    def parse(
+        _ctx: click.Context, _param: click.Parameter, value: tuple[str, ...]
+    ) -> dict[str, str]:
+        return _parse_bindings(value)
+
     return click.argument(
         "bindings",
         nargs=-1,
         metavar="[KEY=VALUE]...",
-        callback=lambda ctx, param, value: _parse_bindings(value),
+        callback=parse,
     )(func)
 
 
@@ -198,6 +203,7 @@ from propstore.cli.world import analysis, query, reasoning, revision
 
 __all__ = [
     "analysis",
+    "bindings_with_target",
     "build_policy",
     "emit_report_json",
     "format_assumption_ids",
@@ -207,11 +213,10 @@ __all__ = [
     "lifecycle_options",
     "lifecycle_policy",
     "open_world",
-    "bindings_with_target",
-    "world_bindings",
     "query",
     "reasoning",
     "revision",
     "world",
+    "world_bindings",
     "world_repo",
 ]

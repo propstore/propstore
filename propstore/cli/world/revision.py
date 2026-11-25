@@ -20,8 +20,8 @@ from propstore.cli.world import (
     format_assumption_ids,
     is_json_object,
     open_world,
-    world_bindings,
     world,
+    world_bindings,
     world_repo,
 )
 from propstore.support_revision.belief_set_adapter import (

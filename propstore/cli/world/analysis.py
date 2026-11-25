@@ -16,12 +16,12 @@ import click
 from propstore.cli.helpers import CliContext
 from propstore.cli.output import emit, emit_table
 from propstore.cli.world import (
+    bindings_with_target,
     emit_report_json,
     format_option,
     open_world,
-    bindings_with_target,
-    world_bindings,
     world,
+    world_bindings,
     world_repo,
 )
 from propstore.fragility import FragilityRequest, query_fragility
