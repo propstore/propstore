@@ -22,7 +22,12 @@ from tests.merge_commit_helpers import author_obs_claim
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
 def test_invalid_coordinate_never_reaches_storage(tmp_path: Path, bound, value):
     provenance = stated_provenance()
-    fields = dict(anchor_id="a", claim_id="c", frame_id="f", provenance=provenance)
+    fields = {
+        "anchor_id": "a",
+        "claim_id": "c",
+        "frame_id": "f",
+        "provenance": provenance,
+    }
     bounds = {bound: value}
     with pytest.raises(ValueError, match="finite"):
         DescriptionTemporalAnchorDoc(**fields, **bounds)

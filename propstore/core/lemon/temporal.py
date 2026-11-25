@@ -60,7 +60,7 @@ from condition_ir import (
 )
 from condition_ir.solver import SolverUnknown
 
-from propstore.core.scalars import validate_scalar_value
+from propstore.core.scalars import ScalarValue, validate_scalar_value
 from propstore.provenance import Provenance
 
 
@@ -114,22 +114,24 @@ class InvalidTemporalBounds(ValueError):
     """An endpoint cannot represent a timepoint or the interval is reversed."""
 
 
+def _validate_timepoint(name: str, value: ScalarValue | None) -> None:
+    if value is None:
+        return
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise InvalidTemporalBounds(f"{name} must be a numeric timepoint")
+    try:
+        validate_scalar_value(value)
+    except ValueError as exc:
+        raise InvalidTemporalBounds(f"{name}: {exc}") from exc
+    if isinstance(value, int) and float(value) != value:
+        raise InvalidTemporalBounds(f"{name} cannot be stored exactly as a timepoint")
+
+
 def validate_temporal_bounds(
     valid_from: float | None, valid_until: float | None
 ) -> None:
-    for name, value in (("valid_from", valid_from), ("valid_until", valid_until)):
-        if value is None:
-            continue
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise InvalidTemporalBounds(f"{name} must be a numeric timepoint")
-        try:
-            validate_scalar_value(value)
-        except ValueError as exc:
-            raise InvalidTemporalBounds(f"{name}: {exc}") from exc
-        if isinstance(value, int) and float(value) != value:
-            raise InvalidTemporalBounds(
-                f"{name} cannot be stored exactly as a timepoint"
-            )
+    _validate_timepoint("valid_from", valid_from)
+    _validate_timepoint("valid_until", valid_until)
     if valid_from is not None and valid_until is not None and valid_from > valid_until:
         raise InvalidTemporalBounds(
             "description temporal anchor requires valid_from <= valid_until"
