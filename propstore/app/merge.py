@@ -109,7 +109,7 @@ def commit_merge(
     )
     commit_sha = plan.commit(repo, message=request.message)
     framework = build_repository_merge_framework(
-        repo, request.branch_a, request.branch_b
+        repo, plan.branch_a, plan.branch_b, branch_commits=plan.branch_commits
     )
     tree_paths = [path for path, _sha in git.iter_flat_tree_entries(commit_sha)]
     manifest_paths = _entries_under(tree_paths, _MANIFEST_ROOT)
