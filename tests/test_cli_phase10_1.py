@@ -76,6 +76,13 @@ def test_predicate_list_and_show(tmp_path: Path) -> None:
     assert "predicate_id: sample_size" in shown.output
 
 
+def test_proposal_has_no_duplicate_predicates_command(tmp_path: Path) -> None:
+    repo = _repo(tmp_path)
+    result = _invoke(repo, ["proposal", "predicates", "promote", "--help"])
+    assert result.exit_code == 2
+    assert "No such command 'predicates'" in result.output
+
+
 def test_predicate_list_empty(tmp_path: Path) -> None:
     repo = _repo(tmp_path)
     result = _invoke(repo, ["predicate", "list"])
@@ -95,6 +102,9 @@ def test_predicate_show_unknown_fails(tmp_path: Path) -> None:
 
 def test_predicate_declare_then_promote(tmp_path: Path) -> None:
     repo = _repo(tmp_path)
+    before = _invoke(repo, ["predicate", "promote", "--paper", PAPER])
+    assert before.exit_code == 0
+    assert "Nothing to promote" in before.output
 
     declared = _invoke(
         repo,
@@ -127,6 +137,9 @@ def test_predicate_declare_then_promote(tmp_path: Path) -> None:
     assert promoted.exit_code == 0, promoted.output
     assert "Promoted: statistical_power" in promoted.output
     assert repo.families.predicate.require("statistical_power").authoring_group == PAPER
+    repeat = _invoke(repo, ["predicate", "promote", "--paper", PAPER])
+    assert repeat.exit_code == 0
+    assert "No predicate proposals to promote" in repeat.output
 
 
 def test_predicate_declare_bad_arity_fails(tmp_path: Path) -> None:
@@ -299,18 +312,16 @@ def test_proposal_promote_unknown_stance_fails(tmp_path: Path) -> None:
     assert "ps:stance:typo" in result.output
 
 
-# --- proposal predicates promote ----------------------------------------------
-
-
-def test_proposal_predicates_promote(tmp_path: Path) -> None:
+def test_predicate_promote_reports_conflicting_owner(tmp_path: Path) -> None:
     repo = _repo(tmp_path)
+    _seed_predicate(repo)
     _invoke(
         repo,
         [
             "predicate",
             "declare",
             "--paper",
-            PAPER,
+            "other_paper",
             "--name",
             "sample_size",
             "--arity",
@@ -325,9 +336,9 @@ def test_proposal_predicates_promote(tmp_path: Path) -> None:
             "2026-06-30",
         ],
     )
-    result = _invoke(repo, ["proposal", "predicates", "promote", "--paper", PAPER])
-    assert result.exit_code == 0, result.output
-    assert "Promoted: sample_size" in result.output
+    result = _invoke(repo, ["predicate", "promote", "--paper", "other_paper"])
+    assert result.exit_code != 0
+    assert f"'sample_size' is already declared by '{PAPER}'" in result.output
     assert repo.families.predicate.require("sample_size").authoring_group == PAPER
 
 
