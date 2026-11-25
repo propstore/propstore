@@ -146,16 +146,24 @@ def _read_branch_merge_claims(
     return merge_claims
 
 
-def _read_base_merge_claims(
-    repo: Repository, git: GitStore, branch_a: str, left_sha: str, right_sha: str
-) -> tuple[MergeClaim, ...]:
-    """Read the merge-base claim set, or empty when the branches share no ancestor."""
+class MergeAncestryError(ValueError):
+    """The merge inputs have no shared baseline for claim classification."""
 
-    try:
-        base_sha = git.merge_base(left_sha, right_sha)
-    except ValueError:
-        return ()
-    return tuple(_read_branch_merge_claims(repo, branch_a, base_sha))
+
+def _require_merge_base(
+    git: GitStore, branch_a: str, left_sha: str, branch_b: str, right_sha: str
+) -> str:
+    bases = tuple(git.iter_merge_bases(left_sha, right_sha))
+    match bases:
+        case (base,):
+            return base
+        case ():
+            raise MergeAncestryError(
+                f"No common ancestor between {branch_a!r} at {left_sha} and "
+                f"{branch_b!r} at {right_sha}"
+            )
+        case _:
+            raise AmbiguousMergeBaseError(left_sha, right_sha, bases)
 
 
 def build_repository_merge_framework(
@@ -186,12 +194,20 @@ def build_repository_merge_framework(
         if commit_sha is None:
             raise ValueError(f"Branch {name!r} does not exist")
         commits[name] = commit_sha
+    base_sha = _require_merge_base(
+        git, branch_a, commits[branch_a], branch_b, commits[branch_b]
+    )
+    for branch in additional_branches:
+        if base_sha not in git.ancestor_distances(commits[branch]):
+            raise MergeAncestryError(
+                f"Additional branch {branch!r} at {commits[branch]} does not descend "
+                f"from the merge base {base_sha} of {branch_a!r} at {commits[branch_a]} "
+                f"and {branch_b!r} at {commits[branch_b]}"
+            )
     claim_sets: dict[str, Sequence[MergeClaim]] = {}
     for name in branch_names:
         claim_sets[name] = _read_branch_merge_claims(repo, name, commits[name])
-    base_claims = _read_base_merge_claims(
-        repo, git, branch_a, commits[branch_a], commits[branch_b]
-    )
+    base_claims = tuple(_read_branch_merge_claims(repo, branch_a, base_sha))
     return build_merge_framework(
         claim_sets,
         branch_a,
@@ -394,7 +410,7 @@ class MergeCommitPlan:
     right_sha: str
     target_branch: str
     target_sha: str | None
-    base_sha: str | None
+    base_sha: str
 
     @property
     def target_admission(self) -> Literal["absent", "contained"]:
@@ -426,9 +442,7 @@ class MergeCommitPlan:
             branch: dict(git.iter_flat_tree_entries(commit))
             for branch, commit in ((branch_a, left_sha), (branch_b, right_sha))
         }
-        base_entries = (
-            dict(git.iter_flat_tree_entries(self.base_sha)) if self.base_sha else {}
-        )
+        base_entries = dict(git.iter_flat_tree_entries(self.base_sha))
         base_ordinary, left_ordinary, right_ordinary = (
             {path: blob for path, blob in entries.items() if not _is_claim_path(path)}
             for entries in (
@@ -518,6 +532,7 @@ def plan_merge_commit(
     if right_sha is None:
         raise ValueError(f"Branch {branch_b!r} does not exist")
 
+    base_sha = _require_merge_base(git, branch_a, left_sha, branch_b, right_sha)
     target_sha = (
         left_sha
         if target_branch == branch_a
@@ -532,9 +547,6 @@ def plan_merge_commit(
         and target_sha not in git.ancestor_distances(right_sha)
     ):
         raise DivergentMergeTargetError(target_branch, target_sha, left_sha, right_sha)
-    base_shas = tuple(git.iter_merge_bases(left_sha, right_sha))
-    if len(base_shas) > 1:
-        raise AmbiguousMergeBaseError(left_sha, right_sha, base_shas)
     return MergeCommitPlan(
         branch_a,
         branch_b,
@@ -542,7 +554,7 @@ def plan_merge_commit(
         right_sha,
         target_branch,
         target_sha,
-        base_shas[0] if base_shas else None,
+        base_sha,
     )
 
 
@@ -567,6 +579,7 @@ def create_merge_commit(
 
 __all__ = [
     "DivergentMergeTargetError",
+    "MergeAncestryError",
     "MergeCommitPlan",
     "NonClaimMergeConflict",
     "build_repository_merge_framework",
