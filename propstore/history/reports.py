@@ -15,6 +15,9 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TypeGuard
 
+from dulwich.objects import valid_hexsha
+from dulwich.objectspec import parse_commit, parse_ref
+
 from propstore.families.merge_manifests import MergeManifest
 from propstore.families.registry import PROPSTORE_FAMILY_REGISTRY, PropstoreFamily
 from propstore.repository import Repository
@@ -241,19 +244,41 @@ def build_log_report(
     )
 
 
+def _resolve_commit(repo: Repository, revision: str) -> str:
+    """Resolve a user revision once, before reading its tree or parents."""
+    raw = repo.require_git().raw_repo
+    if not valid_hexsha(revision):
+        try:
+            ref = parse_ref(raw.refs, revision)
+        except KeyError:
+            pass
+        else:
+            # A present ref pointing to an absent object is a storage error.
+            return parse_commit(raw, raw.refs[ref]).id.decode("ascii")
+    try:
+        return parse_commit(raw, revision).id.decode("ascii")
+    except KeyError as exc:
+        raise CommitNotFoundError(f"Commit not found: {revision}") from exc
+
+
 def build_diff_report(repo: Repository, commit: str | None) -> FileChangeReport:
     """Report the file changes a commit introduced (vs its first parent)."""
 
-    return _file_change_report(repo.require_git().diff_commits(commit1=commit))
+    git = repo.require_git()
+    if commit is None:
+        sha = git.head_sha()
+        if sha is None:
+            return FileChangeReport((), (), ())
+    else:
+        sha = _resolve_commit(repo, commit)
+    return _file_change_report(git.diff_commits(commit1=sha))
 
 
 def build_commit_show_report(repo: Repository, commit: str) -> CommitShowReport:
     """Report one commit's metadata and file change set."""
 
-    try:
-        info = repo.require_git().show_commit(commit)
-    except KeyError as exc:
-        raise CommitNotFoundError(f"Commit not found: {commit}") from exc
+    sha = _resolve_commit(repo, commit)
+    info = repo.require_git().show_commit(sha)
     return CommitShowReport(
         sha=_mapping_str(info, "sha"),
         author=_mapping_str(info, "author"),
@@ -273,13 +298,9 @@ def checkout_commit(repo: Repository, commit: str) -> CheckoutReport:
 
     from propstore.derived_build import materialize_world_sidecar
 
-    try:
-        repo.require_git().show_commit(commit)
-    except KeyError as exc:
-        raise CommitNotFoundError(f"Commit not found: {commit}") from exc
-
-    if not any(repo.families.concept.iter_refs(commit=commit)):
+    sha = _resolve_commit(repo, commit)
+    if not any(repo.families.concept.iter_refs(commit=sha)):
         raise CommitHasNoConceptsError("No concepts found at that commit.")
 
-    _handle, rebuilt = materialize_world_sidecar(repo, force=True, commit=commit)
-    return CheckoutReport(commit=commit, rebuilt=rebuilt)
+    _handle, rebuilt = materialize_world_sidecar(repo, force=True, commit=sha)
+    return CheckoutReport(commit=sha, rebuilt=rebuilt)
